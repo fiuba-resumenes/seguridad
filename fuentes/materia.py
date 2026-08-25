@@ -6,8 +6,7 @@ Una sola salida: el apunte completo (fuentes/completo/ -> ./). Se arma con
 motor_apuntes.armar.construir(). Los capitulos se van sumando clase a clase;
 CFG["grupos"] lista solo los que ya tienen fragmento.
 
-Paleta: propia de la materia (verde terminal sobre neutros frios, acento
-ambar de alerta), pensada para que se distinga de las otras materias de la
+Paleta: propia de la materia (amarillo/ambar sobre neutros frios, tono de alerta), pensada para que se distinga de las otras materias de la
 plataforma. Tema de seguridad, no reutiliza la turquesa de otro apunte.
 """
 
@@ -19,9 +18,9 @@ PALETA_LIGHT = """:root {
       --ink: #16211e;
       --muted: #5c6b66;
       --line: #d4e0db;
-      --accent: #0f8a5f;
-      --accent-2: #d4f0e3;
-      --accent-ink: #0a5c40;
+      --accent: #9a7d0a;
+      --accent-2: #faedc4;
+      --accent-ink: #6b5300;
       --warm: #9a5a12;
       --warm-bg: #fdeecf;
       --danger: #a33540;
@@ -49,9 +48,9 @@ PALETA_DARK = """html[data-theme="dark"] {
       --ink: #e9f4ef;
       --muted: #9bb0a8;
       --line: #26382f;
-      --accent: #4fd6a0;
-      --accent-2: #123829;
-      --accent-ink: #b6f4da;
+      --accent: #e8c552;
+      --accent-2: #38300f;
+      --accent-ink: #f6e6a6;
       --warm: #f0b766;
       --warm-bg: #392a17;
       --danger: #f19aa2;
@@ -88,8 +87,8 @@ CFG = {
              "casos de las diapositivas, listo para el parcialito. Arranca "
              "por el threat model y la ofensiva de un pentest."),
     "descripcion": "Apunte del Taller de Seguridad Informática (TA051, FIUBA).",
-    "theme_color": "#0f8a5f",
-    "favicon_hex": "0f8a5f",
+    "theme_color": "#b58900",
+    "favicon_hex": "b58900",
     "grupos": [
         ("Fundamentos", _CLASES[0:2]),
     ],
