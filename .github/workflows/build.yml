@@ -1,0 +1,26 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: lint fragmentos
+        run: python3 -m motor_apuntes.lint_fragmentos fuentes/completo
+      # armar.py valida ids duplicados, anclas rotas, tokens CSS sin definir,
+      # recursos externos e imagenes faltantes; falla solo si algo de eso pasa.
+      - run: python3 armar.py
+      - name: output al dia
+        run: |
+          if ! git diff --exit-code -- index.html manifest.webmanifest icon.svg sw.js; then
+            echo "::error::el output commiteado no coincide con lo que arma armar.py. Correr python3 armar.py y commitear."
+            exit 1
+          fi

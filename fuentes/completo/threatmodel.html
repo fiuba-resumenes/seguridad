@@ -1,0 +1,118 @@
+<section class="unidad" id="threatmodel" data-titulo="Threat model, mecanismos y politicas">
+  <h2>1. Threat model, mecanismos y políticas</h2>
+  <p class="intro">La primera clase arma el marco de toda la materia: contra quien te defendes (threat model), como se materializa esa defensa (mecanismos y políticas) y como un atacante busca la grieta entre lo que se quiso proteger y lo que quedo protegido. Los ejemplos (el servidor compartido con sudo, el IDOR y el SQL injection, el BadUSB) no son anécdotas: son las formas típicas en que falla la confianza mal ubicada, y son justo el tipo de cosa que cae en el parcialito.</p>
+
+  <h3 id="threatmodel-por-que-un-threat-model">Por qué se empieza por el threat model</h3>
+  <p>Hacer seguro un sistema es caro: cuesta tiempo, energía y dinero, y te vuelve poco popular entre tus usuarios (más fricción). No se puede defender todo contra todos, así que primero hay que saber a quién y a qué te enfrentas. Eso permite enfocar el esfuerzo en amenazas razonables y aplicar defensas acordes, en vez de gastar en ataques improbables y dejar descubierto lo probable.</p>
+  <div class="def"><b>Threat model.</b> Descripción de contra quien te defendes, con que motivos y con que presupuesto (budget) puede atacarte, que assets queres proteger y cuales no, que está en alcance (scope) y que se asume para simplificar. Define el riesgo que estas dispuesto a aceptar.</div>
+
+  <h4 id="threatmodel-quien-y-por-que">Quién te ataca y con que motivo</h4>
+  <p>No es lo mismo un país (muchísimas personas especializadas y budget cuasi infinito) que un script kid o una organización criminal. Y el motivo depende de qué sos:</p>
+  <ul>
+    <li><b>App para tomar notas:</b> probablemente no te ataque nadie, salvo un oportunista o alguien que solo te usa de trampolin hacia su verdadero objetivo.</li>
+    <li><b>Red social:</b> puede que tengas que cuidarte de la competencia.</li>
+    <li><b>Fintech:</b> es cuestión de tiempo que organizaciones criminales quieran robarte o estafarte, a vos o a tus usuarios.</li>
+    <li><b>Infraestructura crítica con hardware importado:</b> si fabricas computadoras para infra crítica de EEUU pero importas los chips de China, quizás quieras revisar esos chips (backdoor en el hardware).</li>
+  </ul>
+  <p class="nota">Los motivos típicos que se listan en clase: profit, razones políticas, competencia (playing dirty). El atacante puede ser un país, un script kid o una organización criminal.</p>
+
+  <h4 id="threatmodel-que-puede-salir-mal">Qué puede salir mal: un proceso iterativo</h4>
+  <p>Darle forma al threat model es iterativo: la pregunta guia es <b>que puede salir mal?</b> y se responde una y otra vez. Un bug en el software? Un backdoor en el hardware? Confias en las personas, pero en organizaciones grandes siempre hay alguna manzana podrida. Y aun sin malicia, la gente comete errores por ignorancia o estupidez (quien no hizo click en un link que prometía la fortuna de un rey nigeriano).</p>
+  <div class="idea"><b>Los vectores de ataque salen de tres lados:</b> personas (people), software y hardware. El threat model recorre los tres preguntándose "que puede salir mal" en cada uno.</div>
+  <p>Las piezas que definen el modelo: <b>scope</b> (que está dentro y que fuera), <b>assets</b> (que proteger y que no), <b>risk</b> como combinación de impacto y probabilidad (no toda vulnerabilidad es igual de dañina; ataques posibles pero improbables pueden quedar sin protección), y las <b>assumptions</b> que se hacen para simplificar.</p>
+  <div class="riesgo"><b>Las assumptions son superficie de ataque.</b> Es justo en los "esto es poco probable" y en las cosas que se asumieron para simplificar donde el atacante va a aprovecharse. Al final todo se reduce a: en quien y en que podes confiar (el hardware, las personas, tu proveedor de internet). Haces tu apuesta; el hacker hace la suya.</div>
+
+  <h3 id="threatmodel-mecanismos-y-politicas">Mecanismos y políticas</h3>
+  <p>El threat model es solo papel. La protección se materializa vía los mecanismos y las políticas, y entre ellos hay sinergia: la política define que mecanismos sirven y cuales no, y el mecanismo le ofrece a la política más flexibilidad o más simpleza.</p>
+  <div class="def"><b>Mecanismo.</b> La herramienta que hace cumplir la protección: la cerradura y su juego de llaves. El "como".</div>
+  <div class="def"><b>Política.</b> La regla que decide quien puede que: que los miembros de una empresa entren a su oficina y otros no. El "quien puede que". Poner la llave en la mano de cada miembro es la puesta en acción de la política.</div>
+  <div class="warn"><b>La cerradura no resuelve todo el threat model.</b> "Alguien ajeno no entra sin llave" deja sin resolver que pasa si alguien entra a martillazos. El mecanismo enforza una política; lo que la política no contempla, queda descubierto.</div>
+
+  <h4 id="threatmodel-mas-que-enforzar">No alcanza con enforzar: hay que ser proactivo</h4>
+  <p>Los mecanismos y políticas enforzan las protecciones contra las amenazas modeladas, pero hay que ir más alla. En algún momento van a entrar igual, así que el ciclo completo es:</p>
+  <ul>
+    <li><b>Prevenir:</b> monitorear para detectar ataques lo antes posible y bloquearlos.</li>
+    <li><b>Mitigar:</b> si entran, como reducimos el daño.</li>
+    <li><b>Responder / auditar:</b> tener registros para hacer una auditoria después.</li>
+    <li><b>Plan B:</b> si todo falla, que hacemos.</li>
+  </ul>
+  <div class="riesgo"><b>La contracara es la fricción, y la fricción tiene un costo de seguridad propio.</b> Además del tiempo y el dinero, la fricción incomoda al usuario, y tarde o temprano el usuario es el primer hacker: pone algo muy restrictivo y lo van a bypassear, muchas veces dejándose más expuestos aún. La seguridad es un tradeoff.</div>
+  <p class="nota">Niveles de confianza (trust levels) que se nombran como formas de armar una política: discrecional, mandatorio (mandatory), basado en roles (role based) y basado en atributos (attribute based).</p>
+
+  <h3 id="threatmodel-ejemplo-servidor-sudo">Ejemplo: el servidor compartido y sudo</h3>
+  <p>Un servidor compartido y tres usuarios (Alice, Bob, Carol) que necesitan operar con el. Qué permisos le das a cada uno?</p>
+  <p><b>Root para todos.</b> Es frictionless: si Alice quiere instalar un programa puede, si Bob necesita ver un log también. Pero es totalmente inseguro:</p>
+  <ul>
+    <li>Si pawnean a Alice, el hacker tiene el servidor como root.</li>
+    <li>Si Bob es un empleado desleal (rogue), tiene root.</li>
+    <li>Y sin malicia, por pura estupidez: <code>rm -Rf /</code> y shit happens.</li>
+  </ul>
+  <p>El threat model "confio en todos" es un mal negocio. Es más seguro <b>no confiar en nadie y dar solo el mínimo de permisos</b>. El usuario ejecuta la acción privilegiada con <code>sudo</code> y se decide continuar o fallar según la config de <code>sudoers</code> que definió el admin. Ahora Carol no puede borrar el server por accidente, pero Alice tampoco puede instalar una tool sin pedirle permiso al admin: ahí empieza la fricción.</p>
+  <div class="idea"><b>Las tres capas del ejemplo, bien separadas:</b> el threat model es "no confio en los usuarios"; la política es "asignar los mínimos permisos" (el <code>sudoers</code>); el mecanismo es <code>sudo</code> junto con los permisos de Linux.</div>
+  <div class="ej"><b>Una regla de sudoers concreta:</b> <code>carol ALL=(ALL): /bin/less /var/log/messages</code> deja a Carol correr <code>sudo less /var/log/messages</code> pero no <code>sudo rm -Rf /</code>. La política dice exactamente qué comando privilegiado se permite.</div>
+
+  <h4 id="threatmodel-donde-ataca-el-hacker">Dónde busca la grieta el hacker</h4>
+  <p>Como atacantes buscamos y abusamos de los puntos débiles. Sobre el mismo ejemplo de sudo, hay tres clases de falla:</p>
+  <table>
+    <thead><tr><th>Pregunta del hacker</th><th>Falla en el ejemplo de sudo</th></tr></thead>
+    <tbody>
+      <tr><td>Que no cubre el threat model ni la política?</td><td>Pawnear al admin: no estaba en el modelo.</td></tr>
+      <tr><td>Hay mismatch entre lo que se queria y lo que la política implementa?</td><td>Shell escape: <code>less</code> permite lanzar un shell, así que la política quedo mal (bad policy) y da más de lo que se creia.</td></tr>
+      <tr><td>Podemos enganar o romper el mecanismo?</td><td>Un bug en <code>sudo</code>: falla del mecanismo mismo.</td></tr>
+    </tbody>
+  </table>
+  <div class="idea"><b>La misma idea con la cerradura:</b> "para que personas no autorizadas no entren" no es tan seguro. Se puede clonar la llave, forzar la cerradura con lockpicking, o enganar a alguien con llave para que nos deje entrar. Think like an attacker.</div>
+
+  <h3 id="threatmodel-idor-y-sqli">Ejemplo: app, web server y base de datos</h3>
+  <p>Una app que se loguea contra un web server, que a su vez verifica las credenciales contra una base de datos. Si todo sale bien, el server le devuelve a Alice su user id (23). Con la app logueada, Alice pide los datos de su usuario. Qué puede salir mal?</p>
+
+  <figure class="diag">
+    <svg viewBox="0 0 620 150" role="img" aria-label="Cadena de tres componentes App, Web Server y Database, con boundaries entre ellos donde se transfieren datos y cambian los roles">
+      <rect x="20" y="45" width="150" height="60" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="95" y="80" text-anchor="middle" fill="currentColor" font-size="15">App</text>
+      <rect x="235" y="45" width="150" height="60" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="310" y="80" text-anchor="middle" fill="currentColor" font-size="15">Web Server</text>
+      <rect x="450" y="45" width="150" height="60" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="525" y="80" text-anchor="middle" fill="currentColor" font-size="15">Database</text>
+      <line x1="170" y1="75" x2="233" y2="75" stroke="var(--acc)" stroke-width="2"/>
+      <line x1="385" y1="75" x2="448" y2="75" stroke="var(--acc)" stroke-width="2"/>
+      <text x="201" y="35" text-anchor="middle" fill="var(--acc2)" font-size="11">boundary</text>
+      <text x="416" y="35" text-anchor="middle" fill="var(--acc2)" font-size="11">boundary</text>
+      <text x="201" y="128" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">interfaz</text>
+      <text x="416" y="128" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">interfaz</text>
+    </svg>
+    <figcaption>Cada punto de contacto entre componentes es una interfaz o boundary: donde se transfieren datos y cambian los roles, y donde un control mal puesto deja pasar el ataque.</figcaption>
+  </figure>
+
+  <h4 id="threatmodel-idor">IDOR: confiar en el id que manda la app</h4>
+  <p>Alice pide los datos con el user id 42 en vez del suyo (23). Como el web server confía en la app, no cuestiona el cambio de id: el desarrollador penso "la app la hacemos nosotros, siempre nos va a dar el id correcto", sin imaginar que Alice podría estar hackeando la app o los mensajes al server. Le devuelve los datos del 42.</p>
+  <div class="def"><b>IDOR (Insecure Direct Object Reference).</b> El sistema usa un identificador que viene del cliente (un user id, un número de factura) para acceder a un objeto sin chequear que ese cliente tenga permiso sobre ese objeto. Cambiar el id da acceso a datos ajenos.</div>
+
+  <h4 id="threatmodel-sqli">SQL injection: confiar en que el input es un entero</h4>
+  <p>Ahora Alice manda <code>0 or 1=1</code> como id. La query arma algo así:</p>
+  <pre><code>select * from users where id = 0 or 1=1</code></pre>
+  <p>Devuelve los usuarios con id 0 o donde <code>1=1</code> sea cierto, es decir, todos. El web server confiaba en que la app manda un entero (no lo hace), y el código que arma la query confiaba en que los argumentos son enteros (tampoco).</p>
+  <div class="def"><b>SQL injection (SQLi).</b> El atacante mete sintaxis de SQL dentro de un dato que el programa concatena a la query, cambiando lo que la query hace (leer de más, saltear un login con <code>' or 1=1</code>, borrar, ejecutar).</div>
+  <p><b>El fix no es una sola cosa, es en profundidad:</b></p>
+  <ul>
+    <li>Forzar que el user id sea siempre un entero y el del usuario logueado (para Alice, el 23). Esto frena el ataque, pero no alcanza.</li>
+    <li>Usar <b>template parameters</b> (consultas parametrizadas) al armar la query, para evitar otro SQLi sin importar los checks de enteros.</li>
+    <li>Aunque el SQLi ya no sea posible, <b>separar los datos más sensibles en una base aparte</b>.</li>
+  </ul>
+
+  <h3 id="threatmodel-interfaces-y-profundidad">Interfaces, seguridad en profundidad y attack path</h3>
+  <p>Los puntos de contacto donde se intercambian datos entre componentes son las <b>interfaces o boundaries</b>. Un control mal implementado o inexistente, o una confianza innecesaria, y un componente puede bypassear, robar o tomar ownership de otro.</p>
+  <div class="def"><b>Seguridad en profundidad (defense in depth).</b> Poner controles no solo en la interfaz más expuesta (app y web server) sino en todas, para que si una falla haya otra detras. No confiar ni en tu propio código: trabajar a la defensiva con controles a lo largo de todo el sistema.</div>
+  <div class="idea"><b>Attack path.</b> En general un fallo de seguridad no es puntual sino la combinación de varios ataques encadenados que van rompiendo los chequeos interfaz por interfaz (abuse of trust), un camino hacia la cookie, el flag o las tarjetas de credito. El defensor mejora el todo, no solo tapa un agujero.</div>
+
+  <h3 id="threatmodel-usb-badusb">Confianza ciega del OS en los dispositivos USB</h3>
+  <p>Las apps del usuario hablan con el sistema operativo (vía syscalls) y el OS habla con el hardware. Hay dos interfaces claras: apps con OS, y OS con hardware. Cuando un device USB se conecta, el primer mensaje es el device diciendole al OS que es:</p>
+  <ul>
+    <li>Un teclado dice "soy un teclado" y el OS acepta e interpreta los key strokes que lleguen de el.</li>
+    <li>Un pendrive dice "soy almacenamiento" y el OS monta un file system para leer y escribir.</li>
+  </ul>
+  <div class="riesgo"><b>El OS confía ciegamente en lo que el device dice ser.</b> Si el pendrive dice "soy un teclado", el OS no tiene como detectar la mentira (así funciona USB, no tiene mucho como protegerse). El firmware del pendrive puede hacerse pasar por teclado y "tipear" solo un shellcode para tomar la máquina: eso es un <b>BadUSB</b>. Si en vez de un pendrive es el cable USB con el que cargas el celular, es un <b>OMG cable</b>.</div>
+  <p class="ref">Este mismo patrón (confiar ciegamente en el que esta del otro lado de una interfaz) reaparece en toda la materia. La ofensiva de la <a href="#offense">clase 2</a> es, justamente, el oficio de encontrar y encadenar estos abusos de confianza.</p>
+
+  <div class="examen"><b>Preguntas típicas de este tema.</b> Diferenciar mecanismo de política con un ejemplo (cerradura/llave, sudo/sudoers). Dado un caso, identificar el threat model, la política y el mecanismo, y decir cuál de las tres falló (pawn del admin fuera del modelo, shell escape como bad policy, bug en sudo como falla de mecanismo). Explicar IDOR y SQLi sobre el ejemplo app/web/DB y proponer el fix en profundidad. Por que las assumptions son superficie de ataque. Que es un BadUSB y por que el OS no puede detectarlo.</div>
+</section>

@@ -1,0 +1,6 @@
+# Material de terceros: no se republica (PDFs de slides/handouts del docente).
+*.pdf
+
+# Python
+__pycache__/
+*.pyc

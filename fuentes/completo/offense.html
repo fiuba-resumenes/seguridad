@@ -1,0 +1,127 @@
+<section class="unidad" id="offense" data-titulo="Ofensiva: red team, pentester y researcher">
+  <h2>2. Ofensiva: red team, pentester y researcher</h2>
+  <p class="intro">Con el threat model ya pensado y los mecanismos y políticas puestos en cada interfaz, aparece la pregunta incomoda: están bien configurados, me olvide de algo, un ataque real lo bloquearia, lo notaria, sabria reaccionar. La única forma de saberlo es probarlo de verdad: un penetration test. Esta clase presenta a los tres jugadores de la ofensiva y, sobre todo, la metodología del engagement (recon, find vulns, exploit) con un caso completo de punta a punta. Es la parte práctica que se usa en cada challenge del laboratorio.</p>
+
+  <h3 id="offense-por-que-probar">Todas las defensas son perfectas hasta que se prueban</h3>
+  <p>Un threat model bien pensado y mecanismos y políticas en su lugar no garantizan nada por si solos. Hay que preguntarse: están correctamente configurados? Me olvide de algo? Ante un ataque, lo bloquearia? Lo notaria? Sabria como reaccionar?</p>
+  <div class="idea"><b>All the defences are perfect until they are tested for real.</b> De ahí el penetration test (pentest): simular el ataque para descubrir donde las defensas no aguantan.</div>
+
+  <h3 id="offense-tres-roles">Los tres roles de la ofensiva</h3>
+  <p>En el plano ofensivo hay tres jugadores, del más cercano al más lejano del campo de batalla. No es una separación tajante, hay mucha sinergia: un red team tiene pentesters en su equipo, y todos aprenden de las técnicas nuevas de los researchers.</p>
+  <table>
+    <thead><tr><th>Rol</th><th>Alcance</th><th>Objetivo</th></tr></thead>
+    <tbody>
+      <tr><td><b>Red team</b></td><td>Multidisciplinario: físico, personas (social) y software (front y backend).</td><td>Simular ataques reales y probar las defensas de la organización en todos los planos.</td></tr>
+      <tr><td><b>Pentester</b></td><td>Especializado: web, android, hardware, intrusión, social eng. Cuanto más hábil, más áreas cubre.</td><td>Encontrar y probar vulnerabilidades, pero sin explotarlas (sin tomar ventaja de ellas).</td></tr>
+      <tr><td><b>Researcher</b></td><td>Altamente especializado en un área, lejos del campo: exploit writing, reversing, cripto, malware analysis (kernel de Windows o Android, hypervisor Xen, BIOS, hardware, sandbox).</td><td>Desarrollar vulnerabilidades y técnicas nuevas.</td></tr>
+    </tbody>
+  </table>
+  <div class="ej"><b>El espectro entre red team y pentester.</b> Un extremo: un grupo capaz de entrar a un edificio, vulnerar las tarjetas de acceso y pawnear los datacenters, e incluso investigar los gustos personales del admin de IT para mandarle un mail targeteado que le instale software y tomar toda la infra. El otro extremo: una sola persona que revisa el código de una app web. Entre ambos hay todo un abanico.</div>
+  <div class="idea"><b>Pentester vs researcher.</b> El pentester busca un SQLi en una app concreta; el researcher busca formas nuevas de hacer SQLi en general. La regla que resume al red team: una cadena es tan fuerte como su eslabon más débil (a chain is only as strong as its weakest link).</div>
+
+  <h4 id="offense-disclosure">Qué se hace al encontrar una vulnerabilidad</h4>
+  <p>Los red teams y pentesters la reportan en sus informes al cliente (cuando hay contrato) o la cobran como recompensa (bug bounty). Los resultados de los researchers se hacen publicos (academia) o los usan empresas privadas en sus productos de seguridad. En general no hay forma de forzar que toda vulnerabilidad se reporte: depende de la ética de la persona o la empresa.</p>
+  <div class="def"><b>Responsible disclosure.</b> Reportar chequeando primero con los aspectos legales, compartir los findings, coordinar un cronograma para el fix y la revalidación, con un plazo típico de 90 días para la divulgación completa (full disclosure). No debería ser necesario, pero a veces hay que "esconderse" (hide yourself) para que el reporte sea tomado en serio.</div>
+  <p class="nota">Donde trabaja cada uno: consultoria y auditorias (equipos in-house o externos), CTFs, bug bounties, la academia y el sector privado.</p>
+
+  <h3 id="offense-scope">Scope: lo que se acuerda antes de tocar nada</h3>
+  <p>Un cliente contrata el pentest. Antes de empezar se define el scope con un contrato escrito entre el cliente y el red team:</p>
+  <ul>
+    <li><b>En que enfocarse</b> y qué se quiere lograr (pawnear la DB, ver si se puede entrar fisicamente al datacenter).</li>
+    <li><b>Qué se permite y qué no:</b> se puede interactuar con los empleados, explotar servicios en producción. Aca entran los aspectos legales y los permisos explicitos.</li>
+    <li><b>Qué info inicial hay</b> (ver black box vs white box).</li>
+    <li><b>Timeframe y restricciones,</b> y a quién se llama si algo sale mal (si el objetivo es entrar a un edificio y te descubren y llaman a la policia, a quien llamas).</li>
+    <li><b>El marco legal.</b></li>
+  </ul>
+  <div class="def"><b>Black box vs white/grey box.</b> En black box el equipo arranca de cero: es el escenario más realista de un ataque. En white/grey box el cliente da info de la infra para que el equipo no pierda tiempo buscando y se enfoque en atacar. Idealmente se convence al cliente de ir por un modelo con más información.</div>
+
+  <h3 id="offense-engagement">El engagement: recon, find vulns, exploit</h3>
+  <p>Definido el scope se pasa al engagement, el core del pentest: recolección de información, busqueda de vulnerabilidades, planning y ataque. Al terminar se arma el reporte, que no solo dice que vulns se encontraron sino como arreglarlas y priorizarlas. A alto nivel son tres etapas, pero forman un ciclo: el exploit habilita más recon.</p>
+
+  <figure class="diag">
+    <svg viewBox="0 0 480 200" role="img" aria-label="Ciclo del engagement: Recon lleva a Find Vulns, que lleva a Exploit, y Exploit vuelve a habilitar mas Recon">
+      <rect x="30" y="80" width="110" height="46" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="85" y="108" text-anchor="middle" fill="currentColor" font-size="14">Recon</text>
+      <rect x="185" y="80" width="110" height="46" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="240" y="103" text-anchor="middle" fill="currentColor" font-size="13">Find</text>
+      <text x="240" y="118" text-anchor="middle" fill="currentColor" font-size="13">Vulns</text>
+      <rect x="340" y="80" width="110" height="46" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="395" y="108" text-anchor="middle" fill="currentColor" font-size="14">Exploit</text>
+      <line x1="140" y1="103" x2="183" y2="103" stroke="var(--linea)" stroke-width="2" marker-end="url(#ar)"/>
+      <line x1="295" y1="103" x2="338" y2="103" stroke="var(--linea)" stroke-width="2" marker-end="url(#ar)"/>
+      <path d="M 395 80 C 395 30, 85 30, 85 80" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+      <text x="240" y="25" text-anchor="middle" fill="var(--acc2)" font-size="12">habilita más recon</text>
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption>El exploit no es el fin sino el habilitador: cada acceso ganado abre más reconocimiento y más vulnerabilidades por encontrar.</figcaption>
+  </figure>
+
+  <h4 id="offense-recon">Recon / Information Gathering (IG)</h4>
+  <p>Ver que hay y como se conectan las piezas: hosts vivos, puertos abiertos, reglas de firewall, DNS, procesos, usuarios, servicios y versiones corriendo, permisos, programas, y nombres, emails y roles de personas. En resumen: tener visibilidad. En white box el cliente aporta parte de esta info; en black box se busca todo desde cero.</p>
+
+  <h4 id="offense-find-vulns">Find vulns</h4>
+  <p>De lo que aparecio en recon, buscar que puede ser vulnerable: máquinas accesibles por red que no deberían estarlo, puertos abiertos de más, servicios con versiones viejas vulnerables, roles con demasiados accesos. Se busca qué se puede leer, escribir o ejecutar que uno no debería.</p>
+  <div class="warn"><b>Buscar vulns relevantes, no ruido.</b> "Una máquina interna respondio un ping" es bullshit. "El SSH está abierto con credenciales por default" es una cookie: sirve para movernos dentro, ganar accesos y habilitar más recon.</div>
+
+  <h4 id="offense-exploit">Exploit</h4>
+  <p>Es el uso de una vuln a nuestra ventaja. No toda vuln es exploitable: puede existir pero no poder ejecutarse o no servir para nada útil (se reporta igual, pero no da más accesos). Cuando funciona se traduce en tener más privilegios (privilege escalation), moverse lateralmente (lateral movement) o poder ver más (más recon). El objetivo de explotar es habilitar más reconocimiento.</p>
+  <div class="riesgo"><b>No cruzar el scope ni lo legal.</b> El exploit toma ventaja real de la vuln (leer, escribir, ejecutar de verdad), pero siempre dentro de lo acordado: si el objetivo es exfiltrar la DB de producción con datos sensibles reales, hacerlo puede ser un delito. El objetivo real pasa a ser probarle al cliente que se puede exfiltrar, sin hacerlo.</div>
+
+  <h3 id="offense-caso">Caso completo: exfiltrar la base de producción</h3>
+  <p>El cliente pide, en black box:</p>
+  <ul>
+    <li><b>Objetivo:</b> exfiltrar la DB de producción (en realidad, probar que se puede sin hacerlo, porque exfiltrarla de verdad no es para los legales).</li>
+    <li><b>Scope:</b> escanear esta OK, hay dos IPs publicas accesibles (.47 y .48), usar credenciales esta OK pero no se dan, social engineering NO, usar exploits sobre producción NO. Sin más info (black box).</li>
+  </ul>
+
+  <ol>
+    <li><b>Recon con nmap sobre .47 y .48.</b> Se ven puertos (por ejemplo 443 en la .47, y 443 y 7172 en la .48), se infiere el OS y se identifican servicios y versiones.</li>
+    <li><b>Más recon, no atacar el servicio.</b> Hay un servidor HTTP, pero el cliente dijo "nada de atacar un servicio", así que ese camino se descarta. Queda intentar loguearse y ver que hay detras.</li>
+    <li><b>Probar el login.</b> Mails y passwords: nada. Enganar a un empleado: prohibido (social eng). Crear una cuenta: pide un registration code que no tenemos. Abusar del password recovery: se ve solido. En la .47 no hay suerte, en la .48 si.</li>
+    <li><b>Find vulns: probar SQLi.</b> Con entradas tipo <code>john' or 1=1</code>, <code>john" or 1=1</code>, <code>john' || pg_sleep(1) --</code> se descubre que hay un SQL detras, que el input es vulnerable (SQLi, y por como responde, un blind SQLi), y hasta que base es.</li>
+    <li><b>Exploit: aprender del entorno.</b> Inyectando queries se averigua qué es Postgres 12.1 corriendo como superuser. Con eso se arma el exploit: <code>COPY (SELECT '') TO PROGRAM '...shellcode...'</code> para conseguir un reverse shell en la máquina que hostea la DB (un programa que se conecta de vuelta hacia nuestros servidores).</li>
+    <li><b>Más recon, ahora desde adentro.</b> Con un agente en esa máquina: <code>ps aux</code>, <code>ip addr</code>, <code>ss -tuplan</code>, <code>groups</code>. Aparece un Apache usando el mismo puerto 7172 y la misma IP publica .48: la máquina de la DB y la del Apache son la misma. Tiene sentido, en testing se suele levantar toda la infra en una sola máquina.</li>
+    <li><b>Recon de la red interna.</b> Desde adentro, un <code>nmap</code> a la red interna revela cosas invisibles desde afuera, entre ellas un servidor DNS.</li>
+    <li><b>Mapear roles con el DNS.</b> Un DNS mapea hostnames a IPs y muchas veces IPs a hostnames. Con <code>nslookup</code> se aprende el rol de cada máquina: web.prod, db.prod, web.test, db.test. Un saludo al personal de IT por simplificar el trabajo.</li>
+    <li><b>Identificar producción y atacar.</b> El entorno de testing tenia credenciales por default; producción no. Identificada la db.prod, se ataca y profit (probando que se puede, sin exfiltrar de verdad).</li>
+  </ol>
+
+  <figure class="diag">
+    <svg viewBox="0 0 560 210" role="img" aria-label="Attack path del caso: desde el atacante externo a la IP publica .48, luego reverse shell a la maquina de la DB, recon interno, DNS y llegada a la db de produccion">
+      <rect x="20" y="90" width="120" height="46" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="80" y="112" text-anchor="middle" fill="currentColor" font-size="12">atacante</text>
+      <text x="80" y="126" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">externo</text>
+      <rect x="185" y="90" width="120" height="46" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="245" y="108" text-anchor="middle" fill="currentColor" font-size="12">pub .48</text>
+      <text x="245" y="124" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">SQLi, Postgres</text>
+      <rect x="350" y="30" width="120" height="46" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="410" y="52" text-anchor="middle" fill="currentColor" font-size="12">DNS interno</text>
+      <text x="410" y="66" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">roles</text>
+      <rect x="350" y="150" width="120" height="46" rx="8" fill="none" stroke="var(--acc4)" stroke-width="2"/>
+      <text x="410" y="172" text-anchor="middle" fill="currentColor" font-size="12">db.prod</text>
+      <text x="410" y="186" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">objetivo</text>
+      <line x1="140" y1="113" x2="183" y2="113" stroke="var(--linea)" stroke-width="2" marker-end="url(#ar2)"/>
+      <path d="M 305 100 C 340 80, 345 65, 350 55" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar2)"/>
+      <path d="M 410 76 C 410 110, 410 130, 410 148" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar2)"/>
+      <text x="323" y="150" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="10">reverse shell</text>
+      <defs>
+        <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption>El attack path encadena abusos: login vulnerable, SQLi, reverse shell, recon interno y el DNS que regala los roles hasta llegar a la base de producción.</figcaption>
+  </figure>
+
+  <div class="idea"><b>En un pentest siempre se trabaja con supuestos.</b> Si la .48 tiene usuarios de testing, es probable (no confirmado) que la .47 sea producción. Si la .48 tiene Postgres, la .47 también. A medida que se avanza en el engagement, los supuestos se van ajustando.</div>
+
+  <h4 id="offense-reporte">El reporte y las recomendaciones</h4>
+  <p>El reporte al cliente no solo incluye el attack path (como se accedio y se llego a la DB) sino también las otras vulns que se vieron en el camino y las medidas a aplicar: arreglar el SQLi, no exponer el entorno de testing, poner un firewall, aislar producción de testing. No es bloquear una parte, es mejorar el todo: seguridad en profundidad.</p>
+  <p class="ref">La metodología de esta clase (recon, find vulns, exploit, trabajar con supuestos) es la que se aplica en cada challenge del laboratorio. Los conceptos de confianza mal ubicada que se explotan aca vienen del <a href="#threatmodel">threat model de la clase 1</a>.</p>
+
+  <div class="examen"><b>Preguntas típicas de este tema.</b> Diferenciar red team, pentester y researcher (alcance y objetivo de cada uno). Que es el scope y que se acuerda antes de un engagement; black box vs white box. Las tres etapas del engagement y por que forman un ciclo (el exploit habilita más recon). Distinguir una vuln relevante de ruido (ping interno vs SSH con creds default). Por que no toda vuln es exploitable. Reconstruir el caso completo: como se pasa de dos IPs publicas a la DB de producción encadenando SQLi, reverse shell, recon interno y DNS. Que va en el reporte.</div>
+</section>
