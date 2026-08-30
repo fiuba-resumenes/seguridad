@@ -1166,7 +1166,8 @@
     </nav>
     <div class="nav-title">Laboratorio</div>
     <nav class="toc" aria-label="Laboratorio">
-      <a href="#escalada"><span>Lab</span>Escalada de privilegios: permisos, sudo y setuid</a>
+      <a href="#permisos"><span>A</span>Permisos de Unix: identidad, claves y secretos</a>
+      <a href="#escalada"><span>B</span>Escalada de privilegios: sudo y setuid</a>
     </nav>
 
     <div class="side-actions">
@@ -1511,12 +1512,76 @@
 
     </section>
 
-    <section class="chapter" id="escalada" data-title="escalada privilegios permisos sudo setuid base identidad proceso leer que permite wildcard abuse path traversal shell escape gtfobins bit hijacking utilidades estandar con secuestro del agente ssh como defiende cada una">
+    <section class="chapter" id="permisos" data-title="permisos unix identidad claves secretos modelo leer stat las ssh higiene privada publica authorized keys linea comandos movimiento lateral secuestro del agente">
       <div class="chapter-head">
-        <div class="chapter-number">Lab</div>
-        <div><h2>Escalada de privilegios: permisos, sudo y setuid</h2></div>
+        <div class="chapter-number">A</div>
+        <div><h2>Permisos de Unix: identidad, claves y secretos</h2></div>
       </div>
-  <p class="intro">Las categorías de permisos y privilegios del laboratorio (A y B) son variaciones de una misma idea: en un sistema Unix tu identidad decide qué podés leer, escribir y ejecutar, y casi toda escalada consiste en hacer que un programa actúe con una identidad más poderosa que la tuya. Este capítulo junta las técnicas que aparecen una y otra vez (abuso de sudoers, shell escape, el bit setuid, PATH hijacking, secuestro del agente SSH) sin resolver ningún desafío puntual: son justo el tipo de mecanismo que cae en el quiz, con su pregunta gemela de cómo se defiende.</p>
+  <p class="intro">La primera categoría del laboratorio (A, permisos) recorre las formas típicas en que la protección de un sistema Unix se cae, no por una vulnerabilidad exótica, sino por higiene: una clave privada con permisos de más, una copia de esa clave dejada suelta, un password pasado por la línea de comandos, un permiso de sudo mal acotado, un agente SSH desprotegido. Todas son variaciones de la confianza mal ubicada de la que habla el <a href="#threatmodel">threat model</a>, y todas tienen su pregunta gemela de cómo se defienden. Este capítulo junta el modelo de permisos, la higiene de claves y secretos, y el secuestro del agente SSH.</p>
+
+  <h3 id="permisos-modelo">El modelo de permisos de Unix</h3>
+  <p>Cada archivo tiene un dueño, un grupo, y tres ternas de permisos (dueño, grupo, otros), cada una con tres bits: read, write, execute. Se leen en la primera columna de <code>ls -lah</code> (10 caracteres: tipo + 3 ternas) o, ya resueltos en octal, con <code>stat</code>.</p>
+  <div class="callout"><b>Notación octal.</b> Cada terna es un dígito que suma <code>r=4 w=2 x=1</code>: <code>rw-</code> es 6, <code>r-x</code> es 5, <code>rwx</code> es 7. Un cuarto dígito adelante (opcional) son los bits especiales: setuid=4000, setgid=2000, sticky=1000. Por ejemplo <code>0600</code> es <code>rw-------</code> (solo el dueño lee y escribe), <code>0700</code> es <code>rwx------</code>.</div>
+  <p>En archivos, el bit de ejecución permite correrlos; en directorios significa "poder atravesarlo" (entrar y acceder a lo de adentro por nombre). Los bits especiales cambian el comportamiento:</p>
+  <ul class="study-list">
+    <li><b>setuid</b> (la <code>s</code> en la ejecución del dueño): un ejecutable con este bit corre con la identidad de su dueño, no de quien lo lanza. Es la base de toda la categoría B (ver <a href="#escalada">escalada de privilegios</a>).</li>
+    <li><b>setgid</b> en un directorio (la <code>s</code> en la ejecución del grupo, se ve <code>drwxr-sr-x</code>): los archivos creados adentro heredan el grupo del directorio, no el del creador.</li>
+    <li><b>sticky</b> (la <code>t</code>, típica de <code>/tmp</code>): en un directorio compartido, cada quien solo puede borrar sus propios archivos.</li>
+  </ul>
+  <div class="callout warning"><b>El link count de un directorio no es un enumerador confiable.</b> En teoría es 2 más un enlace por cada subdirectorio, pero en filesystems tipo overlay o tmpfs (los de una VM de laboratorio) esa regla no se cumple. No sirve para inferir cuántos usuarios o subcarpetas hay: para eso, listar de verdad con <code>ls</code>.</div>
+
+  <h4 id="permisos-ls-stat">Leer permisos: ls y stat</h4>
+  <p>Son complementarios. <code>ls -lah</code> da el panorama de muchas entradas de un tiro; <code>stat</code> describe una ruta puntual en detalle, con los permisos ya en octal y las tres fechas (atime de acceso, mtime de modificación de contenido, ctime de cambio de metadata como permisos o dueño). El flujo natural es ancho primero (<code>ls -lah</code>) y angosto después (<code>stat</code> sobre lo que ya identificaste), el mismo patrón que aplica el <a href="#offense">recon de un pentest</a>.</p>
+  <div class="callout example"><b>Recon en el filesystem sin leer todo.</b> La raíz de Linux sigue un estándar (FHS): buena parte es plomería del sistema, idéntica en cualquier instalación (<code>/proc /sys /dev /bin /lib /usr</code>), y se puede descartar sin mirar. Lo específico de la instalación es <code>/etc</code>, <code>/var</code>, <code>/tmp</code> y los datos por usuario (<code>/home</code>). En vez de leer <code>ls /</code> de arriba a abajo, preguntarse a qué categoría pertenece lo que se busca y saltar ahí. El estándar se consulta con <code>man hier</code> desde cualquier máquina.</div>
+
+  <h3 id="permisos-claves-ssh">Permisos de las claves SSH</h3>
+  <p>El cliente SSH es estricto con los permisos de tus claves privadas: si el archivo es legible por el grupo o por otros, no lo usa. La consecuencia es traicionera porque no falla con un error claro.</p>
+  <div class="callout danger"><b>SSH descarta en silencio una clave privada con permisos laxos.</b> Con <code>StrictModes</code> (activo por defecto), si <code>id_rsa</code> u otra clave está en <code>0644</code> (o cualquier cosa que no sea privada del dueño), el cliente la ignora y cae a otro método de autenticación (password), sin decir "permisos inválidos" de forma obvia. El síntoma es un login que falla sin razón aparente. La cura es <code>chmod 0600 clave</code> (el 6 es <code>rw-</code> para el dueño, nada para el resto).</div>
+  <p class="nota">La lógica es la de <a href="#threatmodel">defensa en profundidad</a>: el propio cliente fuerza la buena higiene en vez de confiar en que el usuario protegió el archivo.</p>
+
+  <h3 id="permisos-higiene-claves">Higiene de claves: privada, pública y authorized_keys</h3>
+  <p>Un error común es proteger bien el directorio <code>.ssh</code> (en <code>0700</code>, nadie más entra) pero dejar una copia de la clave privada suelta en otro lado, con permisos más laxos. La protección de Unix es por archivo y por ubicación, no "este tipo de archivo está protegido dondequiera que esté": una sola copia mal puesta tira abajo todo el resto.</p>
+  <p>Para no confundirse, conviene distinguir los tres archivos de SSH por su contenido (el nombre es solo convención, no garantía):</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Archivo</th><th>Contenido</th><th>Forma</th></tr></thead>
+    <tbody>
+      <tr><td>clave privada (<code>id_rsa</code>, <code>alice_ecdsa</code>)</td><td>el secreto, nunca se comparte</td><td>multilínea, entre <code>-----BEGIN ... KEY-----</code> y <code>-----END ... KEY-----</code></td></tr>
+      <tr><td>clave pública (<code>id_rsa.pub</code>)</td><td>se puede compartir</td><td>una sola línea: tipo + blob base64 + comentario</td></tr>
+      <tr><td><code>authorized_keys</code></td><td>lista de claves públicas autorizadas a loguearse como ese usuario</td><td>una línea por clave, mismo formato que la pública suelta</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warning"><b>Una clave pública o un <code>authorized_keys</code> no te sirve para entrar.</b> Contienen material público: identifican quién PUEDE loguearse, no permiten hacerlo. Para autenticarte necesitás la clave PRIVADA. Confundirlas es una pérdida de tiempo clásica en un CTF.</div>
+  <div class="callout blue"><b>Trust On First Use (TOFU).</b> La primera vez que te conectás a un host nuevo, SSH te muestra el fingerprint de su <em>host key</em> y pide confirmar. Esa host key identifica al SERVIDOR y es distinta de la clave con la que vos (el cliente) te autenticás: son dos claves con roles opuestos. Aceptar a ciegas rompe la protección contra man in the middle (se relaciona con los certificados de la <a href="#offense">cadena de confianza</a>).</div>
+
+  <h3 id="permisos-secretos-argv">Secretos en la línea de comandos</h3>
+  <p>Pasar un secreto como argumento de un programa (<code>--password=...</code>) lo expone a todo el sistema, no solo al dueño del proceso. A diferencia de un archivo, cuyos permisos se pueden restringir por usuario, el argv de un proceso es legible por cualquier usuario mientras el proceso viva.</p>
+  <pre><code>ps aux                          # lista los procesos y su linea de comando
+cat /proc/&lt;pid&gt;/cmdline | tr '\0' ' '   # el argv exacto de un proceso, sin truncar</code></pre>
+  <div class="callout warning"><b><code>ps aux</code> trunca la columna COMMAND al ancho de la terminal.</b> Lo que parece "el comando completo" puede estar cortado. Para el dato exacto conviene leer <code>/proc/&lt;pid&gt;/cmdline</code> directo del kernel (los campos vienen separados por bytes nulos, se traducen con <code>tr '\0' ' '</code>). El PID sale de la primera columna del <code>ps aux</code>, no se adivina.</div>
+  <div class="callout danger"><b>Por eso las claves pública/privada son categóricamente más seguras que un password en claro.</b> Un password hay que escribirlo en algún lado (un archivo, una variable, o la línea de comandos), y la línea de comandos es visible para todo el sistema. Si hay que manejar un secreto, va en una variable de entorno protegida, un prompt interactivo, o un archivo con permisos restrictivos, nunca en el argv.</div>
+
+  <h3 id="permisos-movimiento-lateral">Movimiento lateral</h3>
+  <p>Un secreto robado en un lado rara vez es el fin: habilita alcanzar otras cuentas. Si un usuario tiene permiso de <code>sudo</code> para convertirse en otro (no hace falta que sea root), comprometer al primero compromete al segundo. Robar el password de charlie y, con una regla de sudoers que lo deja volverse darleen, pasar a la cuenta de darleen, es <b>movimiento lateral</b>: usar lo ya comprometido para llegar más lejos.</p>
+  <p class="nota">Es un concepto de metodología ofensiva (<a href="#offense">clase de ofensiva</a>): el exploit no es el objetivo sino el habilitador del siguiente paso. El detalle del abuso de <code>sudoers</code> se trata a fondo en <a href="#escalada">escalada de privilegios</a>.</p>
+
+  <h3 id="permisos-ssh-agent">Secuestro del agente SSH</h3>
+  <p>El <b>ssh-agent</b> mantiene en memoria las claves privadas ya desbloqueadas. No expone las claves: expone un <b>socket Unix</b>, y cualquier <code>ssh</code> que le hable por ese socket le pide firmar los desafíos de autenticación. Dónde está el socket lo dice la variable <code>SSH_AUTH_SOCK</code>.</p>
+  <div class="callout"><b>Agent forwarding (<code>ssh -A</code>).</b> Al saltar de una máquina a otra con forwarding, el destino recibe un socket local que tunelea los pedidos de firma de vuelta hacia el agente real en el origen. Permite seguir saltando a más hosts sin copiar la clave privada a ninguno: las firmas viajan de vuelta al agente.</div>
+  <p>El problema: ese socket es un archivo con permisos <code>0600</code>. El agente no protege sus claves por proceso ni por sesión, las protege con los permisos del socket. Quien pueda actuar como el dueño dentro del host, puede hablarle al socket, y el agente firma sin distinguir quién pregunta.</p>
+  <div class="callout example"><b>El ataque, paso a paso.</b> Actuando como el dueño del agente, se busca el socket en el filesystem (<code>find /tmp -type s</code>), se apunta el propio cliente a él (<code>export SSH_AUTH_SOCK=/tmp/ssh-.../agent.NN</code>), se confirma que tiene claves cargadas (<code>ssh-add -l</code> lista fingerprints, <code>-L</code> las públicas) y se usa para autenticar como el objetivo, sin tener ninguna clave privada.</div>
+  <div class="callout warning"><b>Un camino que no funciona: leer <code>/proc/&lt;pid&gt;/environ</code> del agente.</b> El valor de <code>SSH_AUTH_SOCK</code> está en el entorno del proceso, pero el kernel protege ese environ con reglas de tipo ptrace (el flag "dumpable" del proceso), más estrictas que el simple mismo UID: da Permission denied aun siendo el mismo usuario. El camino correcto es no pelear el environ ajeno sino buscar el socket como archivo (tiene su propio modelo de permisos, común y corriente). Además, una shell abierta con otra identidad (<code>su</code>) arranca con entorno limpio y NO hereda el <code>SSH_AUTH_SOCK</code> de la sesión real: hay que setear la variable a mano.</div>
+  <div class="callout danger"><b>Defensa (pregunta típica de quiz).</b> Cargar las claves en el agente con <code>ssh-add -c</code> (confirm): pide confirmación interactiva cada vez que la clave se usa para firmar, así el secuestro deja de ser silencioso y el dueño lo puede rechazar en el momento. Complementar con <code>ssh-add -t &lt;tiempo&gt;</code> (expiración de la clave en el agente). Y evitar el forwarding hacia hosts en los que no se confía.</div>
+
+  <div class="callout exam"><b>Preguntas típicas de esta sección (A, permisos).</b> Leer una línea de <code>ls -lah</code> o un <code>stat</code>: identificar dueño, grupo, permisos en octal, y los bits especiales (setuid, setgid en directorios, sticky). Por qué SSH descarta en silencio una clave privada con permisos laxos (StrictModes) y cae a password. Diferenciar clave privada, clave pública y <code>authorized_keys</code> por su forma, y por qué solo la privada sirve para entrar. Por qué proteger <code>.ssh</code> no alcanza si se deja una copia de la clave suelta (la protección es por archivo). Qué es TOFU y por qué la host key no es la clave del cliente. Por qué el argv de un proceso no es privado (<code>ps</code>, <code>/proc/&lt;pid&gt;/cmdline</code>) y por qué un password en la línea de comandos es inseguro. Qué es el movimiento lateral y cómo un sudoers acotado lo habilita. Cómo funciona el ssh-agent, el agent forwarding y su secuestro (<code>SSH_AUTH_SOCK</code>, el socket como archivo), y cómo lo previene <code>ssh-add -c</code>.</div>
+
+    </section>
+
+    <section class="chapter" id="escalada" data-title="escalada privilegios sudo setuid base identidad permisos proceso leer que permite wildcard abuse path traversal shell escape gtfobins bit hijacking utilidades estandar con como defiende cada una">
+      <div class="chapter-head">
+        <div class="chapter-number">B</div>
+        <div><h2>Escalada de privilegios: sudo y setuid</h2></div>
+      </div>
+  <p class="intro">La segunda categoría del laboratorio (B, privilegios) es un paso más allá de los <a href="#permisos">permisos</a>: acá el objetivo es hacer que un programa actúe con una identidad más poderosa que la tuya. Todas las técnicas (abuso de sudoers, shell escape, el bit setuid, PATH hijacking) comparten esa forma y su pregunta gemela de cómo se defienden. Son justo el tipo de mecanismo que cae en el quiz.</p>
 
   <h3 id="escalada-identidad-y-permisos">La base: identidad y permisos de un proceso</h3>
   <p>Todo proceso corre con una identidad (un usuario). El kernel guarda en realidad varios UIDs: el <b>real UID</b> (ruid, quién lanzó el proceso) y el <b>effective UID</b> (euid, con quién se chequean los permisos al abrir un archivo o matar un proceso). Normalmente coinciden, pero los mecanismos de escalada viven justo en la brecha entre los dos.</p>
@@ -1526,7 +1591,7 @@
     <li>Ser dueño de un archivo no te deja leerlo si el bit de lectura del owner está en cero: el chequeo es siempre contra los bits, no contra "soy el dueño". Solo root (con CAP_DAC_OVERRIDE) los saltea.</li>
     <li>Pero el dueño sí puede correr <code>chmod</code> sobre su archivo aunque no tenga permiso de leerlo: <code>chmod</code> se autoriza por ownership, no por los permisos actuales. Es una primitiva de escritura sobre los metadatos que habilita la de lectura.</li>
   </ul>
-  <div class="callout blue"><b>chmod, dos notaciones.</b> Simbólica: <code>chmod u+rw,o-r archivo</code> donde el destinatario es <code>u</code>/<code>g</code>/<code>o</code>/<code>a</code>, el operador <code>+</code>/<code>-</code>/<code>=</code> y el permiso <code>r</code>/<code>w</code>/<code>x</code>/<code>s</code>/<code>t</code> (un <code>chmod +r</code> sin destinatario equivale a <code>a+r</code>). Octal: cada dígito suma <code>r=4 w=2 x=1</code>, y un cuarto dígito adelante son los bits especiales (setuid=4000, setgid=2000, sticky=1000).</div>
+  <p class="nota">La notación de <code>chmod</code> y el detalle del modelo de permisos octal están en el <a href="#permisos-modelo">capítulo de permisos</a>. Acá alcanza con recordar que <code>chmod +r archivo</code> agrega lectura para todos, y que un <code>chmod</code> lo puede hacer el dueño aunque no pueda leer el archivo.</p>
 
   <h3 id="escalada-sudo-sudoers">Leer lo que sudo te permite</h3>
   <p>El <a href="#threatmodel">ejemplo de sudo del threat model</a> mostró la idea: en vez de dar root, el admin define en <code>sudoers</code> exactamente qué comando privilegiado puede correr cada usuario. Como atacante, el primer paso es siempre leer esa política:</p>
@@ -1571,12 +1636,6 @@ which stat                          # debe devolver /tmp/stat
   </table></div>
   <p>Por eso <code>find</code> suele ser el camino fácil (ejecuta el comando él mismo y conserva el euid del proceso) mientras que <code>tar</code> exige rodeos: si termina lanzando un <code>/bin/sh</code>, se cae en el mismo reseteo de privilegios del shebang.</p>
 
-  <h3 id="escalada-ssh-agent">Secuestro del agente SSH</h3>
-  <p>El <b>ssh-agent</b> es un proceso que guarda en memoria claves privadas ya desbloqueadas. No expone las claves: expone un <b>socket Unix</b>, y cualquier <code>ssh</code> que apunte a ese socket le pide firmar los desafíos de autenticación. La ubicación del socket la dice la variable de entorno <code>SSH_AUTH_SOCK</code>.</p>
-  <p>Con <b>agent forwarding</b> (<code>ssh -A</code>), cuando alguien salta de su máquina a un host intermedio, su agente queda accesible desde ese host a través de un socket que ssh crea ahí: así puede seguir saltando a otras máquinas sin copiar la clave privada. El problema: ese socket es un archivo con permisos <code>0600</code>. Si lográs actuar como ese usuario dentro del host, el socket es tuyo.</p>
-  <div class="callout example"><b>La idea concreta.</b> Actuando como el dueño, se busca el socket en el filesystem (<code>find /tmp -type s</code>), se apunta el propio cliente a él (<code>export SSH_AUTH_SOCK=/tmp/ssh-.../agent.NN</code>), se confirma que el agente tiene claves cargadas (<code>ssh-add -l</code>) y se usa para autenticar sin tener ninguna clave privada. El agente firma para quien le hable por el socket.</div>
-  <div class="callout warning"><b>Una shell nueva no hereda <code>SSH_AUTH_SOCK</code>.</b> Si tomás la identidad del usuario con algo tipo <code>su</code>, arrancás con un entorno limpio: la variable de su sesión real no está, hay que encontrar el socket a mano y setearla.</div>
-
   <h3 id="escalada-defensas">Cómo se defiende cada una</h3>
   <p>La pregunta gemela del quiz siempre es cómo evitar el abuso. En una línea por técnica:</p>
   <div class="table-wrap"><table>
@@ -1586,12 +1645,11 @@ which stat                          # debe devolver /tmp/stat
       <tr><td>Shell escape</td><td>No dar por sudo binarios con capacidad de lanzar shells; preferir un wrapper mínimo que haga solo la acción necesaria.</td></tr>
       <tr><td>PATH hijacking de un setuid</td><td>Invocar siempre por ruta absoluta (nunca <code>system</code>/<code>execvp</code>); sanitizar el entorno (resetear <code>$PATH</code> e <code>IFS</code>); droppear privilegios (<code>setuid(getuid())</code>) antes de ejecutar si no se necesitan.</td></tr>
       <tr><td>Utilidad estándar como setuid</td><td>No instalar utilidades potentes con el bit setuid; dar la capacidad justa (capabilities acotadas), no el poder genérico de find/tar como otro usuario.</td></tr>
-      <tr><td>Secuestro del agente SSH</td><td>Cargar las claves con confirmación por uso (<code>ssh-add -c</code>, pide aprobación en cada firma); complementar con expiración (<code>ssh-add -t</code>). Evitar el forwarding hacia hosts en los que no confiás.</td></tr>
     </tbody>
   </table></div>
   <p class="ref">Todo esto es el mismo patrón del <a href="#threatmodel">threat model</a>: confianza mal ubicada en un boundary (el entorno, el <code>$PATH</code>, un socket, un comodín) y falta de mínimo privilegio. La metodología para encontrar estas grietas es la de la <a href="#offense">clase de ofensiva</a>: recon (leer permisos y sudoers), buscar la primitiva, y usar cada abuso como habilitador del siguiente.</p>
 
-  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Diferencia entre real UID y effective UID, y por qué un binario setuid corre con el euid del dueño. Por qué el dueño de un archivo con cero permisos igual puede leerlo tras un <code>chmod</code> pero no antes. Leer una línea de <code>sudo -l</code> e identificar qué primitiva da cada comando permitido. Por qué un <code>*</code> en sudoers no limita el directorio (wildcard abuse y path traversal). Cómo funciona un shell escape y con qué binarios. Cómo funciona el PATH hijacking de un setuid y cómo se lo arregla (ruta absoluta, sanear entorno, droppear privilegios). Por qué <code>find</code> conserva el euid y un intermediario de bash lo pierde (el shebang y <code>-p</code>). Qué es <code>SSH_AUTH_SOCK</code>, cómo se secuestra un agente forwardeado y cómo lo previene <code>ssh-add -c</code>.</div>
+  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Diferencia entre real UID y effective UID, y por qué un binario setuid corre con el euid del dueño. Por qué el dueño de un archivo con cero permisos igual puede leerlo tras un <code>chmod</code> pero no antes. Leer una línea de <code>sudo -l</code> e identificar qué primitiva da cada comando permitido. Por qué un <code>*</code> en sudoers no limita el directorio (wildcard abuse y path traversal). Cómo funciona un shell escape y con qué binarios. Cómo funciona el PATH hijacking de un setuid y cómo se lo arregla (ruta absoluta, sanear entorno, droppear privilegios). Por qué <code>find</code> conserva el euid y un intermediario de bash lo pierde (el shebang y <code>-p</code>).</div>
 
     </section>
 

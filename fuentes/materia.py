@@ -74,7 +74,8 @@ _CLASES = [
 ]
 
 _LAB = [
-    ("escalada", "Lab", "Escalada de privilegios: permisos, sudo y setuid"),
+    ("permisos", "A", "Permisos de Unix: identidad, claves y secretos"),
+    ("escalada", "B", "Escalada de privilegios: sudo y setuid"),
 ]
 
 CFG = {
