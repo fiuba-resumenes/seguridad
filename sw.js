@@ -2,7 +2,7 @@
 // Precachea el apunte completo. La version del cache sale del hash del
 // contenido: el archivo solo cambia cuando cambia algo, y ahi el navegador
 // reinstala el service worker y renueva el cache en la visita siguiente.
-const CACHE = 'seg-0545d8f958c0';
+const CACHE = 'seg-604e0407211c';
 const ARCHIVOS = [
   "./",
   "./index.html",

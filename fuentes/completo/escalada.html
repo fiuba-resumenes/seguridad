@@ -1,0 +1,79 @@
+<section class="unidad" id="escalada" data-titulo="Escalada de privilegios: permisos, sudo y setuid">
+  <h2>Escalada de privilegios: permisos, sudo y setuid</h2>
+  <p class="intro">Las categorías de permisos y privilegios del laboratorio (A y B) son variaciones de una misma idea: en un sistema Unix tu identidad decide qué podés leer, escribir y ejecutar, y casi toda escalada consiste en hacer que un programa actúe con una identidad más poderosa que la tuya. Este capítulo junta las técnicas que aparecen una y otra vez (abuso de sudoers, shell escape, el bit setuid, PATH hijacking, secuestro del agente SSH) sin resolver ningún desafío puntual: son justo el tipo de mecanismo que cae en el quiz, con su pregunta gemela de cómo se defiende.</p>
+
+  <h3 id="escalada-identidad-y-permisos">La base: identidad y permisos de un proceso</h3>
+  <p>Todo proceso corre con una identidad (un usuario). El kernel guarda en realidad varios UIDs: el <b>real UID</b> (ruid, quién lanzó el proceso) y el <b>effective UID</b> (euid, con quién se chequean los permisos al abrir un archivo o matar un proceso). Normalmente coinciden, pero los mecanismos de escalada viven justo en la brecha entre los dos.</p>
+  <div class="def"><b>Effective UID (euid).</b> El UID contra el que el kernel evalúa cada operación privilegiada del proceso. Si un programa logra correr con euid distinto (y mayor) que tu ruid, hace por vos cosas que vos no podés.</div>
+  <p>Sobre los archivos, los permisos son tres ternas (owner, group, other) de tres bits (read, write, execute). Dos consecuencias que se explotan seguido:</p>
+  <ul>
+    <li>Ser dueño de un archivo no te deja leerlo si el bit de lectura del owner está en cero: el chequeo es siempre contra los bits, no contra "soy el dueño". Solo root (con CAP_DAC_OVERRIDE) los saltea.</li>
+    <li>Pero el dueño sí puede correr <code>chmod</code> sobre su archivo aunque no tenga permiso de leerlo: <code>chmod</code> se autoriza por ownership, no por los permisos actuales. Es una primitiva de escritura sobre los metadatos que habilita la de lectura.</li>
+  </ul>
+  <div class="idea"><b>chmod, dos notaciones.</b> Simbólica: <code>chmod u+rw,o-r archivo</code> donde el destinatario es <code>u</code>/<code>g</code>/<code>o</code>/<code>a</code>, el operador <code>+</code>/<code>-</code>/<code>=</code> y el permiso <code>r</code>/<code>w</code>/<code>x</code>/<code>s</code>/<code>t</code> (un <code>chmod +r</code> sin destinatario equivale a <code>a+r</code>). Octal: cada dígito suma <code>r=4 w=2 x=1</code>, y un cuarto dígito adelante son los bits especiales (setuid=4000, setgid=2000, sticky=1000).</div>
+
+  <h3 id="escalada-sudo-sudoers">Leer lo que sudo te permite</h3>
+  <p>El <a href="#threatmodel">ejemplo de sudo del threat model</a> mostró la idea: en vez de dar root, el admin define en <code>sudoers</code> exactamente qué comando privilegiado puede correr cada usuario. Como atacante, el primer paso es siempre leer esa política:</p>
+  <pre><code>sudo -l</code></pre>
+  <p>La salida es críptica pero tiene un formato fijo. Cada línea es <code>(usuario-destino) ETIQUETAS: /ruta/exacta/del/comando [argumentos]</code>. Por ejemplo <code>(bob) NOPASSWD: /bin/cat /home/bob/nota</code> significa: podés correr <em>ese</em> <code>cat</code>, con <em>ese</em> argumento, como <b>bob</b>, sin contraseña. El <code>-u</code> de sudo elige el usuario destino: <code>sudo -u bob /bin/cat /home/bob/nota</code>.</p>
+  <div class="idea"><b>Pensar en primitivas.</b> De una lista de comandos permitidos, no todos sirven igual. Un atacante clasifica cada uno por la primitiva que da: leer un contenido (una primitiva de <em>lectura</em>), escribir en algún lado, o ejecutar código arbitrario. <code>ls</code> y <code>stat</code> solo dan metadata, <code>sha1sum</code> da un hash; el que devuelve el contenido tal cual (un <code>cat</code>) es la primitiva de lectura.</div>
+
+  <h4 id="escalada-wildcard">Wildcard abuse y path traversal</h4>
+  <p>Cuando una regla usa un comodín, como <code>/bin/cat /var/log/*</code>, es tentador leerlo como "solo archivos de <code>/var/log</code>". No lo es: el <code>*</code> es un glob y sudo compara el string final del comando contra el patrón. Nada impide que el argumento arranque literalmente en <code>/var/log/</code> y con <code>..</code> salga a cualquier otro directorio:</p>
+  <pre><code>sudo -u darleen /bin/cat /var/log/../../home/darleen/secreto</code></pre>
+  <div class="def"><b>Path traversal.</b> Usar <code>..</code> (u otras formas de reescribir una ruta) para salir del directorio al que en teoría estaba acotado un acceso. Es una de las técnicas más frecuentes de la industria: la misma lógica está detrás de los LFI en aplicaciones web y del zip slip.</div>
+  <div class="riesgo"><b>Un comodín en sudoers no es un sandbox de directorio.</b> Es un match de texto contra el comando final. Cualquier <code>*</code> es candidato a wildcard abuse, y cualquier comando que reciba una ruta como argumento es candidato a path traversal si esa ruta no se normaliza y valida antes de usarla.</div>
+
+  <h4 id="escalada-shell-escape">Shell escape (GTFOBins)</h4>
+  <p>Muchos programas "inocentes" e interactivos tienen una función legítima para lanzar un comando de shell sin salir: <code>less</code> y <code>vi</code> con <code>!comando</code>, <code>man</code>, <code>awk</code>, <code>find</code>, <code>tar</code>, <code>ftp</code>. Si sudoers te deja correr uno de esos como otro usuario, el shell que abrís hereda esa identidad, aunque <code>sudo -u gaia /bin/bash</code> esté prohibido.</p>
+  <div class="ej"><b>La idea concreta.</b> <code>sudo -u gaia /usr/bin/less /home/gaia/manifiesto</code> corre <code>less</code> como gaia. Dentro, <code>!sh</code> (o <code>!cualquier-comando</code>) abre una subshell que también corre como gaia. Desde ahí ya ejecutás lo que quieras con esa identidad.</div>
+  <p class="nota">El catálogo de referencia de estas técnicas es GTFOBins: para cada binario lista cómo abusar de él (shell, lectura de archivos, escritura, escalada vía sudo o setuid).</p>
+
+  <h3 id="escalada-setuid">El bit setuid</h3>
+  <p>El bit <b>setuid</b> (la <code>s</code> en la posición de ejecución del owner, un permiso <code>4755</code> que se ve <code>-rwsr-xr-x</code>) hace que al ejecutar el binario, el proceso tome como euid al <em>dueño del archivo</em>, no a quien lo lanza. Es el mecanismo con el que un programa de bob puede leer un archivo de bob aunque lo corra alice.</p>
+  <div class="warn"><b>Ser dueño de un binario no otorga nada por sí solo.</b> Sin el bit <code>s</code>, un programa de bob que corre alice tiene euid alice y falla. El <code>s</code> convierte "soy dueño de este programa" en "quien lo corre actúa como yo". Por eso, para encontrar el binario útil, se filtra por dueño <em>y</em> por el bit setuid: <code>find / -user bob -perm -4000 2&gt;/dev/null</code>.</div>
+
+  <h4 id="escalada-path-hijacking">PATH hijacking de un setuid</h4>
+  <p>Si el binario setuid, en su código, ejecuta a otro programa <b>por nombre y no por ruta absoluta</b>, la víctima elige el programa que se ejecuta. Esto pasa cuando usa <code>system("prog ...")</code> (que siempre lanza <code>/bin/sh -c</code>) o <code>execlp</code>/<code>execvp</code> (la <code>p</code> = "resolver el nombre recorriendo <code>$PATH</code>"). Como <code>$PATH</code> lo controla el atacante, se puede anteponer un directorio con un ejecutable propio que se llame igual:</p>
+  <pre><code># el setuid hace, por dentro:  execlp("stat", "stat", argv[1], NULL)
+echo '#!/bin/bash'                  &gt;  /tmp/stat
+echo '/ruta/al/programa/que/quiero' &gt;&gt; /tmp/stat
+chmod +x /tmp/stat
+export PATH=/tmp:$PATH              # nuestro directorio primero
+which stat                          # debe devolver /tmp/stat
+/ruta/al/binario_setuid  argumento  # resuelve "stat" -&gt; nuestro script</code></pre>
+  <div class="warn"><b>El escollo del shebang.</b> Si el programa intermediario es un script <code>#!/bin/bash</code>, el kernel mete un <code>/bin/bash</code> en el medio, y bash al arrancar con euid distinto de ruid <b>baja el euid a ruid</b> por seguridad: el privilegio heredado se pierde. Se resuelve pidiéndole que no lo haga, con <code>#!/bin/bash -p</code> (modo privilegiado), o haciendo que el intermediario sea un binario compilado (sin bash de por medio).</div>
+
+  <h4 id="escalada-utilidades-setuid">Utilidades estándar con bit setuid</h4>
+  <p>Un caso especialmente peligroso es una utilidad conocida instalada como setuid de otro usuario. Muchas tienen features para ejecutar otro programa, y el <em>cómo</em> lo hacen decide si sirven:</p>
+  <table>
+    <thead><tr><th>Utilidad</th><th>Feature que ejecuta otro comando</th><th>Hereda el euid?</th></tr></thead>
+    <tbody>
+      <tr><td><code>find</code></td><td><code>-exec cmd {} \;</code> (corre <code>cmd</code> por cada resultado)</td><td>Sí: find hace <code>exec</code> directo, sin shell.</td></tr>
+      <tr><td><code>tar</code></td><td><code>--checkpoint-action=exec=...</code> o <code>--to-command=...</code></td><td>Depende: si mete un shell, ese shell puede resetear el euid.</td></tr>
+    </tbody>
+  </table>
+  <p>Por eso <code>find</code> suele ser el camino fácil (ejecuta el comando él mismo y conserva el euid del proceso) mientras que <code>tar</code> exige rodeos: si termina lanzando un <code>/bin/sh</code>, se cae en el mismo reseteo de privilegios del shebang.</p>
+
+  <h3 id="escalada-ssh-agent">Secuestro del agente SSH</h3>
+  <p>El <b>ssh-agent</b> es un proceso que guarda en memoria claves privadas ya desbloqueadas. No expone las claves: expone un <b>socket Unix</b>, y cualquier <code>ssh</code> que apunte a ese socket le pide firmar los desafíos de autenticación. La ubicación del socket la dice la variable de entorno <code>SSH_AUTH_SOCK</code>.</p>
+  <p>Con <b>agent forwarding</b> (<code>ssh -A</code>), cuando alguien salta de su máquina a un host intermedio, su agente queda accesible desde ese host a través de un socket que ssh crea ahí: así puede seguir saltando a otras máquinas sin copiar la clave privada. El problema: ese socket es un archivo con permisos <code>0600</code>. Si lográs actuar como ese usuario dentro del host, el socket es tuyo.</p>
+  <div class="ej"><b>La idea concreta.</b> Actuando como el dueño, se busca el socket en el filesystem (<code>find /tmp -type s</code>), se apunta el propio cliente a él (<code>export SSH_AUTH_SOCK=/tmp/ssh-.../agent.NN</code>), se confirma que el agente tiene claves cargadas (<code>ssh-add -l</code>) y se usa para autenticar sin tener ninguna clave privada. El agente firma para quien le hable por el socket.</div>
+  <div class="warn"><b>Una shell nueva no hereda <code>SSH_AUTH_SOCK</code>.</b> Si tomás la identidad del usuario con algo tipo <code>su</code>, arrancás con un entorno limpio: la variable de su sesión real no está, hay que encontrar el socket a mano y setearla.</div>
+
+  <h3 id="escalada-defensas">Cómo se defiende cada una</h3>
+  <p>La pregunta gemela del quiz siempre es cómo evitar el abuso. En una línea por técnica:</p>
+  <table>
+    <thead><tr><th>Técnica</th><th>Defensa</th></tr></thead>
+    <tbody>
+      <tr><td>Wildcard / path traversal en sudoers</td><td>No usar comodines amplios; acotar a rutas exactas y normalizar/validar la ruta antes de abrirla (rechazar <code>..</code>).</td></tr>
+      <tr><td>Shell escape</td><td>No dar por sudo binarios con capacidad de lanzar shells; preferir un wrapper mínimo que haga solo la acción necesaria.</td></tr>
+      <tr><td>PATH hijacking de un setuid</td><td>Invocar siempre por ruta absoluta (nunca <code>system</code>/<code>execvp</code>); sanitizar el entorno (resetear <code>$PATH</code> e <code>IFS</code>); droppear privilegios (<code>setuid(getuid())</code>) antes de ejecutar si no se necesitan.</td></tr>
+      <tr><td>Utilidad estándar como setuid</td><td>No instalar utilidades potentes con el bit setuid; dar la capacidad justa (capabilities acotadas), no el poder genérico de find/tar como otro usuario.</td></tr>
+      <tr><td>Secuestro del agente SSH</td><td>Cargar las claves con confirmación por uso (<code>ssh-add -c</code>, pide aprobación en cada firma); complementar con expiración (<code>ssh-add -t</code>). Evitar el forwarding hacia hosts en los que no confiás.</td></tr>
+    </tbody>
+  </table>
+  <p class="ref">Todo esto es el mismo patrón del <a href="#threatmodel">threat model</a>: confianza mal ubicada en un boundary (el entorno, el <code>$PATH</code>, un socket, un comodín) y falta de mínimo privilegio. La metodología para encontrar estas grietas es la de la <a href="#offense">clase de ofensiva</a>: recon (leer permisos y sudoers), buscar la primitiva, y usar cada abuso como habilitador del siguiente.</p>
+
+  <div class="examen"><b>Preguntas típicas de este tema.</b> Diferencia entre real UID y effective UID, y por qué un binario setuid corre con el euid del dueño. Por qué el dueño de un archivo con cero permisos igual puede leerlo tras un <code>chmod</code> pero no antes. Leer una línea de <code>sudo -l</code> e identificar qué primitiva da cada comando permitido. Por qué un <code>*</code> en sudoers no limita el directorio (wildcard abuse y path traversal). Cómo funciona un shell escape y con qué binarios. Cómo funciona el PATH hijacking de un setuid y cómo se lo arregla (ruta absoluta, sanear entorno, droppear privilegios). Por qué <code>find</code> conserva el euid y un intermediario de bash lo pierde (el shebang y <code>-p</code>). Qué es <code>SSH_AUTH_SOCK</code>, cómo se secuestra un agente forwardeado y cómo lo previene <code>ssh-add -c</code>.</div>
+</section>

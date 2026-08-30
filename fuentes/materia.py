@@ -73,6 +73,10 @@ _CLASES = [
     ("offense", "2", "Ofensiva: red team, pentester y researcher"),
 ]
 
+_LAB = [
+    ("escalada", "Lab", "Escalada de privilegios: permisos, sudo y setuid"),
+]
+
 CFG = {
     "clave": "seg",
     "codigo": "TA051",
@@ -91,6 +95,7 @@ CFG = {
     "favicon_hex": "b58900",
     "grupos": [
         ("Fundamentos", _CLASES[0:2]),
+        ("Laboratorio", _LAB),
     ],
     "paleta_light": PALETA_LIGHT,
     "paleta_dark": PALETA_DARK,
