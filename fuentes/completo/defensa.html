@@ -1,0 +1,221 @@
+<section class="unidad" id="defensa" data-titulo="Defensa: prevenir, mitigar, responder y testear">
+  <h2>3. Defensa: prevenir, mitigar, responder y testear</h2>
+  <p class="intro">Del otro lado del pentest está el blue team: el que tiene que diseñar el sistema para que el ataque no entre, y para que cuando entre igual duela poco. Esta clase da los cuatro pilares de la defensa (prevención, mitigación, respuesta y testeo) con los principios concretos que cuelgan de cada uno, y los ilustra con casos reales donde faltó justo uno: el banco Barings, el WEP de la wifi, la arquitectura de Chrome, una termocupla de estufa y las máquinas de votación electrónica.</p>
+
+  <h3 id="defensa-cuatro-pilares">Los cuatro pilares</h3>
+  <p>En el plano defensivo hay cuatro pilares: prevención, mitigación, respuesta y testeo. No es una taxonomía completa ni pretende serlo, pero funciona bastante bien como guía o blueprint para diseñar e implementar mecanismos de defensa: para cada mecanismo que se agrega conviene preguntarse a cuál de los cuatro contribuye, y qué pilar quedó vacío.</p>
+
+  <figure class="diag">
+    <svg viewBox="0 0 520 300" role="img" aria-label="Los cuatro pilares de la defensa y sus principios: Prevent con Simplicity, Open, Minimum y No home made sec; Mitigate con Sec in depth, Separation, Minimum y Fail safe; Respond con Monitoring, Auditing e Incident response; Test con Test your defenses">
+      <rect x="12" y="14" width="120" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="72" y="39" text-anchor="middle" fill="currentColor" font-size="14">Prevent</text>
+      <text x="175" y="24" fill="currentColor" font-size="12">Simplicity</text>
+      <text x="175" y="42" fill="currentColor" font-size="12">Open</text>
+      <text x="175" y="60" fill="currentColor" font-size="12">Minimum</text>
+      <text x="175" y="78" fill="currentColor" font-size="12">No home made sec</text>
+      <path d="M 132 34 L 152 34 L 152 20 L 168 20 M 152 34 L 168 34 M 152 34 L 152 56 L 168 56 M 152 56 L 152 74 L 168 74" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+
+      <rect x="12" y="98" width="120" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="72" y="123" text-anchor="middle" fill="currentColor" font-size="14">Mitigate</text>
+      <text x="175" y="108" fill="currentColor" font-size="12">Sec in depth</text>
+      <text x="175" y="126" fill="currentColor" font-size="12">Separation</text>
+      <text x="175" y="144" fill="currentColor" font-size="12">Minimum</text>
+      <text x="175" y="162" fill="currentColor" font-size="12">Fail safe</text>
+      <path d="M 132 118 L 152 118 L 152 104 L 168 104 M 152 118 L 168 118 M 152 118 L 152 140 L 168 140 M 152 140 L 152 158 L 168 158" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+
+      <rect x="12" y="182" width="120" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="72" y="207" text-anchor="middle" fill="currentColor" font-size="14">Respond</text>
+      <text x="175" y="192" fill="currentColor" font-size="12">Monitoring</text>
+      <text x="175" y="210" fill="currentColor" font-size="12">Auditing</text>
+      <text x="175" y="228" fill="currentColor" font-size="12">Incident response</text>
+      <path d="M 132 202 L 152 202 L 152 188 L 168 188 M 152 202 L 168 202 M 152 202 L 152 224 L 168 224" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+
+      <rect x="12" y="248" width="120" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="72" y="273" text-anchor="middle" fill="currentColor" font-size="14">Test</text>
+      <text x="175" y="272" fill="currentColor" font-size="12">Test your defenses</text>
+      <path d="M 132 268 L 168 268" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+
+      <path d="M 500 60 C 505 130, 505 190, 500 250" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-dasharray="5 4"/>
+      <text x="470" y="155" text-anchor="middle" fill="var(--acc2)" font-size="11">el testeo</text>
+      <text x="470" y="169" text-anchor="middle" fill="var(--acc2)" font-size="11">valida los</text>
+      <text x="470" y="183" text-anchor="middle" fill="var(--acc2)" font-size="11">otros tres</text>
+    </svg>
+    <figcaption>Blueprint de la defensa. Cada pilar aporta principios distintos y el testeo es el que confirma que los otros tres funcionan de verdad.</figcaption>
+  </figure>
+
+  <h3 id="defensa-prevent">Prevent: que el ataque no entre</h3>
+  <p>Prevenir es mejor que curar, frase milenaria totalmente vigente. En todo momento, si se puede evitar el hack, hay que evitarlo: recuperarse tras un hack va a ser mucho más costoso que haberlo prevenido. De la prevención cuelgan cuatro principios.</p>
+
+  <h4 id="defensa-simplicity">Simplicity</h4>
+  <p>Un sistema difícil de usar deja margen para errores, y ese margen es la vulnerabilidad:</p>
+  <ul>
+    <li><b>Difícil de configurar:</b> se termina dejando agujeros abiertos, casi siempre sin darse cuenta.</li>
+    <li><b>Difícil o tedioso de usar:</b> los usuarios van a ser los primeros en saltearse los mecanismos de seguridad (la contraseña en un post it, el permiso abierto "por ahora").</li>
+  </ul>
+  <p>Pero simplicidad no se refiere solamente a "fácil de usar", sino a que el sistema en sí sea simple. Un sistema complejo tiene demasiadas piezas móviles y las posibles interacciones internas hacen que sea fácil pasarse por alto alguna vulnerabilidad.</p>
+  <div class="idea"><b>La complejidad es superficie de ataque.</b> No hace falta que ninguna pieza esté mal: alcanza con que nadie pueda razonar sobre todas las combinaciones a la vez.</div>
+
+  <h4 id="defensa-open">Open, no security by obscurity</h4>
+  <div class="def"><b>Principio de Kerckhoff.</b> Un sistema criptográfico debe ser seguro aun si el adversario sabe absolutamente todo de él excepto la clave secreta.</div>
+  <p>El principio se extrapola a sistemas de seguridad en general: un sistema debe ser seguro aun si se conoce absolutamente todo de él. Ocultar los detalles de implementación como única protección es totalmente frágil, y es cuestión de tiempo hasta que alguien lo reversee y venga con un ataque. Open source rules.</p>
+  <div class="warn"><b>El asterisco.</b> En ciertas situaciones ocultar detalles sí potencia la defensa (no publicar la versión exacta de un servicio, por ejemplo), pero nunca debe ser la única capa. La regla es "no <i>rely</i> on obscurity", no "no obscurity".</div>
+
+  <h4 id="defensa-minimum-prevent">Minimum: reducir la superficie de ataque</h4>
+  <p>Alineado con simplicidad: un sistema lo más chico posible reduce el área expuesta a problemas. Menos servicios corriendo, menos puertos abiertos, menos features, menos dependencias, menos código: menos lugares donde puede haber un bug explotable.</p>
+
+  <h4 id="defensa-no-home-made">No home made sec</h4>
+  <p>Implementar mecanismos de seguridad es difícil, e implementarlos bien es más difícil aún. La regla es siempre usar implementaciones estándar y no salir a implementar cosas custom.</p>
+  <div class="riesgo"><b>Crypto is <i>super</i> hard.</b> En criptografía la regla es todavía más estricta: usar lo que ya está implementado y auditado. Una implementación propia puede pasar todos los tests funcionales (encripta y desencripta bien) y ser trivialmente rompible.</div>
+  <p class="nota">Dicho eso, ciertas situaciones sí requieren implementaciones hechas a medida. Es una excepción, no el default, y viene con la obligación de exponerla a revisión (ver <a href="#defensa-open">Open</a>).</p>
+
+  <h3 id="defensa-mitigate">Mitigate: que el ataque duela poco</h3>
+  <p>Si no podés evitar el hack, hacé que tenga el menor impacto y daño posible. La mitigación asume que el adversario ya está adentro y se pregunta hasta dónde puede llegar.</p>
+
+  <h4 id="defensa-sec-in-depth">Security in depth</h4>
+  <p>Seguridad en lo profundo: checks a lo largo de toda la cadena de procesamiento, no solo en la puerta de entrada. Si un adversario logró llegar al servidor productivo, que no pueda llegar a la base de datos. Tal vez tire producción por unas horas, pero al menos no se llevó la data de los clientes.</p>
+
+  <h4 id="defensa-separation">Separation</h4>
+  <p>Separar y aislar: cuando hay un hack, queremos que el adversario no pueda moverse hacia otras áreas, sistemas o procesos. Si dos sistemas conviven en la misma área, es probable que el adversario pueda infectar uno desde el otro. Si están totalmente aislados, queda en un callejón sin salida.</p>
+  <table>
+    <thead><tr><th>Eje</th><th>Qué se separa</th></tr></thead>
+    <tbody>
+      <tr><td><b>Espacio</b></td><td>Memoria (un proceso no lee la memoria de otro) y físico (máquinas, redes y datacenters distintos).</td></tr>
+      <tr><td><b>Responsabilidades</b></td><td>Roles humanos: quien opera no es quien controla (operator vs controller).</td></tr>
+    </tbody>
+  </table>
+  <div class="warn"><b>La aislación total no existe.</b> En la práctica siempre queda algún canal (una red, un disco compartido, una persona con acceso a las dos partes). El objetivo no es el ideal sino el gradiente: cuanto más se pueda aislar, mejor. Y separación no es solo software y hardware, es también a nivel humano.</div>
+
+  <h4 id="defensa-minimum-mitigate">Minimum: mínimo privilegio</h4>
+  <p>Si una cuenta es hackeada, el adversario va a tener menos poder si esa cuenta tiene la mínima cantidad de recursos y accesos. Se minimiza en cuatro ejes: <b>trust</b> (en quién y en qué se confía), <b>resources</b> (CPU, memoria, disco, red), <b>privileges</b> (qué operaciones puede hacer) y <b>accesses</b> (a qué datos y sistemas llega).</p>
+
+  <h4 id="defensa-fail-safe">Fail safe</h4>
+  <p>Cuando algo salga mal, el sistema debería defaultear a un estado de mínimo privilegio, un estado seguro. El disparador es cualquiera de estos casos:</p>
+  <ul>
+    <li>Si un valor es <b>inválido</b>.</li>
+    <li>Si una operación <b>falla</b>.</li>
+    <li>Si pasa algo <b>inesperado</b>.</li>
+    <li>Si <b>falta</b> algo (un archivo de config, un permiso, un campo).</li>
+  </ul>
+  <div class="def"><b>Fail safe.</b> Ante el error, el default es "no access, no privileges, no resources": denegar, no permitir. El sistema falla, pero falla de forma segura.</div>
+  <div class="warn"><b>El antipatrón.</b> El bug clásico es el <code>catch</code> que ante un error de autorización devuelve "permitido" porque nadie pensó ese camino, o la config faltante que se interpreta como "sin restricciones".</div>
+
+  <h3 id="defensa-respond">Respond: detectar y reaccionar</h3>
+  <h4 id="defensa-monitoring-auditing">Monitoring y auditing</h4>
+  <p>Son dos caras de la misma moneda, y las dos sirven para <b>detectar</b>, pero en tiempos distintos:</p>
+  <table>
+    <thead><tr><th></th><th>Cuándo</th><th>Para qué</th></tr></thead>
+    <tbody>
+      <tr><td><b>Monitoring</b></td><td>Ahora, con alertas.</td><td>Detección temprana, mientras el evento está pasando.</td></tr>
+      <tr><td><b>Auditing</b></td><td>Después.</td><td>Detección o análisis forense de un evento de seguridad que ya pasó.</td></tr>
+    </tbody>
+  </table>
+  <div class="idea">Sin logs y sin alertas no hay respuesta posible: no se puede reaccionar a algo que no se ve, ni reconstruir un incidente que no dejó rastro.</div>
+
+  <h4 id="defensa-incident-response">Incident response</h4>
+  <p>Shit happens. Y cuando pasa, cuáles son los next steps? Tener un plan escrito de antemano, saber a quién llamar y cómo encarar un incidente en curso hace que las respuestas sean más rápidas y minimiza el daño. El plan cubre:</p>
+  <ul>
+    <li><b>How to block:</b> el ataque actual (current) y los futuros (future).</li>
+    <li><b>How to recover:</b> volver a un estado sano, con backups y procedimientos ya probados.</li>
+    <li><b>How to coordinate:</b> planear los próximos pasos, qué canales de comunicación se usan y qué personas hay que involucrar.</li>
+  </ul>
+  <div class="warn"><b>Un plan improvisado durante el incidente no es un plan.</b> En medio del ataque no es momento de averiguar quién tiene la contraseña del firewall ni si los backups restauran.</div>
+
+  <h3 id="defensa-test">Test: poner las defensas a prueba</h3>
+  <p>No importa qué tan bien hayas puesto las defensas: hay que ponerlas a prueba. Ese testeo es exactamente el <a href="#offense">pentest y el red team de la clase 2</a>, mirado desde el lado del que se defiende. El pilar de testeo es el que convierte a los otros tres de intención en hecho verificado.</p>
+
+  <h3 id="defensa-casos">Casos: cuando falta un pilar</h3>
+
+  <h4 id="defensa-barings">Barings Bank: sin separación de roles</h4>
+  <p>Barings, banco inglés fundado en 1762, donde hasta la Reina de Inglaterra tenía cuenta. Nick Leeson era a la vez <b>trading manager</b> y <b>su propio supervisor</b>: dos roles en una persona. El resultado directo de esa combinación:</p>
+  <ul>
+    <li><b>No separation:</b> quien opera es quien controla.</li>
+    <li><b>No minimum:</b> una sola cuenta con todos los privilegios necesarios para operar y para tapar.</li>
+    <li><b>No monitoring:</b> nadie mirando las operaciones desde afuera.</li>
+  </ul>
+  <div class="ej"><b>El desenlace.</b> Pérdidas por 1400 millones de dólares, quiebra en 1995 y el banco vendido por 1 libra esterlina: 264 años de historia liquidados. Leeson fue capturado en Kuala Lumpur tras casi un año prófugo. Es poner al zorro a cuidar el gallinero. (Fuente citada en clase: Washington Street Journal.)</div>
+  <div class="idea">El caso no tiene una línea de código: la vulnerabilidad era el organigrama. Separación y mínimo privilegio se aplican a personas igual que a procesos.</div>
+
+  <h4 id="defensa-wep">WEP y RC4: home made sec sobre crypto cerrada</h4>
+  <p>Con la aparición de la wifi hicieron falta mecanismos de encriptación, y el primero fue <b>WEP</b> (Wired Equivalent Privacy). El problema: código cerrado, no se sabía cómo estaba hecho. Recién via research se confirmó que por debajo usaba <b>RC4</b> como stream cipher.</p>
+
+  <figure class="diag">
+    <svg viewBox="0 0 540 190" role="img" aria-label="Linea de tiempo de WEP y RC4: RC4 implementado en 1987, leakeado en 1994, biases conocidos en 1995, ataques completos en 2001 y 2003; WEP implementado en 1997 y confirmado como RC4 alrededor de 2001">
+      <line x1="60" y1="55" x2="500" y2="55" stroke="var(--linea)" stroke-width="2"/>
+      <text x="20" y="50" fill="currentColor" font-size="13">WEP</text>
+      <text x="8" y="66" fill="currentColor" opacity="0.55" font-size="10">(closed-ish)</text>
+      <line x1="300" y1="48" x2="300" y2="62" stroke="var(--acc)" stroke-width="2"/>
+      <text x="300" y="42" text-anchor="middle" fill="currentColor" font-size="11">1997 impl</text>
+      <line x1="420" y1="48" x2="420" y2="62" stroke="var(--acc)" stroke-width="2"/>
+      <text x="420" y="42" text-anchor="middle" fill="currentColor" font-size="11">2001 RC4 confirmado</text>
+
+      <line x1="60" y1="135" x2="500" y2="135" stroke="var(--linea)" stroke-width="2"/>
+      <text x="20" y="130" fill="currentColor" font-size="13">RC4</text>
+      <text x="16" y="146" fill="currentColor" opacity="0.55" font-size="10">(closed)</text>
+      <line x1="120" y1="128" x2="120" y2="142" stroke="var(--acc)" stroke-width="2"/>
+      <text x="120" y="122" text-anchor="middle" fill="currentColor" font-size="11">1987 impl</text>
+      <line x1="230" y1="128" x2="230" y2="142" stroke="var(--acc)" stroke-width="2"/>
+      <text x="230" y="122" text-anchor="middle" fill="currentColor" font-size="11">1994 leaked</text>
+      <line x1="270" y1="128" x2="270" y2="142" stroke="var(--acc)" stroke-width="2"/>
+      <text x="262" y="160" text-anchor="middle" fill="currentColor" font-size="11">1995 bias</text>
+      <line x1="420" y1="128" x2="420" y2="142" stroke="var(--acc4)" stroke-width="2"/>
+      <text x="420" y="122" text-anchor="middle" fill="var(--acc4)" font-size="11">2001 attack</text>
+      <line x1="470" y1="128" x2="470" y2="142" stroke="var(--acc4)" stroke-width="2"/>
+      <text x="470" y="160" text-anchor="middle" fill="var(--acc4)" font-size="11">2003 attack</text>
+
+      <path d="M 300 62 L 300 128" fill="none" stroke="var(--acc2)" stroke-width="1.5" stroke-dasharray="4 4"/>
+      <text x="300" y="182" text-anchor="middle" fill="var(--acc2)" font-size="11">WEP nació apoyado en un cipher que ya venía con biases conocidos</text>
+    </svg>
+    <figcaption>La línea de RC4 corría años por delante de la de WEP, pero al ser cerradas las dos, nadie del lado de WEP pudo cruzarlas a tiempo.</figcaption>
+  </figure>
+
+  <p>RC4 es un stream cipher viejo, cuyo código fue leakeado en los 90 y del que ya para 1995 se sabía que tenía biases. Para el 2000 esos biases se transformaron en ataques completos: un atacante podía romper la criptografía por completo en un par de horas, abusando tanto de las vulnerabilidades de RC4 como del protocolo WEP.</p>
+  <div class="riesgo"><b>Las dos causas raíz.</b> Desarrollar cripto in house (<a href="#defensa-no-home-made">home made sec</a>) y hacerlo a puertas cerradas (<a href="#defensa-open">sin disclosure</a>). Cuando se supo, ya había miles de dispositivos vendidos, con lo cual el fix ni siquiera era una decisión de software.</div>
+
+  <h4 id="defensa-chrome">Chrome: separación por procesos</h4>
+  <p>Cuando uno abre Chrome, en realidad hay un proceso encargado de dibujar en pantalla (el render) y un proceso por cada tab abierta. Al ser procesos distintos, un adversario que tomó el control de una tab (y de su proceso) no tiene acceso ni a las otras tabs ni al render: es el sistema operativo el que fuerza esa separación.</p>
+  <div class="idea">El adversario ahora necesita bypassear al OS o encontrar un bug en la comunicación entre las tabs y el render. No es imposible, pero es mucho más difícil: la separación no elimina el ataque, le sube el precio.</div>
+
+  <figure class="diag">
+    <svg viewBox="0 0 480 90" role="img" aria-label="Escalera de aislacion: procesos, luego containers, luego virtual machines, luego physical devices, de menor a mayor aislacion">
+      <rect x="10" y="26" width="96" height="38" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="58" y="50" text-anchor="middle" fill="currentColor" font-size="12">Processes</text>
+      <rect x="130" y="26" width="96" height="38" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="178" y="50" text-anchor="middle" fill="currentColor" font-size="12">Containers</text>
+      <rect x="250" y="26" width="96" height="38" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="298" y="50" text-anchor="middle" fill="currentColor" font-size="12">VMs</text>
+      <rect x="370" y="26" width="100" height="38" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="420" y="45" text-anchor="middle" fill="currentColor" font-size="12">Physical</text>
+      <text x="420" y="58" text-anchor="middle" fill="currentColor" font-size="12">devices</text>
+      <line x1="106" y1="45" x2="128" y2="45" stroke="var(--acc2)" stroke-width="2" marker-end="url(#ardef)"/>
+      <line x1="226" y1="45" x2="248" y2="45" stroke="var(--acc2)" stroke-width="2" marker-end="url(#ardef)"/>
+      <line x1="346" y1="45" x2="368" y2="45" stroke="var(--acc2)" stroke-width="2" marker-end="url(#ardef)"/>
+      <text x="240" y="16" text-anchor="middle" fill="var(--acc2)" font-size="11">más aislación, más costo</text>
+      <defs>
+        <marker id="ardef" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc2)"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption>La misma idea de separación se puede profundizar por niveles: procesos, containers, máquinas virtuales, dispositivos físicos.</figcaption>
+  </figure>
+
+  <h4 id="defensa-termocupla">La termocupla: fail safe en hardware</h4>
+  <p>En una estufa a gas, la termocupla controla el paso de gas de las cañerías principal y piloto. Cuando el sistema está apagado la termocupla está fría y corta el suministro. Para encenderla hay que habilitar manualmente el paso de gas, prender el piloto y esperar a que la termocupla se caliente para que deje pasar el gas por sí sola.</p>
+  <div class="ej"><b>Qué pasa si se corta el gas, o si se apaga el piloto?</b> No hay peligro. Aunque la válvula esté abierta, al apagarse el piloto la termocupla se enfría y cierra el suministro. El sistema falló, pero de forma segura. Es a la vez <a href="#defensa-simplicity">simple</a> (una pieza, un principio físico) y <a href="#defensa-fail-safe">fail safe</a>, sin una línea de software.</div>
+
+  <h4 id="defensa-voto">Máquinas de votación: opaco y complejo</h4>
+  <p>El esquema: el votante elige A, la máquina imprime una boleta con un chip NFC que dice "voto A" y al mismo tiempo manda un mensaje al centro de cómputos con el resultado. El sistema es cerrado, así que la pregunta es quién puede verificar que en el momento de la votación el voto a A no sea cambiado por B.</p>
+  <p>La respuesta que ofrece el diseño es que el votante acerque la boleta a la máquina para que lea el NFC y le muestre qué dice. Pero si modelamos que la máquina es adversarial y nos imprimió un "voto A" que en realidad es un voto B, no podemos confiar en que nos haga esa verificación honestamente.</p>
+  <div class="riesgo"><b>Dos pilares rotos a la vez.</b> <b>Opaque</b> (no open): el votante no puede chequear ni tiene por qué confiar. <b>No role separation</b>: la misma máquina vota y controla el voto, exactamente el error de <a href="#defensa-barings">Barings</a> trasladado a hardware.</div>
+  <p>Y encima no es simple. La máquina es mucho más que una impresora de boletas: tiene sistema operativo, drivers de impresora, interfaz de red con sus drivers, puertos USB y código cerrado. Es demasiado compleja, puede fallar de múltiples formas, expone una superficie grande para ser hackeada desde varios ángulos y no es transparente. Cómo puede alguien verificar que la máquina funciona como debería?</p>
+  <p class="nota">Charla citada en clase sobre el tema: <code>youtube.com/watch?v=HwyN6P83HcY</code>.</p>
+
+  <h3 id="defensa-takeaways">Takeaways</h3>
+  <ul>
+    <li><b>La seguridad va más allá del software.</b> Los casos de la clase son software (Chrome), hardware (la termocupla) y personas (Barings). Un mecanismo perfecto en una capa no salva a las otras dos.</li>
+    <li><b>La defensa no es solo contra un hack externo,</b> es contra que pasen cosas malas en general: un empleado sin supervisión, un cipher que envejeció, una válvula que se queda abierta. El adversario no siempre es una persona atacando.</li>
+  </ul>
+  <p class="ref">Los mecanismos y políticas y la idea de seguridad en profundidad vienen del <a href="#threatmodel">threat model de la clase 1</a>; el pilar de testeo es el <a href="#offense">engagement ofensivo de la clase 2</a>. El mínimo privilegio se ve en la práctica en <a href="#permisos">permisos de Unix</a> y <a href="#escalada">escalada de privilegios</a>.</p>
+
+  <div class="examen"><b>Preguntas típicas de este tema.</b> Enumerar los cuatro pilares y ubicar un mecanismo dado en el que corresponde. Los cuatro principios de prevención y qué ataca cada uno. Enunciar el principio de Kerckhoff y explicar por qué la obscuridad no puede ser la única defensa (con el asterisco). Por qué no implementar crypto propia. Diferenciar monitoring de auditing. Qué es fail safe y cuáles son sus cuatro disparadores. Separación en espacio vs en responsabilidades, y por qué la aislación total no es alcanzable. Analizar un caso (Barings, WEP, la máquina de votación) diciendo qué principios se violaron y qué habría cambiado el resultado.</div>
+</section>

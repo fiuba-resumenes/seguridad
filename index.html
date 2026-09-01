@@ -1163,6 +1163,7 @@
     <nav class="toc" aria-label="Fundamentos">
       <a href="#threatmodel"><span>1</span>Threat model, mecanismos y politicas</a>
       <a href="#offense"><span>2</span>Ofensiva: red team, pentester y researcher</a>
+      <a href="#defensa"><span>3</span>Defensa: prevenir, mitigar, responder y testear</a>
     </nav>
     <div class="nav-title">Laboratorio</div>
     <nav class="toc" aria-label="Laboratorio">
@@ -1380,135 +1381,563 @@
 
     </section>
 
-    <section class="chapter" id="offense" data-title="ofensiva red team pentester researcher todas las defensas son perfectas hasta que prueban los tres roles hace encontrar una vulnerabilidad scope acuerda antes tocar nada engagement recon find vulns exploit information gathering caso completo exfiltrar base produccion reporte recomendaciones">
+    <section class="chapter" id="offense" data-title="ofensiva red team pentester researcher todas las defensas son perfectas hasta que prueban los tres roles donde trabaja cada uno hace encontrar una vulnerabilidad pipeline vuln del hallazgo exploit publico registros puntajes clasificaciones weaponizacion days compliance marco normativo scope acuerda antes tocar nada engagement recon find vulns information gathering caso completo exfiltrar base produccion reporte recomendaciones resumen">
       <div class="chapter-head">
         <div class="chapter-number">2</div>
         <div><h2>Ofensiva: red team, pentester y researcher</h2></div>
       </div>
-  <p class="intro">Con el threat model ya pensado y los mecanismos y políticas puestos en cada interfaz, aparece la pregunta incomoda: están bien configurados, me olvide de algo, un ataque real lo bloquearia, lo notaria, sabria reaccionar. La única forma de saberlo es probarlo de verdad: un penetration test. Esta clase presenta a los tres jugadores de la ofensiva y, sobre todo, la metodología del engagement (recon, find vulns, exploit) con un caso completo de punta a punta. Es la parte práctica que se usa en cada challenge del laboratorio.</p>
+  <p class="intro">Con el threat model ya pensado y los mecanismos y políticas puestos en cada interfaz, aparece la pregunta incómoda: están bien configurados, me olvidé de algo, un ataque real lo bloquearía, lo notaría, sabría reaccionar. La única forma de saberlo es probarlo de verdad: un penetration test. Esta clase presenta a los tres jugadores de la ofensiva, qué se hace con una vulnerabilidad una vez encontrada (disclosure, CVE, CVSS, weaponización), el marco normativo que obliga a las empresas a testearse, y sobre todo la metodología del engagement (recon, find vulns, exploit) con un caso completo de punta a punta.</p>
 
   <h3 id="offense-por-que-probar">Todas las defensas son perfectas hasta que se prueban</h3>
-  <p>Un threat model bien pensado y mecanismos y políticas en su lugar no garantizan nada por si solos. Hay que preguntarse: están correctamente configurados? Me olvide de algo? Ante un ataque, lo bloquearia? Lo notaria? Sabria como reaccionar?</p>
-  <div class="callout blue"><b>All the defences are perfect until they are tested for real.</b> De ahí el penetration test (pentest): simular el ataque para descubrir donde las defensas no aguantan.</div>
+  <p>Un threat model bien pensado y mecanismos y políticas en su lugar no garantizan nada por si solos. Hay que preguntarse: están correctamente configurados? Me olvidé de algo? Ante un ataque, lo bloquearía? Lo notaría? Sabría cómo reaccionar?</p>
+  <div class="callout blue"><b>All the defences are perfect until they are tested for real.</b> De ahí el penetration test (pentest): simular el ataque para descubrir dónde las defensas no aguantan. Es el pilar de <a href="#defensa-test">testeo de la defensa</a> visto desde el lado ofensivo.</div>
 
   <h3 id="offense-tres-roles">Los tres roles de la ofensiva</h3>
-  <p>En el plano ofensivo hay tres jugadores, del más cercano al más lejano del campo de batalla. No es una separación tajante, hay mucha sinergia: un red team tiene pentesters en su equipo, y todos aprenden de las técnicas nuevas de los researchers.</p>
+  <p>En el plano ofensivo hay tres players, del más cercano al más lejano del campo de batalla: red team, pentester y researcher. No es una separación tajante, hay mucha sinergia: un red team tiene pentesters en su equipo, los pentesters y red teams aprenden de las técnicas nuevas de los researchers, y en general tanto los miembros de un red team como los pentesters van rotando de rol.</p>
   <div class="table-wrap"><table>
-    <thead><tr><th>Rol</th><th>Alcance</th><th>Objetivo</th></tr></thead>
+    <thead><tr><th>Rol</th><th>Alcance</th><th>Objetivo (goal)</th></tr></thead>
     <tbody>
-      <tr><td><b>Red team</b></td><td>Multidisciplinario: físico, personas (social) y software (front y backend).</td><td>Simular ataques reales y probar las defensas de la organización en todos los planos.</td></tr>
-      <tr><td><b>Pentester</b></td><td>Especializado: web, android, hardware, intrusión, social eng. Cuanto más hábil, más áreas cubre.</td><td>Encontrar y probar vulnerabilidades, pero sin explotarlas (sin tomar ventaja de ellas).</td></tr>
-      <tr><td><b>Researcher</b></td><td>Altamente especializado en un área, lejos del campo: exploit writing, reversing, cripto, malware analysis (kernel de Windows o Android, hypervisor Xen, BIOS, hardware, sandbox).</td><td>Desarrollar vulnerabilidades y técnicas nuevas.</td></tr>
+      <tr><td><b>Red team</b></td><td>Multidisciplinario: físico, personas (social) y software (front y backend).</td><td>Simular ataques reales.</td></tr>
+      <tr><td><b>Pentester</b></td><td>Especializado: web, android, hardware, intrusión física, social eng. Cuanto más hábil, más áreas cubre.</td><td>Simular ataques reales, pero en scopes más reducidos.</td></tr>
+      <tr><td><b>Researcher</b></td><td>Altamente especializado en un área, lejos del campo de batalla.</td><td>Desarrollar vulnerabilidades y técnicas nuevas.</td></tr>
     </tbody>
   </table></div>
-  <div class="callout example"><b>El espectro entre red team y pentester.</b> Un extremo: un grupo capaz de entrar a un edificio, vulnerar las tarjetas de acceso y pawnear los datacenters, e incluso investigar los gustos personales del admin de IT para mandarle un mail targeteado que le instale software y tomar toda la infra. El otro extremo: una sola persona que revisa el código de una app web. Entre ambos hay todo un abanico.</div>
-  <div class="callout blue"><b>Pentester vs researcher.</b> El pentester busca un SQLi en una app concreta; el researcher busca formas nuevas de hacer SQLi en general. La regla que resume al red team: una cadena es tan fuerte como su eslabon más débil (a chain is only as strong as its weakest link).</div>
 
-  <h4 id="offense-disclosure">Qué se hace al encontrar una vulnerabilidad</h4>
-  <p>Los red teams y pentesters la reportan en sus informes al cliente (cuando hay contrato) o la cobran como recompensa (bug bounty). Los resultados de los researchers se hacen publicos (academia) o los usan empresas privadas en sus productos de seguridad. En general no hay forma de forzar que toda vulnerabilidad se reporte: depende de la ética de la persona o la empresa.</p>
-  <div class="callout"><b>Responsible disclosure.</b> Reportar chequeando primero con los aspectos legales, compartir los findings, coordinar un cronograma para el fix y la revalidación, con un plazo típico de 90 días para la divulgación completa (full disclosure). No debería ser necesario, pero a veces hay que "esconderse" (hide yourself) para que el reporte sea tomado en serio.</div>
-  <p class="nota">Donde trabaja cada uno: consultoria y auditorias (equipos in-house o externos), CTFs, bug bounties, la academia y el sector privado.</p>
+  <h4 id="offense-red-team">Red team</h4>
+  <p>Un equipo multidisciplinario que cubre todos los aspectos de la seguridad: físico, personas y software. Pensá en un equipo que puede planear entrar a un edificio lockpickeando las cerraduras, llegar al datacenter abriéndose paso con tarjetas de acceso clonadas y plantar software que vulnere a la empresa desde adentro.</p>
+  <div class="callout example"><b>Muy hardcore?</b> Imaginate una campaña de investigación mirando los gustos personales del admin de IT para mandarle un mail específicamente targeteado, que le instale software en su desktop, y de ahí tomar control de toda la infra.</div>
+  <div class="callout blue"><b>A chain is only as strong as its weakest link.</b> Por eso el red team es multidisciplinario: no sirve blindar el software si el eslabón débil es una cerradura o una persona. La versión chistosa del principio: la crypto puede ser irrompible, pero siempre queda la opción de agarrar al dueño de la laptop y pegarle con una llave inglesa de 5 dólares hasta que largue la password.</div>
+  <p class="nota">El objetivo es simular ataques reales, aunque a veces eso implique medidas poco usuales. Siempre bajo la ley.</p>
 
-  <h3 id="offense-scope">Scope: lo que se acuerda antes de tocar nada</h3>
-  <p>Un cliente contrata el pentest. Antes de empezar se define el scope con un contrato escrito entre el cliente y el red team:</p>
+  <h4 id="offense-pentester">Pentester</h4>
+  <p>Una persona más especializada. Los hay especialistas en apps web, apps de Android, hardware, intrusión física, ingeniería social, front y backend. Obviamente, cuanto más hábil es el pentester, más áreas cubre.</p>
+  <p>El objetivo es el mismo que el del red team (simular ataques reales), pero en alcances (scopes) más reducidos: por ejemplo "buscar vulnerabilidades en una app pero sin acceder a los servidores".</p>
+  <div class="callout warning"><b>No hay una distinción clara entre red team y pentester.</b> Es un espectro: en un extremo, un grupo capaz de vulnerar un edificio entero; en el otro, una sola persona revisando el código de una app web. La diferencia práctica es la amplitud del scope, no el título.</div>
+
+  <h4 id="offense-researcher">Researcher</h4>
+  <p>Los researchers (investigadores) son un bicho aparte: altamente especializados en un área y usualmente lejos del campo de batalla. Se enfocan en encontrar vulnerabilidades y ataques nuevos.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Área</th><th>Ejemplos de especialización</th></tr></thead>
+    <tbody>
+      <tr><td><b>Exploit writing</b></td><td>Kernel de Windows, kernel de Android, hypervisor Xen.</td></tr>
+      <tr><td><b>Reversing engineering</b></td><td>BIOS, hardware.</td></tr>
+      <tr><td><b>Cryptography</b></td><td>Signing schemes, chain analysis.</td></tr>
+      <tr><td><b>Malware analysis</b></td><td>Detección de antivirus, sandboxes.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout blue"><b>Pentester vs researcher.</b> El pentester busca un SQLi en una app concreta; el researcher busca formas nuevas de hacer SQLi en general.</div>
+
+  <h3 id="offense-jobs">Dónde trabaja cada uno</h3>
   <ul class="study-list">
-    <li><b>En que enfocarse</b> y qué se quiere lograr (pawnear la DB, ver si se puede entrar fisicamente al datacenter).</li>
-    <li><b>Qué se permite y qué no:</b> se puede interactuar con los empleados, explotar servicios en producción. Aca entran los aspectos legales y los permisos explicitos.</li>
-    <li><b>Qué info inicial hay</b> (ver black box vs white box).</li>
-    <li><b>Timeframe y restricciones,</b> y a quién se llama si algo sale mal (si el objetivo es entrar a un edificio y te descubren y llaman a la policia, a quien llamas).</li>
-    <li><b>El marco legal.</b></li>
+    <li><b>Consultoría y auditorías</b> (red team y pentester): algunas empresas tienen equipos in house, otras contratan equipos externos.</li>
+    <li><b>CTFs</b> (red team y pentester).</li>
+    <li><b>Bug bounties</b> (pentester y researcher): organizaciones que pagan una recompensa a quien encuentre una vulnerabilidad en su software.</li>
+    <li><b>Academia</b> (researcher): los resultados de investigación se hacen públicos.</li>
+    <li><b>Sector privado</b> (researcher): los resultados terminan usados por empresas privadas en sus productos de seguridad.</li>
   </ul>
-  <div class="callout"><b>Black box vs white/grey box.</b> En black box el equipo arranca de cero: es el escenario más realista de un ataque. En white/grey box el cliente da info de la infra para que el equipo no pierda tiempo buscando y se enfoque en atacar. Idealmente se convence al cliente de ir por un modelo con más información.</div>
+  <div class="callout example"><b>Researchers en el sector privado.</b> Una empresa X cuyo producto es la automatización de ataques para pentesters y red teams tiene entre sus empleados a researchers que encuentran vulns y ataques nuevos. Una empresa Y que ofrece logins de Windows con biometría necesita researchers para entender cómo funciona el login de Windows, hackearlo e integrar el login biométrico, porque Windows no ofrece ni la forma ni la documentación para hacerlo.</div>
 
-  <h3 id="offense-engagement">El engagement: recon, find vulns, exploit</h3>
-  <p>Definido el scope se pasa al engagement, el core del pentest: recolección de información, busqueda de vulnerabilidades, planning y ataque. Al terminar se arma el reporte, que no solo dice que vulns se encontraron sino como arreglarlas y priorizarlas. A alto nivel son tres etapas, pero forman un ciclo: el exploit habilita más recon.</p>
+  <h3 id="offense-disclosure">Qué se hace al encontrar una vulnerabilidad</h3>
+  <p>Los red teams y pentesters la reportan como parte de sus informes al cliente (cuando hay un contrato de por medio) o la cobran como recompensa (bug bounty). En general no hay forma de enforzar que toda vulnerabilidad sea reportada: depende de la ética de la persona o de la empresa para la que trabaja.</p>
+  <div class="callout"><b>Responsible disclosure.</b> Reportar chequeando primero con los aspectos legales, compartir los findings, coordinar un cronograma para el fix, la revalidación y la publicación, con un plazo típico de 90 días para el full disclosure. No debería ser necesario, pero a veces hay que esconderse (hide yourself) para que el reporte sea tomado en serio.</div>
+
+  <h4 id="offense-pipeline">El pipeline de una vuln, del hallazgo al exploit público</h4>
+  <p>La publicación de una vulnerabilidad arranca una comunicación, habitualmente privada, entre el researcher y el responsable del software vulnerable (los stakeholders).</p>
 
   <figure class="diag">
-    <svg viewBox="0 0 480 200" role="img" aria-label="Ciclo del engagement: Recon lleva a Find Vulns, que lleva a Exploit, y Exploit vuelve a habilitar mas Recon">
-      <rect x="30" y="80" width="110" height="46" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="85" y="108" text-anchor="middle" fill="currentColor" font-size="14">Recon</text>
-      <rect x="185" y="80" width="110" height="46" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="240" y="103" text-anchor="middle" fill="currentColor" font-size="13">Find</text>
-      <text x="240" y="118" text-anchor="middle" fill="currentColor" font-size="13">Vulns</text>
-      <rect x="340" y="80" width="110" height="46" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="395" y="108" text-anchor="middle" fill="currentColor" font-size="14">Exploit</text>
-      <line x1="140" y1="103" x2="183" y2="103" stroke="var(--linea)" stroke-width="2" marker-end="url(#ar)"/>
-      <line x1="295" y1="103" x2="338" y2="103" stroke="var(--linea)" stroke-width="2" marker-end="url(#ar)"/>
-      <path d="M 395 80 C 395 30, 85 30, 85 80" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
-      <text x="240" y="25" text-anchor="middle" fill="var(--acc2)" font-size="12">habilita más recon</text>
+    <svg viewBox="0 0 600 250" role="img" aria-label="Pipeline de disclosure: el researcher encuentra una vuln y hace private disclosure a los stakeholders, que publican un fix y lo deployean; en paralelo la vuln se publica con public disclosure hacia registros como QID, NVD y VulnDB, se le asigna un CVE con puntaje CVSS, se clasifica en OWASP o ATT and CK y se publica una PoC en un blog que eventualmente se weaponiza">
+      <rect x="8" y="90" width="95" height="34" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="55" y="112" text-anchor="middle" fill="currentColor" font-size="12">researcher</text>
+      <rect x="125" y="90" width="95" height="34" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="172" y="112" text-anchor="middle" fill="currentColor" font-size="12">new vuln</text>
+      <line x1="103" y1="107" x2="123" y2="107" stroke="var(--linea)" stroke-width="2" marker-end="url(#aro1)"/>
+
+      <path d="M 220 107 C 236 107, 236 22, 250 22" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
+      <path d="M 220 107 C 236 107, 236 62, 250 62" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
+      <path d="M 220 107 C 236 107, 236 102, 250 102" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
+      <path d="M 220 107 C 236 107, 236 142, 250 142" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
+
+      <rect x="252" y="7" width="118" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+      <text x="311" y="26" text-anchor="middle" fill="currentColor" font-size="11">public disclosure</text>
+      <rect x="252" y="47" width="118" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+      <text x="311" y="66" text-anchor="middle" fill="currentColor" font-size="11">CVE</text>
+      <rect x="252" y="87" width="118" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+      <text x="311" y="106" text-anchor="middle" fill="currentColor" font-size="11">classify</text>
+      <rect x="252" y="127" width="118" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+      <text x="311" y="146" text-anchor="middle" fill="currentColor" font-size="11">public PoC</text>
+
+      <line x1="370" y1="22" x2="398" y2="22" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
+      <line x1="370" y1="62" x2="398" y2="62" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
+      <line x1="370" y1="102" x2="398" y2="102" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
+      <line x1="370" y1="142" x2="398" y2="142" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
+
+      <text x="402" y="26" fill="currentColor" opacity="0.7" font-size="11">QID, NVD id, VulnDB</text>
+      <text x="402" y="66" fill="currentColor" opacity="0.7" font-size="11">CVSS (severidad 1 a 10)</text>
+      <text x="402" y="106" fill="currentColor" opacity="0.7" font-size="11">OWASP, ATT&amp;CK</text>
+      <text x="402" y="146" fill="currentColor" opacity="0.7" font-size="11">blog</text>
+      <path d="M 470 152 C 470 172, 460 175, 452 180" fill="none" stroke="var(--acc4)" stroke-width="1.5" marker-end="url(#aro2)"/>
+      <rect x="340" y="180" width="110" height="30" rx="6" fill="none" stroke="var(--acc4)" stroke-width="2"/>
+      <text x="395" y="199" text-anchor="middle" fill="var(--acc4)" font-size="11">weaponize</text>
+
+      <rect x="8" y="188" width="95" height="34" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="55" y="210" text-anchor="middle" fill="currentColor" font-size="12">stakeholders</text>
+      <line x1="42" y1="124" x2="42" y2="186" stroke="var(--acc2)" stroke-width="1.5" marker-end="url(#aro2)"/>
+      <line x1="68" y1="186" x2="68" y2="126" stroke="var(--acc2)" stroke-width="1.5" marker-end="url(#aro2)"/>
+      <text x="78" y="152" fill="var(--acc2)" font-size="10">private</text>
+      <text x="78" y="164" fill="var(--acc2)" font-size="10">disclosure</text>
+      <line x1="103" y1="205" x2="123" y2="205" stroke="var(--linea)" stroke-width="2" marker-end="url(#aro1)"/>
+      <rect x="125" y="188" width="95" height="34" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="172" y="210" text-anchor="middle" fill="currentColor" font-size="12">public fix</text>
+      <line x1="220" y1="205" x2="240" y2="205" stroke="var(--linea)" stroke-width="2" marker-end="url(#aro1)"/>
+      <rect x="242" y="188" width="80" height="34" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="282" y="210" text-anchor="middle" fill="currentColor" font-size="12">deploy</text>
+
       <defs>
-        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <marker id="aro1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
+        </marker>
+        <marker id="aro2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc2)"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption>De un hallazgo privado a un exploit listo para usar. La rama de abajo (fix y deploy) corre contra la rama de arriba (publicación, PoC y weaponización).</figcaption>
+  </figure>
+
+  <ol class="study-list">
+    <li><b>Private disclosure.</b> El researcher avisa a los stakeholders. En un mundo ideal no debería tener problemas por comunicar el finding; en la práctica no es mala idea usar un pseudónimo hasta estar seguro de que los responsables tienen intenciones de fixear el bug (y no de iniciarle una demanda).</li>
+    <li><b>Coordinación de plazos.</b> Se acuerdan fechas de fix y de publicación, justamente para incentivar a los responsables a hacer el fix y que no procrastinen.</li>
+    <li><b>Public fix y deploy.</b> Tras el fix, este se publica y eventualmente se deployea en los sistemas.</li>
+    <li><b>Public disclosure.</b> Recién ahí el researcher publica la vuln. Qué incluye depende de él, pero lo habitual es pedir que se le asigne un identificador único CVE junto con una explicación.</li>
+    <li><b>PoC.</b> Puede publicar también una prueba de concepto del exploit, muchas veces en un blog.</li>
+  </ol>
+  <div class="callout warning"><b>Cuánto se espera entre el fix y la publicación</b> depende de la sensibilidad de la vuln: si afecta a muchos sistemas puede haber un tiempo de gracia para que todos updateen sin revelarle al mundo la vulnerabilidad. Pero es una carrera contra el reloj: otros researchers saben que los updates contienen fixes de seguridad y están reverseándolos.</div>
+  <p class="nota">Muchas PoCs son a propósito no funcionales, para que no sean usadas por algún adversario directamente.</p>
+
+  <h4 id="offense-registros">Registros, puntajes y clasificaciones</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Sistema</th><th>Qué hace</th></tr></thead>
+    <tbody>
+      <tr><td><b>CVE</b> (Common Vulnerability Exposure)</td><td>Identificador único de la vuln. Es solo uno de muchos sistemas de registro: otros son de empresas (QID, de Qualys) u organismos gubernamentales (NVD id, de EEUU), además de VulnDB y otros.</td></tr>
+      <tr><td><b>CVSS</b> (Common Vulnerability Score)</td><td>Puntaje del 1 al 10 que dice qué tan riesgosa es y de cuánto impacto. Es una de varias formas de evaluar la severidad.</td></tr>
+      <tr><td><b>OWASP, ATT&amp;CK</b> (de Mitre)</td><td>Sistemas de categorización: a qué familia de ataques pertenece, cuántos requerimientos iniciales necesita, si es remota o local.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4 id="offense-weaponize">Weaponización, N-days y 0-days</h4>
+  <p>Eventualmente las vulns son weaponizadas: las PoCs se convierten en exploits fáciles de usar.</p>
+  <div class="callout"><b>N-day, 1-day y 0-day.</b> Los exploits que aparecen a N días de la publicación de la vuln se llaman N-days (aunque en la jerga se les dice 1-day a todos). Los exploits sin una vuln pública detrás son 0-days.</div>
+  <div class="callout danger"><b>No toda vuln llega a este pipeline.</b> No todas son comunicadas a los vendors para el fix, y muchas menos son hechas públicas. Las que quedan fuera son exactamente las que alimentan los 0-days.</div>
+
+  <h3 id="offense-compliance">Compliance: el marco normativo</h3>
+  <p>El marco normativo impone estándares que las compañías deben cumplir. Se ordenan en tres niveles: estándares gubernamentales, que bajan a estándares cross-industry y estándares de industria, y de ahí al compliance que una compañía concreta tiene que demostrar.</p>
+
+  <figure class="diag">
+    <svg viewBox="0 0 520 210" role="img" aria-label="Jerarquia de estandares: los gubernamentales derivan en estandares cross-industry y de industria, y ambos determinan el compliance que debe cumplir la compania">
+      <rect x="180" y="8" width="160" height="36" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="260" y="26" text-anchor="middle" fill="currentColor" font-size="12">Governmental</text>
+      <text x="260" y="39" text-anchor="middle" fill="currentColor" font-size="12">Standards</text>
+      <path d="M 220 44 C 200 60, 180 62, 165 76" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro3)"/>
+      <path d="M 300 44 C 320 60, 340 62, 355 76" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro3)"/>
+      <rect x="70" y="78" width="160" height="36" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="150" y="96" text-anchor="middle" fill="currentColor" font-size="12">Cross-Industry</text>
+      <text x="150" y="109" text-anchor="middle" fill="currentColor" font-size="12">Standards</text>
+      <rect x="290" y="78" width="160" height="36" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="370" y="96" text-anchor="middle" fill="currentColor" font-size="12">Industry</text>
+      <text x="370" y="109" text-anchor="middle" fill="currentColor" font-size="12">Standards</text>
+      <path d="M 150 114 C 150 140, 200 145, 235 152" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro3)"/>
+      <path d="M 370 114 C 370 140, 320 145, 285 152" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro3)"/>
+      <rect x="200" y="152" width="120" height="36" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="260" y="175" text-anchor="middle" fill="currentColor" font-size="12">Company</text>
+      <text x="340" y="175" fill="var(--acc2)" font-size="11">compliance</text>
+      <defs>
+        <marker id="aro3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
         </marker>
       </defs>
     </svg>
-    <figcaption>El exploit no es el fin sino el habilitador: cada acceso ganado abre más reconocimiento y más vulnerabilidades por encontrar.</figcaption>
+    <figcaption>La compañía no elige si se testea: hereda obligaciones de los estándares que le aplican por industria y por jurisdicción.</figcaption>
+  </figure>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Estándar</th><th>Tipo</th><th>A quién aplica</th></tr></thead>
+    <tbody>
+      <tr><td><b>PCI-DSS</b></td><td>Industria</td><td>Empresas que manejan tarjetas de crédito (payments).</td></tr>
+      <tr><td><b>HIPAA</b></td><td>Industria</td><td>Instituciones que manejan registros médicos (health).</td></tr>
+      <tr><td><b>FIPS</b></td><td>Cross-industry</td><td>Software que use criptografía.</td></tr>
+      <tr><td><b>GDPR</b></td><td>Cross-industry</td><td>Empresas en la Unión Europea que manejen datos personales.</td></tr>
+      <tr><td><b>SOC2, ISO/27001</b></td><td>Cross-industry</td><td>Marcos generales de gestión de la seguridad.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warning"><b>Cumplir un estándar no es ser seguro.</b> Los estándares imponen restricciones y exigen niveles mínimos de seguridad, pero muchos son bastante laxos y ambiguos en sus especificaciones.</div>
+  <p>El compliance es una de las razones por las que existe el mercado del pentesting: las compañías contratan pentesters y red teams para evaluar si cumplen o no con algún estándar en específico. Ciertos estándares incluso <b>requieren que haya un pentest periódico hecho por personas ajenas a la compañía</b>. Y en otros casos los pentesters presentan los resultados en términos de un estándar, para que quien esté a cargo de la seguridad del lado de la compañía pueda priorizarlos y entenderlos.</p>
+
+  <h3 id="offense-scope">Scope: lo que se acuerda antes de tocar nada</h3>
+  <p>Un cliente contrata el pentest. Antes de empezar se define el scope, que se cierra con un <b>contrato escrito</b> entre el cliente y el red team. Las cinco preguntas del scope:</p>
+  <ul class="study-list">
+    <li><b>What should we focus on?</b> Qué se quiere lograr: pawnear la DB, validar un estándar, ver si es posible acceder físicamente al datacenter.</li>
+    <li><b>What is and isn't allowed?</b> Se puede interactuar con los empleados, se pueden explotar vulns sobre servicios en producción. Acá hay que considerar los aspectos legales y pedir permisos explícitos.</li>
+    <li><b>What initial info do we have?</b> Ver black box vs white box.</li>
+    <li><b>What is the timeframe? Any schedule restriction?</b></li>
+    <li><b>What is the legal framework?</b> Y a quién se llama si algo sale mal: si el objetivo es entrar a un edificio y te descubren y llaman a la policía, a quién llamás.</li>
+  </ul>
+  <div class="callout"><b>Black box vs white/grey box.</b> En black box el equipo arranca de cero: es el escenario más realista para simular un ataque. En white/grey box el cliente da info de la infra para que el equipo no pierda tanto tiempo buscando y se enfoque más en el ataque. Idealmente se trata de convencer al cliente de ir por un modelo con más información.</div>
+
+  <h3 id="offense-engagement">El engagement: recon, find vulns, exploit</h3>
+  <p>Definido el scope se pasa al engagement, el core del pentest: la recolección de información, la búsqueda de vulnerabilidades, el planning y el ataque. Puesto en tres objetivos: <b>learn about the env</b>, <b>find impactful vulnerabilities</b> y <b>test them (proof)</b>. A alto nivel son tres etapas, pero forman un ciclo, porque el exploit habilita más recon.</p>
+
+  <figure class="diag">
+    <svg viewBox="0 0 480 210" role="img" aria-label="El engagement como ciclo: entra el scope, adentro Recon lleva a Vuln Finding y a Exploit, que vuelve a Recon, y sale el Report">
+      <circle cx="180" cy="105" r="95" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="180" y="42" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">Engagement</text>
+      <text x="180" y="82" text-anchor="middle" fill="currentColor" font-size="13">Recon</text>
+      <text x="228" y="128" text-anchor="middle" fill="currentColor" font-size="13">Vuln finding</text>
+      <text x="118" y="128" text-anchor="middle" fill="currentColor" font-size="13">Exploit</text>
+      <path d="M 205 88 C 232 96, 238 106, 236 114" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro4)"/>
+      <path d="M 196 140 C 170 152, 130 148, 116 138" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro4)"/>
+      <path d="M 116 118 C 118 100, 128 90, 152 82" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro4)"/>
+      <path d="M 300 28 C 268 20, 250 30, 244 42" fill="none" stroke="var(--acc2)" stroke-width="2" marker-end="url(#aro5)"/>
+      <text x="330" y="32" fill="var(--acc2)" font-size="12">Scope</text>
+      <path d="M 244 168 C 252 180, 272 190, 300 184" fill="none" stroke="var(--acc2)" stroke-width="2" marker-end="url(#aro5)"/>
+      <text x="330" y="188" fill="var(--acc2)" font-size="12">Report</text>
+      <defs>
+        <marker id="aro4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
+        </marker>
+        <marker id="aro5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc2)"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption>El exploit no es el fin sino el habilitador: cada acceso ganado abre más reconocimiento y más vulnerabilidades por encontrar. El scope entra al ciclo y el reporte sale de él.</figcaption>
   </figure>
 
   <h4 id="offense-recon">Recon / Information Gathering (IG)</h4>
-  <p>Ver que hay y como se conectan las piezas: hosts vivos, puertos abiertos, reglas de firewall, DNS, procesos, usuarios, servicios y versiones corriendo, permisos, programas, y nombres, emails y roles de personas. En resumen: tener visibilidad. En white box el cliente aporta parte de esta info; en black box se busca todo desde cero.</p>
+  <p>Qué hay? Qué máquinas están corriendo? Qué puertos están abiertos? Qué servicios y qué versiones están live? Qué personas tienen acceso? Qué roles hay? El recon busca ver dónde está cada cosa y cómo se conectan las piezas. Lo que se releva:</p>
+  <ul class="study-list">
+    <li><b>Red:</b> hosts, puertos, reglas de firewall, DNS.</li>
+    <li><b>Máquina:</b> procesos, usuarios, servicios, permisos, versiones de programas.</li>
+    <li><b>Personas:</b> nombres, emails, roles.</li>
+  </ul>
+  <div class="callout blue"><b>Learn, visibility and plan the next step.</b> En resumen: tener visibilidad y saber qué hay. En un modelo white box el cliente aporta parte de esta info; en black box hay que buscar todo desde cero.</div>
 
   <h4 id="offense-find-vulns">Find vulns</h4>
-  <p>De lo que aparecio en recon, buscar que puede ser vulnerable: máquinas accesibles por red que no deberían estarlo, puertos abiertos de más, servicios con versiones viejas vulnerables, roles con demasiados accesos. Se busca qué se puede leer, escribir o ejecutar que uno no debería.</p>
-  <div class="callout warning"><b>Buscar vulns relevantes, no ruido.</b> "Una máquina interna respondio un ping" es bullshit. "El SSH está abierto con credenciales por default" es una cookie: sirve para movernos dentro, ganar accesos y habilitar más recon.</div>
+  <p>De lo que se descubrió en el recon, buscar qué cosas pueden ser vulnerables: hay máquinas accesibles por red que no deberían estarlo? Hay puertos abiertos que no deberían? Hay servicios corriendo con versiones viejas vulnerables? Hay roles con demasiados accesos? La pregunta guía es <b>what can we read, write or exec that we shouldn't?</b>, más los info leaks y las escaladas de privilegio, y hay que dejar prueba de su existencia.</p>
+  <div class="callout warning"><b>Buscar vulns relevantes al cliente y al engagement, no ruido.</b> "Una máquina interna respondió un ping" es bullshit. "El SSH está abierto con credenciales por default" es una cookie: sirve para movernos dentro de la empresa, ganar accesos y habilitar más recon.</div>
+  <div class="callout blue"><b>En general las cosas NO son vulnerables.</b> Por eso el IG/recon es importantísimo: es lo que permite encontrar muchas más cosas con las que después intentar romper. Sin superficie relevada no hay nada que probar.</div>
 
   <h4 id="offense-exploit">Exploit</h4>
-  <p>Es el uso de una vuln a nuestra ventaja. No toda vuln es exploitable: puede existir pero no poder ejecutarse o no servir para nada útil (se reporta igual, pero no da más accesos). Cuando funciona se traduce en tener más privilegios (privilege escalation), moverse lateralmente (lateral movement) o poder ver más (más recon). El objetivo de explotar es habilitar más reconocimiento.</p>
-  <div class="callout danger"><b>No cruzar el scope ni lo legal.</b> El exploit toma ventaja real de la vuln (leer, escribir, ejecutar de verdad), pero siempre dentro de lo acordado: si el objetivo es exfiltrar la DB de producción con datos sensibles reales, hacerlo puede ser un delito. El objetivo real pasa a ser probarle al cliente que se puede exfiltrar, sin hacerlo.</div>
+  <p>Es el uso de una vuln a nuestra ventaja: tomar ventaja de ella para efectivamente leer, escribir o ejecutar. No toda vuln es explotable: puede existir pero no poder ejecutarse o no servir para hacer nada útil con ella. Se reporta igual, pero no sirve para adquirir más accesos.</p>
+  <p>Cuando funciona se traduce en cuatro cosas: <b>privilege escalation</b> (tener más privilegios), <b>lateral movement</b> (moverse lateralmente), <b>see further</b> (poder ver más, o sea habilitar más IG/recon) y <b>get the cookie</b>.</p>
+  <div class="callout danger"><b>Do not cross scope or legals.</b> El exploit toma ventaja real de la vuln, pero siempre dentro de lo acordado: si el objetivo es exfiltrar la DB de producción con datos privados sensibles de usuarios reales, hacerlo podría ser un delito. El objetivo real pasa a ser probarle al cliente que se puede filtrar toda la DB, sin hacerlo.</div>
 
   <h3 id="offense-caso">Caso completo: exfiltrar la base de producción</h3>
-  <p>El cliente pide, en black box:</p>
+  <p>El cliente contrata un pentest y define el scope:</p>
   <ul class="study-list">
-    <li><b>Objetivo:</b> exfiltrar la DB de producción (en realidad, probar que se puede sin hacerlo, porque exfiltrarla de verdad no es para los legales).</li>
-    <li><b>Scope:</b> escanear esta OK, hay dos IPs publicas accesibles (.47 y .48), usar credenciales esta OK pero no se dan, social engineering NO, usar exploits sobre producción NO. Sin más info (black box).</li>
+    <li><b>Goal:</b> exfiltrar la DB de producción. Como eso no es para los legales, el objetivo real es <b>probar</b> que la DB de producción puede ser exfiltrada.</li>
+    <li><b>Permitido:</b> escanear está OK; usar credenciales está OK, pero no se dan credenciales.</li>
+    <li><b>Prohibido:</b> ingeniería social NO, usar exploits sobre producción NO.</li>
+    <li><b>Info inicial:</b> black box, solo se dice que hay dos IPs públicas accesibles, <code>pub.47</code> y <code>pub.48</code>.</li>
   </ul>
 
   <ol class="study-list">
-    <li><b>Recon con nmap sobre .47 y .48.</b> Se ven puertos (por ejemplo 443 en la .47, y 443 y 7172 en la .48), se infiere el OS y se identifican servicios y versiones.</li>
-    <li><b>Más recon, no atacar el servicio.</b> Hay un servidor HTTP, pero el cliente dijo "nada de atacar un servicio", así que ese camino se descarta. Queda intentar loguearse y ver que hay detras.</li>
-    <li><b>Probar el login.</b> Mails y passwords: nada. Enganar a un empleado: prohibido (social eng). Crear una cuenta: pide un registration code que no tenemos. Abusar del password recovery: se ve solido. En la .47 no hay suerte, en la .48 si.</li>
-    <li><b>Find vulns: probar SQLi.</b> Con entradas tipo <code>john' or 1=1</code>, <code>john" or 1=1</code>, <code>john' || pg_sleep(1) --</code> se descubre que hay un SQL detras, que el input es vulnerable (SQLi, y por como responde, un blind SQLi), y hasta que base es.</li>
-    <li><b>Exploit: aprender del entorno.</b> Inyectando queries se averigua qué es Postgres 12.1 corriendo como superuser. Con eso se arma el exploit: <code>COPY (SELECT '') TO PROGRAM '...shellcode...'</code> para conseguir un reverse shell en la máquina que hostea la DB (un programa que se conecta de vuelta hacia nuestros servidores).</li>
-    <li><b>Más recon, ahora desde adentro.</b> Con un agente en esa máquina: <code>ps aux</code>, <code>ip addr</code>, <code>ss -tuplan</code>, <code>groups</code>. Aparece un Apache usando el mismo puerto 7172 y la misma IP publica .48: la máquina de la DB y la del Apache son la misma. Tiene sentido, en testing se suele levantar toda la infra en una sola máquina.</li>
-    <li><b>Recon de la red interna.</b> Desde adentro, un <code>nmap</code> a la red interna revela cosas invisibles desde afuera, entre ellas un servidor DNS.</li>
-    <li><b>Mapear roles con el DNS.</b> Un DNS mapea hostnames a IPs y muchas veces IPs a hostnames. Con <code>nslookup</code> se aprende el rol de cada máquina: web.prod, db.prod, web.test, db.test. Un saludo al personal de IT por simplificar el trabajo.</li>
-    <li><b>Identificar producción y atacar.</b> El entorno de testing tenia credenciales por default; producción no. Identificada la db.prod, se ataca y profit (probando que se puede, sin exfiltrar de verdad).</li>
+    <li><b>Recon con nmap.</b> <code>nmap pub.47</code> y <code>nmap pub.48</code>: se ve el puerto 443 en la .47 y el 7172 en la .48, se infiere qué OS están corriendo (Linux en las dos) y qué servicios y versiones están live.</li>
+    <li><b>Más recon, no atacar el servicio.</b> Hay un server HTTP y se podría ver si es explotable, pero ese camino se descarta porque el cliente dijo explícitamente "nada de atacar un servicio". Queda intentar loguearse y ver si hay algo más detrás.</li>
+    <li><b>Probar el login.</b> Se prueban mails y passwords: nada. Se podría engañar a un empleado para que nos dé acceso, pero el cliente dijo "nada de ingeniería social". Los mails salen de redes sociales, sitios públicos y listas de defaults.</li>
+    <li><b>Otros caminos de entrada, descartados.</b> Crearse una cuenta? Pide un registration code que no tenemos. Abusar del password recovery? Se ve sólido.</li>
+    <li><b>Entra por la lista de defaults.</b> En la .47 no hubo suerte, pero en la .48 sí: <code>email: test@test.com</code>, <code>pass: testing</code>.</li>
+    <li><b>Find vulns: probar SQLi.</b> Sobre un formulario interno se prueba <code>john' or 1=1</code> y <code>john" or 1=1</code> (dudosos) y finalmente <code>john' || pg_sleep(1) --</code>, que confirma. Con eso se sabe que hay un SQL detrás, que el input es vulnerable a SQL injection, que es un <b>blind SQLi</b> (por cómo se comporta) y hasta qué base de datos es.</li>
+    <li><b>Recon vía SQLi.</b> Inyectando queries se aprende sobre la DB y el entorno: Postgres 12.1, corriendo con rol superuser.</li>
+    <li><b>Exploit: reverse shell.</b> Con esa info se arma el exploit: <code>COPY (SELECT '') TO PROGRAM '...shellcode...';</code> ejecuta un programa en la máquina que hostea la DB, que se conecta de vuelta hacia nuestros servidores (<code>pub.attacker:80</code>) para establecer un shell. Queda un agente adentro.</li>
+    <li><b>Más recon, ahora desde adentro.</b> <code>ps aux</code>, <code>ip addr</code>, <code>ss -tuplan</code>, <code>groups</code>: qué procesos corren, qué usuarios hay, qué puertos están en uso. Aparece un Apache usando el mismo puerto 7172 y la misma IP pública .48. Conclusión: la máquina de la DB y la del Apache son la misma (<code>int.16</code>). Tiene sentido, en ambientes de testing muchas veces se levanta toda la infra en una única máquina.</li>
+    <li><b>Recon de la red interna.</b> <code>nmap int.0/24</code> desde adentro revela cosas invisibles desde afuera: aparecen <code>int.17</code>, <code>int.18</code> y un servidor DNS.</li>
+    <li><b>Mapear roles con el DNS.</b> Un DNS no solo mapea hostnames a IPs sino, muchas veces, IPs a hostnames. Con <code>nslookup</code> se aprende el rol de cada máquina: <code>web.prod = int.17</code>, <code>db.prod = int.18</code>, <code>web.test = int.16</code>, <code>db.test = int.16</code>. Un saludo al personal de IT por simplificarnos el trabajo.</li>
+    <li><b>Identificar producción y atacar.</b> El entorno de testing tenía credenciales por default. Identificada la <code>db.prod</code> en <code>int.18</code>, se ataca y profit (probando que se puede, sin exfiltrar de verdad).</li>
   </ol>
 
   <figure class="diag">
-    <svg viewBox="0 0 560 210" role="img" aria-label="Attack path del caso: desde el atacante externo a la IP publica .48, luego reverse shell a la maquina de la DB, recon interno, DNS y llegada a la db de produccion">
-      <rect x="20" y="90" width="120" height="46" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
-      <text x="80" y="112" text-anchor="middle" fill="currentColor" font-size="12">atacante</text>
-      <text x="80" y="126" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">externo</text>
-      <rect x="185" y="90" width="120" height="46" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="245" y="108" text-anchor="middle" fill="currentColor" font-size="12">pub .48</text>
-      <text x="245" y="124" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">SQLi, Postgres</text>
-      <rect x="350" y="30" width="120" height="46" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="410" y="52" text-anchor="middle" fill="currentColor" font-size="12">DNS interno</text>
-      <text x="410" y="66" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">roles</text>
-      <rect x="350" y="150" width="120" height="46" rx="8" fill="none" stroke="var(--acc4)" stroke-width="2"/>
-      <text x="410" y="172" text-anchor="middle" fill="currentColor" font-size="12">db.prod</text>
-      <text x="410" y="186" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">objetivo</text>
-      <line x1="140" y1="113" x2="183" y2="113" stroke="var(--linea)" stroke-width="2" marker-end="url(#ar2)"/>
-      <path d="M 305 100 C 340 80, 345 65, 350 55" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar2)"/>
-      <path d="M 410 76 C 410 110, 410 130, 410 148" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar2)"/>
-      <text x="323" y="150" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="10">reverse shell</text>
+    <svg viewBox="0 0 580 230" role="img" aria-label="Attack path del caso: el atacante externo entra por la IP publica .48 con un SQLi sobre Postgres, obtiene un reverse shell hacia pub.attacker, descubre que es la misma maquina int.16 que hostea web.test y db.test, hace recon interno, consulta el DNS y llega a db.prod en int.18">
+      <rect x="10" y="92" width="105" height="44" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="62" y="110" text-anchor="middle" fill="currentColor" font-size="12">atacante</text>
+      <text x="62" y="126" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">pub.attacker</text>
+      <rect x="165" y="92" width="130" height="44" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="230" y="110" text-anchor="middle" fill="currentColor" font-size="12">pub.48 = int.16</text>
+      <text x="230" y="126" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">web.test + db.test</text>
+      <text x="230" y="152" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="10">creds default, SQLi, Postgres 12.1 superuser</text>
+      <rect x="350" y="20" width="120" height="44" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="410" y="38" text-anchor="middle" fill="currentColor" font-size="12">DNS interno</text>
+      <text x="410" y="54" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">roles de cada IP</text>
+      <rect x="350" y="160" width="120" height="44" rx="8" fill="none" stroke="var(--acc4)" stroke-width="2"/>
+      <text x="410" y="178" text-anchor="middle" fill="currentColor" font-size="12">db.prod = int.18</text>
+      <text x="410" y="194" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">objetivo</text>
+      <line x1="115" y1="106" x2="163" y2="106" stroke="var(--linea)" stroke-width="2" marker-end="url(#aro6)"/>
+      <text x="139" y="100" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="10">login</text>
+      <line x1="163" y1="124" x2="117" y2="124" stroke="var(--acc4)" stroke-width="2" marker-end="url(#aro7)"/>
+      <text x="139" y="140" text-anchor="middle" fill="var(--acc4)" font-size="10">reverse shell</text>
+      <path d="M 295 100 C 330 88, 340 66, 348 50" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#aro8)"/>
+      <text x="332" y="76" text-anchor="middle" fill="var(--acc2)" font-size="10">nmap int.0/24</text>
+      <path d="M 410 64 C 410 100, 410 130, 410 158" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#aro8)"/>
+      <text x="460" y="115" text-anchor="middle" fill="var(--acc2)" font-size="10">nslookup</text>
       <defs>
-        <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <marker id="aro6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
+        </marker>
+        <marker id="aro7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc4)"/>
+        </marker>
+        <marker id="aro8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc2)"/>
         </marker>
       </defs>
     </svg>
-    <figcaption>El attack path encadena abusos: login vulnerable, SQLi, reverse shell, recon interno y el DNS que regala los roles hasta llegar a la base de producción.</figcaption>
+    <figcaption>El attack path encadena abusos: credenciales por default, SQLi, reverse shell, recon interno y el DNS que regala los roles hasta llegar a la base de producción.</figcaption>
   </figure>
 
-  <div class="callout blue"><b>En un pentest siempre se trabaja con supuestos.</b> Si la .48 tiene usuarios de testing, es probable (no confirmado) que la .47 sea producción. Si la .48 tiene Postgres, la .47 también. A medida que se avanza en el engagement, los supuestos se van ajustando.</div>
+  <div class="callout blue"><b>En un pentest siempre se trabaja con supuestos.</b> Si la .48 tiene usuarios de testing, es probable (aunque no confirmado) que la .47 sea la máquina de producción. Si la .48 tiene Postgres, la .47 también. A medida que se avanza en el engagement hay que ir cambiándolos.</div>
 
   <h4 id="offense-reporte">El reporte y las recomendaciones</h4>
-  <p>El reporte al cliente no solo incluye el attack path (como se accedio y se llego a la DB) sino también las otras vulns que se vieron en el camino y las medidas a aplicar: arreglar el SQLi, no exponer el entorno de testing, poner un firewall, aislar producción de testing. No es bloquear una parte, es mejorar el todo: seguridad en profundidad.</p>
-  <p class="ref">La metodología de esta clase (recon, find vulns, exploit, trabajar con supuestos) es la que se aplica en cada challenge del laboratorio. Los conceptos de confianza mal ubicada que se explotan aca vienen del <a href="#threatmodel">threat model de la clase 1</a>.</p>
+  <p>Al finalizar se arma el reporte. No solo le decimos al cliente qué vulns encontramos, sino que lo orientamos en cómo arreglarlas y priorizarlas. Qué lleva:</p>
+  <ul class="study-list">
+    <li><b>Findings:</b> las vulns encontradas, incluyendo el attack path (cómo se accedió y se llegó a la DB) y las otras vulns vistas en el camino.</li>
+    <li><b>Impact / risk.</b></li>
+    <li><b>How to trigger it (proof):</b> la prueba de que existe.</li>
+    <li><b>How to fix it.</b></li>
+    <li><b>Recommendations.</b></li>
+  </ul>
+  <div class="callout blue"><b>Es crítico darle valor al cliente, no solo un listado de vulns.</b> Presentarlas en términos de una clasificación (como <a href="#offense-registros">OWASP</a>) u ordenarlas por puntaje (como el CVSS) ayuda al cliente a priorizar qué arreglar primero.</div>
+  <p>En el caso, las recomendaciones fueron: no usar credenciales por default, fixear el SQLi, no exponer el entorno de testing, aislar producción de testing y poner un firewall. No es bloquear una parte, es mejorar el todo: <a href="#defensa-sec-in-depth">sec in depth</a>.</p>
 
-  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Diferenciar red team, pentester y researcher (alcance y objetivo de cada uno). Que es el scope y que se acuerda antes de un engagement; black box vs white box. Las tres etapas del engagement y por que forman un ciclo (el exploit habilita más recon). Distinguir una vuln relevante de ruido (ping interno vs SSH con creds default). Por que no toda vuln es exploitable. Reconstruir el caso completo: como se pasa de dos IPs publicas a la DB de producción encadenando SQLi, reverse shell, recon interno y DNS. Que va en el reporte.</div>
+  <h3 id="offense-resumen">El resumen del engagement</h3>
+  <p>Get info, find weak points, exploit. Y repetir: cada vuelta del ciclo suma información y accesos. Con eso se construye el <b>attack path</b>, y recién ahí, profit.</p>
+  <p class="ref">La metodología de esta clase (recon, find vulns, exploit, trabajar con supuestos) es la que se aplica en cada challenge del laboratorio: ver <a href="#permisos">permisos de Unix</a> y <a href="#escalada">escalada de privilegios</a>. Los conceptos de confianza mal ubicada que se explotan acá vienen del <a href="#threatmodel">threat model de la clase 1</a>, y el lado defensivo de todo esto es la <a href="#defensa">clase 3</a>.</p>
+
+  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Diferenciar red team, pentester y researcher (alcance y objetivo de cada uno). Qué es el scope, las cinco preguntas que lo definen y por qué se cierra con un contrato escrito; black box vs white box. Las tres etapas del engagement y por qué forman un ciclo (el exploit habilita más recon). Distinguir una vuln relevante de ruido (ping interno vs SSH con creds default). Por qué no toda vuln es explotable y en qué se traduce un exploit exitoso. El pipeline de disclosure completo: private disclosure, fix, deploy, public disclosure, CVE, PoC, weaponización; diferenciar CVE de CVSS y de OWASP/ATT&amp;CK; qué es un N-day y qué es un 0-day. Qué es el compliance, ejemplos de estándares de industria vs cross-industry, y por qué el marco normativo es una fuente de trabajo para los pentesters. Reconstruir el caso completo: cómo se pasa de dos IPs públicas a la DB de producción encadenando credenciales default, SQLi, reverse shell, recon interno y DNS. Qué va en el reporte.</div>
+
+    </section>
+
+    <section class="chapter" id="defensa" data-title="defensa prevenir mitigar responder testear los cuatro pilares prevent que ataque entre simplicity open security obscurity minimum reducir superficie home made sec mitigate duela poco depth separation minimo privilegio fail safe respond detectar reaccionar monitoring auditing incident response test poner las defensas prueba casos cuando falta pilar barings bank sin separacion roles wep rc4 sobre crypto cerrada chrome por procesos termocupla hardware maquinas votacion opaco complejo takeaways">
+      <div class="chapter-head">
+        <div class="chapter-number">3</div>
+        <div><h2>Defensa: prevenir, mitigar, responder y testear</h2></div>
+      </div>
+  <p class="intro">Del otro lado del pentest está el blue team: el que tiene que diseñar el sistema para que el ataque no entre, y para que cuando entre igual duela poco. Esta clase da los cuatro pilares de la defensa (prevención, mitigación, respuesta y testeo) con los principios concretos que cuelgan de cada uno, y los ilustra con casos reales donde faltó justo uno: el banco Barings, el WEP de la wifi, la arquitectura de Chrome, una termocupla de estufa y las máquinas de votación electrónica.</p>
+
+  <h3 id="defensa-cuatro-pilares">Los cuatro pilares</h3>
+  <p>En el plano defensivo hay cuatro pilares: prevención, mitigación, respuesta y testeo. No es una taxonomía completa ni pretende serlo, pero funciona bastante bien como guía o blueprint para diseñar e implementar mecanismos de defensa: para cada mecanismo que se agrega conviene preguntarse a cuál de los cuatro contribuye, y qué pilar quedó vacío.</p>
+
+  <figure class="diag">
+    <svg viewBox="0 0 520 300" role="img" aria-label="Los cuatro pilares de la defensa y sus principios: Prevent con Simplicity, Open, Minimum y No home made sec; Mitigate con Sec in depth, Separation, Minimum y Fail safe; Respond con Monitoring, Auditing e Incident response; Test con Test your defenses">
+      <rect x="12" y="14" width="120" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="72" y="39" text-anchor="middle" fill="currentColor" font-size="14">Prevent</text>
+      <text x="175" y="24" fill="currentColor" font-size="12">Simplicity</text>
+      <text x="175" y="42" fill="currentColor" font-size="12">Open</text>
+      <text x="175" y="60" fill="currentColor" font-size="12">Minimum</text>
+      <text x="175" y="78" fill="currentColor" font-size="12">No home made sec</text>
+      <path d="M 132 34 L 152 34 L 152 20 L 168 20 M 152 34 L 168 34 M 152 34 L 152 56 L 168 56 M 152 56 L 152 74 L 168 74" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+
+      <rect x="12" y="98" width="120" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="72" y="123" text-anchor="middle" fill="currentColor" font-size="14">Mitigate</text>
+      <text x="175" y="108" fill="currentColor" font-size="12">Sec in depth</text>
+      <text x="175" y="126" fill="currentColor" font-size="12">Separation</text>
+      <text x="175" y="144" fill="currentColor" font-size="12">Minimum</text>
+      <text x="175" y="162" fill="currentColor" font-size="12">Fail safe</text>
+      <path d="M 132 118 L 152 118 L 152 104 L 168 104 M 152 118 L 168 118 M 152 118 L 152 140 L 168 140 M 152 140 L 152 158 L 168 158" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+
+      <rect x="12" y="182" width="120" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="72" y="207" text-anchor="middle" fill="currentColor" font-size="14">Respond</text>
+      <text x="175" y="192" fill="currentColor" font-size="12">Monitoring</text>
+      <text x="175" y="210" fill="currentColor" font-size="12">Auditing</text>
+      <text x="175" y="228" fill="currentColor" font-size="12">Incident response</text>
+      <path d="M 132 202 L 152 202 L 152 188 L 168 188 M 152 202 L 168 202 M 152 202 L 152 224 L 168 224" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+
+      <rect x="12" y="248" width="120" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="72" y="273" text-anchor="middle" fill="currentColor" font-size="14">Test</text>
+      <text x="175" y="272" fill="currentColor" font-size="12">Test your defenses</text>
+      <path d="M 132 268 L 168 268" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+
+      <path d="M 500 60 C 505 130, 505 190, 500 250" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-dasharray="5 4"/>
+      <text x="470" y="155" text-anchor="middle" fill="var(--acc2)" font-size="11">el testeo</text>
+      <text x="470" y="169" text-anchor="middle" fill="var(--acc2)" font-size="11">valida los</text>
+      <text x="470" y="183" text-anchor="middle" fill="var(--acc2)" font-size="11">otros tres</text>
+    </svg>
+    <figcaption>Blueprint de la defensa. Cada pilar aporta principios distintos y el testeo es el que confirma que los otros tres funcionan de verdad.</figcaption>
+  </figure>
+
+  <h3 id="defensa-prevent">Prevent: que el ataque no entre</h3>
+  <p>Prevenir es mejor que curar, frase milenaria totalmente vigente. En todo momento, si se puede evitar el hack, hay que evitarlo: recuperarse tras un hack va a ser mucho más costoso que haberlo prevenido. De la prevención cuelgan cuatro principios.</p>
+
+  <h4 id="defensa-simplicity">Simplicity</h4>
+  <p>Un sistema difícil de usar deja margen para errores, y ese margen es la vulnerabilidad:</p>
+  <ul class="study-list">
+    <li><b>Difícil de configurar:</b> se termina dejando agujeros abiertos, casi siempre sin darse cuenta.</li>
+    <li><b>Difícil o tedioso de usar:</b> los usuarios van a ser los primeros en saltearse los mecanismos de seguridad (la contraseña en un post it, el permiso abierto "por ahora").</li>
+  </ul>
+  <p>Pero simplicidad no se refiere solamente a "fácil de usar", sino a que el sistema en sí sea simple. Un sistema complejo tiene demasiadas piezas móviles y las posibles interacciones internas hacen que sea fácil pasarse por alto alguna vulnerabilidad.</p>
+  <div class="callout blue"><b>La complejidad es superficie de ataque.</b> No hace falta que ninguna pieza esté mal: alcanza con que nadie pueda razonar sobre todas las combinaciones a la vez.</div>
+
+  <h4 id="defensa-open">Open, no security by obscurity</h4>
+  <div class="callout"><b>Principio de Kerckhoff.</b> Un sistema criptográfico debe ser seguro aun si el adversario sabe absolutamente todo de él excepto la clave secreta.</div>
+  <p>El principio se extrapola a sistemas de seguridad en general: un sistema debe ser seguro aun si se conoce absolutamente todo de él. Ocultar los detalles de implementación como única protección es totalmente frágil, y es cuestión de tiempo hasta que alguien lo reversee y venga con un ataque. Open source rules.</p>
+  <div class="callout warning"><b>El asterisco.</b> En ciertas situaciones ocultar detalles sí potencia la defensa (no publicar la versión exacta de un servicio, por ejemplo), pero nunca debe ser la única capa. La regla es "no <i>rely</i> on obscurity", no "no obscurity".</div>
+
+  <h4 id="defensa-minimum-prevent">Minimum: reducir la superficie de ataque</h4>
+  <p>Alineado con simplicidad: un sistema lo más chico posible reduce el área expuesta a problemas. Menos servicios corriendo, menos puertos abiertos, menos features, menos dependencias, menos código: menos lugares donde puede haber un bug explotable.</p>
+
+  <h4 id="defensa-no-home-made">No home made sec</h4>
+  <p>Implementar mecanismos de seguridad es difícil, e implementarlos bien es más difícil aún. La regla es siempre usar implementaciones estándar y no salir a implementar cosas custom.</p>
+  <div class="callout danger"><b>Crypto is <i>super</i> hard.</b> En criptografía la regla es todavía más estricta: usar lo que ya está implementado y auditado. Una implementación propia puede pasar todos los tests funcionales (encripta y desencripta bien) y ser trivialmente rompible.</div>
+  <p class="nota">Dicho eso, ciertas situaciones sí requieren implementaciones hechas a medida. Es una excepción, no el default, y viene con la obligación de exponerla a revisión (ver <a href="#defensa-open">Open</a>).</p>
+
+  <h3 id="defensa-mitigate">Mitigate: que el ataque duela poco</h3>
+  <p>Si no podés evitar el hack, hacé que tenga el menor impacto y daño posible. La mitigación asume que el adversario ya está adentro y se pregunta hasta dónde puede llegar.</p>
+
+  <h4 id="defensa-sec-in-depth">Security in depth</h4>
+  <p>Seguridad en lo profundo: checks a lo largo de toda la cadena de procesamiento, no solo en la puerta de entrada. Si un adversario logró llegar al servidor productivo, que no pueda llegar a la base de datos. Tal vez tire producción por unas horas, pero al menos no se llevó la data de los clientes.</p>
+
+  <h4 id="defensa-separation">Separation</h4>
+  <p>Separar y aislar: cuando hay un hack, queremos que el adversario no pueda moverse hacia otras áreas, sistemas o procesos. Si dos sistemas conviven en la misma área, es probable que el adversario pueda infectar uno desde el otro. Si están totalmente aislados, queda en un callejón sin salida.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Eje</th><th>Qué se separa</th></tr></thead>
+    <tbody>
+      <tr><td><b>Espacio</b></td><td>Memoria (un proceso no lee la memoria de otro) y físico (máquinas, redes y datacenters distintos).</td></tr>
+      <tr><td><b>Responsabilidades</b></td><td>Roles humanos: quien opera no es quien controla (operator vs controller).</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warning"><b>La aislación total no existe.</b> En la práctica siempre queda algún canal (una red, un disco compartido, una persona con acceso a las dos partes). El objetivo no es el ideal sino el gradiente: cuanto más se pueda aislar, mejor. Y separación no es solo software y hardware, es también a nivel humano.</div>
+
+  <h4 id="defensa-minimum-mitigate">Minimum: mínimo privilegio</h4>
+  <p>Si una cuenta es hackeada, el adversario va a tener menos poder si esa cuenta tiene la mínima cantidad de recursos y accesos. Se minimiza en cuatro ejes: <b>trust</b> (en quién y en qué se confía), <b>resources</b> (CPU, memoria, disco, red), <b>privileges</b> (qué operaciones puede hacer) y <b>accesses</b> (a qué datos y sistemas llega).</p>
+
+  <h4 id="defensa-fail-safe">Fail safe</h4>
+  <p>Cuando algo salga mal, el sistema debería defaultear a un estado de mínimo privilegio, un estado seguro. El disparador es cualquiera de estos casos:</p>
+  <ul>
+    <li>Si un valor es <b>inválido</b>.</li>
+    <li>Si una operación <b>falla</b>.</li>
+    <li>Si pasa algo <b>inesperado</b>.</li>
+    <li>Si <b>falta</b> algo (un archivo de config, un permiso, un campo).</li>
+  </ul>
+  <div class="callout"><b>Fail safe.</b> Ante el error, el default es "no access, no privileges, no resources": denegar, no permitir. El sistema falla, pero falla de forma segura.</div>
+  <div class="callout warning"><b>El antipatrón.</b> El bug clásico es el <code>catch</code> que ante un error de autorización devuelve "permitido" porque nadie pensó ese camino, o la config faltante que se interpreta como "sin restricciones".</div>
+
+  <h3 id="defensa-respond">Respond: detectar y reaccionar</h3>
+  <h4 id="defensa-monitoring-auditing">Monitoring y auditing</h4>
+  <p>Son dos caras de la misma moneda, y las dos sirven para <b>detectar</b>, pero en tiempos distintos:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Cuándo</th><th>Para qué</th></tr></thead>
+    <tbody>
+      <tr><td><b>Monitoring</b></td><td>Ahora, con alertas.</td><td>Detección temprana, mientras el evento está pasando.</td></tr>
+      <tr><td><b>Auditing</b></td><td>Después.</td><td>Detección o análisis forense de un evento de seguridad que ya pasó.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout blue">Sin logs y sin alertas no hay respuesta posible: no se puede reaccionar a algo que no se ve, ni reconstruir un incidente que no dejó rastro.</div>
+
+  <h4 id="defensa-incident-response">Incident response</h4>
+  <p>Shit happens. Y cuando pasa, cuáles son los next steps? Tener un plan escrito de antemano, saber a quién llamar y cómo encarar un incidente en curso hace que las respuestas sean más rápidas y minimiza el daño. El plan cubre:</p>
+  <ul class="study-list">
+    <li><b>How to block:</b> el ataque actual (current) y los futuros (future).</li>
+    <li><b>How to recover:</b> volver a un estado sano, con backups y procedimientos ya probados.</li>
+    <li><b>How to coordinate:</b> planear los próximos pasos, qué canales de comunicación se usan y qué personas hay que involucrar.</li>
+  </ul>
+  <div class="callout warning"><b>Un plan improvisado durante el incidente no es un plan.</b> En medio del ataque no es momento de averiguar quién tiene la contraseña del firewall ni si los backups restauran.</div>
+
+  <h3 id="defensa-test">Test: poner las defensas a prueba</h3>
+  <p>No importa qué tan bien hayas puesto las defensas: hay que ponerlas a prueba. Ese testeo es exactamente el <a href="#offense">pentest y el red team de la clase 2</a>, mirado desde el lado del que se defiende. El pilar de testeo es el que convierte a los otros tres de intención en hecho verificado.</p>
+
+  <h3 id="defensa-casos">Casos: cuando falta un pilar</h3>
+
+  <h4 id="defensa-barings">Barings Bank: sin separación de roles</h4>
+  <p>Barings, banco inglés fundado en 1762, donde hasta la Reina de Inglaterra tenía cuenta. Nick Leeson era a la vez <b>trading manager</b> y <b>su propio supervisor</b>: dos roles en una persona. El resultado directo de esa combinación:</p>
+  <ul class="study-list">
+    <li><b>No separation:</b> quien opera es quien controla.</li>
+    <li><b>No minimum:</b> una sola cuenta con todos los privilegios necesarios para operar y para tapar.</li>
+    <li><b>No monitoring:</b> nadie mirando las operaciones desde afuera.</li>
+  </ul>
+  <div class="callout example"><b>El desenlace.</b> Pérdidas por 1400 millones de dólares, quiebra en 1995 y el banco vendido por 1 libra esterlina: 264 años de historia liquidados. Leeson fue capturado en Kuala Lumpur tras casi un año prófugo. Es poner al zorro a cuidar el gallinero. (Fuente citada en clase: Washington Street Journal.)</div>
+  <div class="callout blue">El caso no tiene una línea de código: la vulnerabilidad era el organigrama. Separación y mínimo privilegio se aplican a personas igual que a procesos.</div>
+
+  <h4 id="defensa-wep">WEP y RC4: home made sec sobre crypto cerrada</h4>
+  <p>Con la aparición de la wifi hicieron falta mecanismos de encriptación, y el primero fue <b>WEP</b> (Wired Equivalent Privacy). El problema: código cerrado, no se sabía cómo estaba hecho. Recién via research se confirmó que por debajo usaba <b>RC4</b> como stream cipher.</p>
+
+  <figure class="diag">
+    <svg viewBox="0 0 540 190" role="img" aria-label="Linea de tiempo de WEP y RC4: RC4 implementado en 1987, leakeado en 1994, biases conocidos en 1995, ataques completos en 2001 y 2003; WEP implementado en 1997 y confirmado como RC4 alrededor de 2001">
+      <line x1="60" y1="55" x2="500" y2="55" stroke="var(--linea)" stroke-width="2"/>
+      <text x="20" y="50" fill="currentColor" font-size="13">WEP</text>
+      <text x="8" y="66" fill="currentColor" opacity="0.55" font-size="10">(closed-ish)</text>
+      <line x1="300" y1="48" x2="300" y2="62" stroke="var(--acc)" stroke-width="2"/>
+      <text x="300" y="42" text-anchor="middle" fill="currentColor" font-size="11">1997 impl</text>
+      <line x1="420" y1="48" x2="420" y2="62" stroke="var(--acc)" stroke-width="2"/>
+      <text x="420" y="42" text-anchor="middle" fill="currentColor" font-size="11">2001 RC4 confirmado</text>
+
+      <line x1="60" y1="135" x2="500" y2="135" stroke="var(--linea)" stroke-width="2"/>
+      <text x="20" y="130" fill="currentColor" font-size="13">RC4</text>
+      <text x="16" y="146" fill="currentColor" opacity="0.55" font-size="10">(closed)</text>
+      <line x1="120" y1="128" x2="120" y2="142" stroke="var(--acc)" stroke-width="2"/>
+      <text x="120" y="122" text-anchor="middle" fill="currentColor" font-size="11">1987 impl</text>
+      <line x1="230" y1="128" x2="230" y2="142" stroke="var(--acc)" stroke-width="2"/>
+      <text x="230" y="122" text-anchor="middle" fill="currentColor" font-size="11">1994 leaked</text>
+      <line x1="270" y1="128" x2="270" y2="142" stroke="var(--acc)" stroke-width="2"/>
+      <text x="262" y="160" text-anchor="middle" fill="currentColor" font-size="11">1995 bias</text>
+      <line x1="420" y1="128" x2="420" y2="142" stroke="var(--acc4)" stroke-width="2"/>
+      <text x="420" y="122" text-anchor="middle" fill="var(--acc4)" font-size="11">2001 attack</text>
+      <line x1="470" y1="128" x2="470" y2="142" stroke="var(--acc4)" stroke-width="2"/>
+      <text x="470" y="160" text-anchor="middle" fill="var(--acc4)" font-size="11">2003 attack</text>
+
+      <path d="M 300 62 L 300 128" fill="none" stroke="var(--acc2)" stroke-width="1.5" stroke-dasharray="4 4"/>
+      <text x="300" y="182" text-anchor="middle" fill="var(--acc2)" font-size="11">WEP nació apoyado en un cipher que ya venía con biases conocidos</text>
+    </svg>
+    <figcaption>La línea de RC4 corría años por delante de la de WEP, pero al ser cerradas las dos, nadie del lado de WEP pudo cruzarlas a tiempo.</figcaption>
+  </figure>
+
+  <p>RC4 es un stream cipher viejo, cuyo código fue leakeado en los 90 y del que ya para 1995 se sabía que tenía biases. Para el 2000 esos biases se transformaron en ataques completos: un atacante podía romper la criptografía por completo en un par de horas, abusando tanto de las vulnerabilidades de RC4 como del protocolo WEP.</p>
+  <div class="callout danger"><b>Las dos causas raíz.</b> Desarrollar cripto in house (<a href="#defensa-no-home-made">home made sec</a>) y hacerlo a puertas cerradas (<a href="#defensa-open">sin disclosure</a>). Cuando se supo, ya había miles de dispositivos vendidos, con lo cual el fix ni siquiera era una decisión de software.</div>
+
+  <h4 id="defensa-chrome">Chrome: separación por procesos</h4>
+  <p>Cuando uno abre Chrome, en realidad hay un proceso encargado de dibujar en pantalla (el render) y un proceso por cada tab abierta. Al ser procesos distintos, un adversario que tomó el control de una tab (y de su proceso) no tiene acceso ni a las otras tabs ni al render: es el sistema operativo el que fuerza esa separación.</p>
+  <div class="callout blue">El adversario ahora necesita bypassear al OS o encontrar un bug en la comunicación entre las tabs y el render. No es imposible, pero es mucho más difícil: la separación no elimina el ataque, le sube el precio.</div>
+
+  <figure class="diag">
+    <svg viewBox="0 0 480 90" role="img" aria-label="Escalera de aislacion: procesos, luego containers, luego virtual machines, luego physical devices, de menor a mayor aislacion">
+      <rect x="10" y="26" width="96" height="38" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="58" y="50" text-anchor="middle" fill="currentColor" font-size="12">Processes</text>
+      <rect x="130" y="26" width="96" height="38" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="178" y="50" text-anchor="middle" fill="currentColor" font-size="12">Containers</text>
+      <rect x="250" y="26" width="96" height="38" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="298" y="50" text-anchor="middle" fill="currentColor" font-size="12">VMs</text>
+      <rect x="370" y="26" width="100" height="38" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="420" y="45" text-anchor="middle" fill="currentColor" font-size="12">Physical</text>
+      <text x="420" y="58" text-anchor="middle" fill="currentColor" font-size="12">devices</text>
+      <line x1="106" y1="45" x2="128" y2="45" stroke="var(--acc2)" stroke-width="2" marker-end="url(#ardef)"/>
+      <line x1="226" y1="45" x2="248" y2="45" stroke="var(--acc2)" stroke-width="2" marker-end="url(#ardef)"/>
+      <line x1="346" y1="45" x2="368" y2="45" stroke="var(--acc2)" stroke-width="2" marker-end="url(#ardef)"/>
+      <text x="240" y="16" text-anchor="middle" fill="var(--acc2)" font-size="11">más aislación, más costo</text>
+      <defs>
+        <marker id="ardef" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc2)"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption>La misma idea de separación se puede profundizar por niveles: procesos, containers, máquinas virtuales, dispositivos físicos.</figcaption>
+  </figure>
+
+  <h4 id="defensa-termocupla">La termocupla: fail safe en hardware</h4>
+  <p>En una estufa a gas, la termocupla controla el paso de gas de las cañerías principal y piloto. Cuando el sistema está apagado la termocupla está fría y corta el suministro. Para encenderla hay que habilitar manualmente el paso de gas, prender el piloto y esperar a que la termocupla se caliente para que deje pasar el gas por sí sola.</p>
+  <div class="callout example"><b>Qué pasa si se corta el gas, o si se apaga el piloto?</b> No hay peligro. Aunque la válvula esté abierta, al apagarse el piloto la termocupla se enfría y cierra el suministro. El sistema falló, pero de forma segura. Es a la vez <a href="#defensa-simplicity">simple</a> (una pieza, un principio físico) y <a href="#defensa-fail-safe">fail safe</a>, sin una línea de software.</div>
+
+  <h4 id="defensa-voto">Máquinas de votación: opaco y complejo</h4>
+  <p>El esquema: el votante elige A, la máquina imprime una boleta con un chip NFC que dice "voto A" y al mismo tiempo manda un mensaje al centro de cómputos con el resultado. El sistema es cerrado, así que la pregunta es quién puede verificar que en el momento de la votación el voto a A no sea cambiado por B.</p>
+  <p>La respuesta que ofrece el diseño es que el votante acerque la boleta a la máquina para que lea el NFC y le muestre qué dice. Pero si modelamos que la máquina es adversarial y nos imprimió un "voto A" que en realidad es un voto B, no podemos confiar en que nos haga esa verificación honestamente.</p>
+  <div class="callout danger"><b>Dos pilares rotos a la vez.</b> <b>Opaque</b> (no open): el votante no puede chequear ni tiene por qué confiar. <b>No role separation</b>: la misma máquina vota y controla el voto, exactamente el error de <a href="#defensa-barings">Barings</a> trasladado a hardware.</div>
+  <p>Y encima no es simple. La máquina es mucho más que una impresora de boletas: tiene sistema operativo, drivers de impresora, interfaz de red con sus drivers, puertos USB y código cerrado. Es demasiado compleja, puede fallar de múltiples formas, expone una superficie grande para ser hackeada desde varios ángulos y no es transparente. Cómo puede alguien verificar que la máquina funciona como debería?</p>
+  <p class="nota">Charla citada en clase sobre el tema: <code>youtube.com/watch?v=HwyN6P83HcY</code>.</p>
+
+  <h3 id="defensa-takeaways">Takeaways</h3>
+  <ul class="study-list">
+    <li><b>La seguridad va más allá del software.</b> Los casos de la clase son software (Chrome), hardware (la termocupla) y personas (Barings). Un mecanismo perfecto en una capa no salva a las otras dos.</li>
+    <li><b>La defensa no es solo contra un hack externo,</b> es contra que pasen cosas malas en general: un empleado sin supervisión, un cipher que envejeció, una válvula que se queda abierta. El adversario no siempre es una persona atacando.</li>
+  </ul>
+  <p class="ref">Los mecanismos y políticas y la idea de seguridad en profundidad vienen del <a href="#threatmodel">threat model de la clase 1</a>; el pilar de testeo es el <a href="#offense">engagement ofensivo de la clase 2</a>. El mínimo privilegio se ve en la práctica en <a href="#permisos">permisos de Unix</a> y <a href="#escalada">escalada de privilegios</a>.</p>
+
+  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Enumerar los cuatro pilares y ubicar un mecanismo dado en el que corresponde. Los cuatro principios de prevención y qué ataca cada uno. Enunciar el principio de Kerckhoff y explicar por qué la obscuridad no puede ser la única defensa (con el asterisco). Por qué no implementar crypto propia. Diferenciar monitoring de auditing. Qué es fail safe y cuáles son sus cuatro disparadores. Separación en espacio vs en responsabilidades, y por qué la aislación total no es alcanzable. Analizar un caso (Barings, WEP, la máquina de votación) diciendo qué principios se violaron y qué habría cambiado el resultado.</div>
 
     </section>
 

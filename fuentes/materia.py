@@ -71,6 +71,7 @@ PALETA_DARK = """html[data-theme="dark"] {
 _CLASES = [
     ("threatmodel", "1", "Threat model, mecanismos y politicas"),
     ("offense", "2", "Ofensiva: red team, pentester y researcher"),
+    ("defensa", "3", "Defensa: prevenir, mitigar, responder y testear"),
 ]
 
 _LAB = [
@@ -95,7 +96,7 @@ CFG = {
     "theme_color": "#b58900",
     "favicon_hex": "b58900",
     "grupos": [
-        ("Fundamentos", _CLASES[0:2]),
+        ("Fundamentos", _CLASES[0:3]),
         ("Laboratorio", _LAB),
     ],
     "paleta_light": PALETA_LIGHT,
