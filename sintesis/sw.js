@@ -2,7 +2,7 @@
 // Precachea el apunte completo. La version del cache sale del hash del
 // contenido: el archivo solo cambia cuando cambia algo, y ahi el navegador
 // reinstala el service worker y renueva el cache en la visita siguiente.
-const CACHE = 'seg-7c92c87753dd';
+const CACHE = 'segsin-bc3c36b00799';
 const ARCHIVOS = [
   "./",
   "./index.html",
@@ -24,7 +24,7 @@ self.addEventListener('activate', (e) => {
   // viejos de ESTA materia, sin pisar los de los otros apuntes.
   e.waitUntil(caches.keys()
     .then((claves) => Promise.all(claves
-      .filter((k) => k.startsWith('seg-') && k !== CACHE)
+      .filter((k) => k.startsWith('segsin-') && k !== CACHE)
       .map((k) => caches.delete(k))))
     .then(() => self.clients.claim()));
 });

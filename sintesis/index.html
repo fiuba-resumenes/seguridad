@@ -3,16 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Apunte del Taller de Seguridad Informática (TA051, FIUBA).">
+  <meta name="description" content="Síntesis del Taller de Seguridad Informática (TA051, FIUBA): cada clase en pocos párrafos.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23b58900'/%3E%3Cg stroke='white' stroke-width='3' fill='white'%3E%3Cline x1='32' y1='32' x2='32' y2='14' /%3E%3Cline x1='32' y1='32' x2='16' y2='44' /%3E%3Cline x1='32' y1='32' x2='48' y2='44' /%3E%3Ccircle cx='32' cy='32' r='6'/%3E%3Ccircle cx='32' cy='13' r='5'/%3E%3Ccircle cx='15' cy='45' r='5'/%3E%3Ccircle cx='49' cy='45' r='5'/%3E%3C/g%3E%3C/svg%3E" type="image/png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="theme-color" content="#b58900">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Taller de Seguridad">
+  <meta name="apple-mobile-web-app-title" content="Seguridad, síntesis">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>Taller de Seguridad - Apunte</title>
+  <title>Taller de Seguridad - Síntesis</title>
   <style>
     :root {
       color-scheme: light;
@@ -1148,7 +1148,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="brand">
       <div class="brand-row">
-        <strong>Taller de Seguridad</strong>
+        <strong>Seguridad, síntesis</strong>
         <button id="menu-close" type="button" aria-label="Cerrar navegación">Cerrar</button>
       </div>
     </div>
@@ -1159,16 +1159,19 @@
       <div class="search-results" id="search-results" role="listbox" aria-label="Resultados de búsqueda" hidden></div>
     </div>
 
-    <div class="nav-title">Fundamentos</div>
-    <nav class="toc" aria-label="Fundamentos">
-      <a href="#threatmodel"><span>1</span>Threat model, mecanismos y politicas</a>
-      <a href="#offense"><span>2</span>Ofensiva: red team, pentester y researcher</a>
-      <a href="#defensa"><span>3</span>Defensa: prevenir, mitigar, responder y testear</a>
+    <div class="nav-title">Clases</div>
+    <nav class="toc" aria-label="Clases">
+      <a href="#s-threatmodel"><span>1</span>Threat model, mecanismos y políticas</a>
+      <a href="#s-offense"><span>2</span>Pentesting: red team, pentester y researcher</a>
+      <a href="#s-defensa"><span>3</span>Defensa: prevenir, mitigar, responder y testear</a>
+      <a href="#s-crypto"><span>4</span>Cryptography I: stream cipher, KDF, PRNG y MAC</a>
     </nav>
-    <div class="nav-title">Laboratorio</div>
-    <nav class="toc" aria-label="Laboratorio">
-      <a href="#permisos"><span>A</span>Permisos de Unix: identidad, claves y secretos</a>
-      <a href="#escalada"><span>B</span>Escalada de privilegios: sudo y setuid</a>
+    <div class="nav-title">Challenges</div>
+    <nav class="toc" aria-label="Challenges">
+      <a href="#s-permisos"><span>A1</span>Permisos y accesos</a>
+      <a href="#s-links"><span>A2</span>Links y race conditions</a>
+      <a href="#s-sudo"><span>B1</span>Sudo</a>
+      <a href="#s-euid"><span>B2</span>Effective UID y setuid</a>
     </nav>
 
     <div class="side-actions">
@@ -1188,7 +1191,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>
         Instalar app
       </button>
-      <a class="icon-button wide" href="sintesis/">Ver la síntesis</a>
+      <a class="icon-button wide" href="../">Ver el apunte completo</a>
     </div>
     <div class="autoria">
       <a href="https://github.com/flopeztancredi" rel="author noopener" title="Autor del apunte"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>flopeztancredi</a>
@@ -1249,837 +1252,229 @@
   <div class="main">
     <div class="top-mobile">
       <button id="menu-toggle" type="button" aria-label="Abrir navegación" aria-expanded="false">Menu</button>
-      <strong>Taller de Seguridad</strong>
+      <strong>Seguridad, síntesis</strong>
       <button id="mobile-theme" type="button" aria-label="Cambiar tema">Tema</button>
     </div>
 
     <main class="content" id="content">
       <header class="hero">
-        <h1>Taller de Seguridad Informática</h1>
-        <p>Apunte del Taller de Seguridad (TA051, cátedra Méndez, FIUBA). Clase por clase, con lo hablado en las notas del docente y los casos de las diapositivas, listo para el parcialito. Arranca por el threat model y la ofensiva de un pentest.</p>
+        <h1>Taller de Seguridad: síntesis</h1>
+        <p>La versión corta del apunte: cada clase y cada categoría de challenges en unos pocos párrafos, con lo que dicen las diapositivas y nada más. Para repasar antes del parcialito. El desarrollo con casos y ejemplos está en el apunte completo.</p>
       </header>
 
-      <section class="chapter" id="threatmodel" data-title="threat model mecanismos politicas por que empieza quien ataca con motivo puede salir mal proceso iterativo alcanza enforzar hay ser proactivo ejemplo servidor compartido sudo donde busca grieta hacker app web server base datos idor confiar manda sql injection input entero interfaces seguridad profundidad attack path confianza ciega del los dispositivos usb">
+      <section class="chapter" id="s-threatmodel" data-title="threat model mecanismos politicas tradeoff friccion donde busca atacante zero trust interfaces">
       <div class="chapter-head">
         <div class="chapter-number">1</div>
         <div><h2>Threat model, mecanismos y políticas</h2></div>
       </div>
-  <p class="intro">La primera clase arma el marco de toda la materia: contra quien te defendes (threat model), como se materializa esa defensa (mecanismos y políticas) y como un atacante busca la grieta entre lo que se quiso proteger y lo que quedo protegido. Los ejemplos (el servidor compartido con sudo, el IDOR y el SQL injection, el BadUSB) no son anécdotas: son las formas típicas en que falla la confianza mal ubicada, y son justo el tipo de cosa que cae en el parcialito.</p>
+  <p class="intro">Síntesis de la clase 1: contra quién te defendés, cómo se materializa esa defensa y dónde busca la grieta el atacante. Es el marco que usa el resto de la materia, así que conviene tenerlo fresco antes de cualquier otro tema.</p>
 
-  <h3 id="threatmodel-por-que-un-threat-model">Por qué se empieza por el threat model</h3>
-  <p>Hacer seguro un sistema es caro: cuesta tiempo, energía y dinero, y te vuelve poco popular entre tus usuarios (más fricción). No se puede defender todo contra todos, así que primero hay que saber a quién y a qué te enfrentas. Eso permite enfocar el esfuerzo en amenazas razonables y aplicar defensas acordes, en vez de gastar en ataques improbables y dejar descubierto lo probable.</p>
-  <div class="callout"><b>Threat model.</b> Descripción de contra quien te defendes, con que motivos y con que presupuesto (budget) puede atacarte, que assets queres proteger y cuales no, que está en alcance (scope) y que se asume para simplificar. Define el riesgo que estas dispuesto a aceptar.</div>
+  <h3 id="s-threatmodel-modelo">El threat model</h3>
+  <p>La seguridad <b>cuesta</b> tiempo, dinero y fricción de uso. El <b>threat model</b> es un proceso <b>iterativo</b> que identifica quién te ataca y cómo defenderte. Define el <b>scope</b> (qué está en alcance) y las <b>assumptions</b> (qué se da por supuesto para simplificar), qué <b>assets</b> proteger y qué <b>riesgos</b> asumir según <b>impacto y probabilidad</b>. Los ataques improbables suelen quedar sin cubrir, y ahí es donde el atacante se aprovecha. Al final se reduce a en quién y en qué confiar: hardware, personas, proveedor de internet.</p>
+  <p>Los <b>atacantes</b> son un país, una organización criminal o un script kid. Los <b>motivos</b>, profit, políticos, competencia, o usarte de trampolín hacia otro objetivo. Los <b>vectores</b>, software, hardware y personas (por malicia o por error).</p>
 
-  <h4 id="threatmodel-quien-y-por-que">Quién te ataca y con que motivo</h4>
-  <p>No es lo mismo un país (muchísimas personas especializadas y budget cuasi infinito) que un script kid o una organización criminal. Y el motivo depende de qué sos:</p>
-  <ul class="study-list">
-    <li><b>App para tomar notas:</b> probablemente no te ataque nadie, salvo un oportunista o alguien que solo te usa de trampolin hacia su verdadero objetivo.</li>
-    <li><b>Red social:</b> puede que tengas que cuidarte de la competencia.</li>
-    <li><b>Fintech:</b> es cuestión de tiempo que organizaciones criminales quieran robarte o estafarte, a vos o a tus usuarios.</li>
-    <li><b>Infraestructura crítica con hardware importado:</b> si fabricas computadoras para infra crítica de EEUU pero importas los chips de China, quizás quieras revisar esos chips (backdoor en el hardware).</li>
-  </ul>
-  <p class="nota">Los motivos típicos que se listan en clase: profit, razones políticas, competencia (playing dirty). El atacante puede ser un país, un script kid o una organización criminal.</p>
+  <h3 id="s-threatmodel-mecanismos">Mecanismos y políticas</h3>
+  <p>El threat model se materializa con <b>mecanismos</b> (las herramientas) y <b>políticas</b> (quién puede hacer qué). Hay sinergia: la policy define qué mecanismos sirven, y el mecanismo le da flexibilidad o simpleza a la policy. Las políticas definen niveles de confianza: <b>discretional</b>, <b>mandatory</b>, <b>role based</b>, <b>attribute based</b>. Además de <b>enforzar</b>, se <b>monitorea</b> para detectar temprano, se <b>previene</b>, se <b>mitiga</b> el daño cuando igual entran, se guardan registros para <b>auditar</b>, y hay un <b>plan B</b>.</p>
 
-  <h4 id="threatmodel-que-puede-salir-mal">Qué puede salir mal: un proceso iterativo</h4>
-  <p>Darle forma al threat model es iterativo: la pregunta guia es <b>que puede salir mal?</b> y se responde una y otra vez. Un bug en el software? Un backdoor en el hardware? Confias en las personas, pero en organizaciones grandes siempre hay alguna manzana podrida. Y aun sin malicia, la gente comete errores por ignorancia o estupidez (quien no hizo click en un link que prometía la fortuna de un rey nigeriano).</p>
-  <div class="callout blue"><b>Los vectores de ataque salen de tres lados:</b> personas (people), software y hardware. El threat model recorre los tres preguntándose "que puede salir mal" en cada uno.</div>
-  <p>Las piezas que definen el modelo: <b>scope</b> (que está dentro y que fuera), <b>assets</b> (que proteger y que no), <b>risk</b> como combinación de impacto y probabilidad (no toda vulnerabilidad es igual de dañina; ataques posibles pero improbables pueden quedar sin protección), y las <b>assumptions</b> que se hacen para simplificar.</p>
-  <div class="callout danger"><b>Las assumptions son superficie de ataque.</b> Es justo en los "esto es poco probable" y en las cosas que se asumieron para simplificar donde el atacante va a aprovecharse. Al final todo se reduce a: en quien y en que podes confiar (el hardware, las personas, tu proveedor de internet). Haces tu apuesta; el hacker hace la suya.</div>
+  <h3 id="s-threatmodel-friccion">El tradeoff de la fricción</h3>
+  <p>El <b>tradeoff</b> es la fricción. Confiar en todos (root para todos) no tiene fricción, pero un usuario pawneado, desleal o distraído compromete todo. Con mínimo privilegio, cualquier cosa fuera del uso habitual requiere pedirle al admin. Si la fricción es mucha, los usuarios bypassean el control y quedan más expuestos que antes.</p>
 
-  <h3 id="threatmodel-mecanismos-y-politicas">Mecanismos y políticas</h3>
-  <p>El threat model es solo papel. La protección se materializa vía los mecanismos y las políticas, y entre ellos hay sinergia: la política define que mecanismos sirven y cuales no, y el mecanismo le ofrece a la política más flexibilidad o más simpleza.</p>
-  <div class="callout"><b>Mecanismo.</b> La herramienta que hace cumplir la protección: la cerradura y su juego de llaves. El "como".</div>
-  <div class="callout"><b>Política.</b> La regla que decide quien puede que: que los miembros de una empresa entren a su oficina y otros no. El "quien puede que". Poner la llave en la mano de cada miembro es la puesta en acción de la política.</div>
-  <div class="callout warning"><b>La cerradura no resuelve todo el threat model.</b> "Alguien ajeno no entra sin llave" deja sin resolver que pasa si alguien entra a martillazos. El mecanismo enforza una política; lo que la política no contempla, queda descubierto.</div>
+  <h3 id="s-threatmodel-grieta">Dónde busca el atacante</h3>
+  <p>El atacante busca en tres lugares: lo que quedó <b>fuera del threat model</b>, un <b>mismatch</b> entre lo que la policy quería y lo que implementa, o <b>romper el mecanismo</b>. Un fallo real suele ser una cadena de ataques, un <b>attack path</b> hacia el objetivo.</p>
 
-  <h4 id="threatmodel-mas-que-enforzar">No alcanza con enforzar: hay que ser proactivo</h4>
-  <p>Los mecanismos y políticas enforzan las protecciones contra las amenazas modeladas, pero hay que ir más alla. En algún momento van a entrar igual, así que el ciclo completo es:</p>
-  <ul class="study-list">
-    <li><b>Prevenir:</b> monitorear para detectar ataques lo antes posible y bloquearlos.</li>
-    <li><b>Mitigar:</b> si entran, como reducimos el daño.</li>
-    <li><b>Responder / auditar:</b> tener registros para hacer una auditoria después.</li>
-    <li><b>Plan B:</b> si todo falla, que hacemos.</li>
-  </ul>
-  <div class="callout danger"><b>La contracara es la fricción, y la fricción tiene un costo de seguridad propio.</b> Además del tiempo y el dinero, la fricción incomoda al usuario, y tarde o temprano el usuario es el primer hacker: pone algo muy restrictivo y lo van a bypassear, muchas veces dejándose más expuestos aún. La seguridad es un tradeoff.</div>
-  <p class="nota">Niveles de confianza (trust levels) que se nombran como formas de armar una política: discrecional, mandatorio (mandatory), basado en roles (role based) y basado en atributos (attribute based).</p>
-
-  <h3 id="threatmodel-ejemplo-servidor-sudo">Ejemplo: el servidor compartido y sudo</h3>
-  <p>Un servidor compartido y tres usuarios (Alice, Bob, Carol) que necesitan operar con el. Qué permisos le das a cada uno?</p>
-  <p><b>Root para todos.</b> Es frictionless: si Alice quiere instalar un programa puede, si Bob necesita ver un log también. Pero es totalmente inseguro:</p>
-  <ul>
-    <li>Si pawnean a Alice, el hacker tiene el servidor como root.</li>
-    <li>Si Bob es un empleado desleal (rogue), tiene root.</li>
-    <li>Y sin malicia, por pura estupidez: <code>rm -Rf /</code> y shit happens.</li>
-  </ul>
-  <p>El threat model "confio en todos" es un mal negocio. Es más seguro <b>no confiar en nadie y dar solo el mínimo de permisos</b>. El usuario ejecuta la acción privilegiada con <code>sudo</code> y se decide continuar o fallar según la config de <code>sudoers</code> que definió el admin. Ahora Carol no puede borrar el server por accidente, pero Alice tampoco puede instalar una tool sin pedirle permiso al admin: ahí empieza la fricción.</p>
-  <div class="callout blue"><b>Las tres capas del ejemplo, bien separadas:</b> el threat model es "no confio en los usuarios"; la política es "asignar los mínimos permisos" (el <code>sudoers</code>); el mecanismo es <code>sudo</code> junto con los permisos de Linux.</div>
-  <div class="callout example"><b>Una regla de sudoers concreta:</b> <code>carol ALL=(ALL): /bin/less /var/log/messages</code> deja a Carol correr <code>sudo less /var/log/messages</code> pero no <code>sudo rm -Rf /</code>. La política dice exactamente qué comando privilegiado se permite.</div>
-
-  <h4 id="threatmodel-donde-ataca-el-hacker">Dónde busca la grieta el hacker</h4>
-  <p>Como atacantes buscamos y abusamos de los puntos débiles. Sobre el mismo ejemplo de sudo, hay tres clases de falla:</p>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Pregunta del hacker</th><th>Falla en el ejemplo de sudo</th></tr></thead>
-    <tbody>
-      <tr><td>Que no cubre el threat model ni la política?</td><td>Pawnear al admin: no estaba en el modelo.</td></tr>
-      <tr><td>Hay mismatch entre lo que se queria y lo que la política implementa?</td><td>Shell escape: <code>less</code> permite lanzar un shell, así que la política quedo mal (bad policy) y da más de lo que se creia.</td></tr>
-      <tr><td>Podemos enganar o romper el mecanismo?</td><td>Un bug en <code>sudo</code>: falla del mecanismo mismo.</td></tr>
-    </tbody>
-  </table></div>
-  <div class="callout blue"><b>La misma idea con la cerradura:</b> "para que personas no autorizadas no entren" no es tan seguro. Se puede clonar la llave, forzar la cerradura con lockpicking, o enganar a alguien con llave para que nos deje entrar. Think like an attacker.</div>
-
-  <h3 id="threatmodel-idor-y-sqli">Ejemplo: app, web server y base de datos</h3>
-  <p>Una app que se loguea contra un web server, que a su vez verifica las credenciales contra una base de datos. Si todo sale bien, el server le devuelve a Alice su user id (23). Con la app logueada, Alice pide los datos de su usuario. Qué puede salir mal?</p>
-
-  <figure class="diag">
-    <svg viewBox="0 0 620 150" role="img" aria-label="Cadena de tres componentes App, Web Server y Database, con boundaries entre ellos donde se transfieren datos y cambian los roles">
-      <rect x="20" y="45" width="150" height="60" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
-      <text x="95" y="80" text-anchor="middle" fill="currentColor" font-size="15">App</text>
-      <rect x="235" y="45" width="150" height="60" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
-      <text x="310" y="80" text-anchor="middle" fill="currentColor" font-size="15">Web Server</text>
-      <rect x="450" y="45" width="150" height="60" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
-      <text x="525" y="80" text-anchor="middle" fill="currentColor" font-size="15">Database</text>
-      <line x1="170" y1="75" x2="233" y2="75" stroke="var(--acc)" stroke-width="2"/>
-      <line x1="385" y1="75" x2="448" y2="75" stroke="var(--acc)" stroke-width="2"/>
-      <text x="201" y="35" text-anchor="middle" fill="var(--acc2)" font-size="11">boundary</text>
-      <text x="416" y="35" text-anchor="middle" fill="var(--acc2)" font-size="11">boundary</text>
-      <text x="201" y="128" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">interfaz</text>
-      <text x="416" y="128" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">interfaz</text>
-    </svg>
-    <figcaption>Cada punto de contacto entre componentes es una interfaz o boundary: donde se transfieren datos y cambian los roles, y donde un control mal puesto deja pasar el ataque.</figcaption>
-  </figure>
-
-  <h4 id="threatmodel-idor">IDOR: confiar en el id que manda la app</h4>
-  <p>Alice pide los datos con el user id 42 en vez del suyo (23). Como el web server confía en la app, no cuestiona el cambio de id: el desarrollador penso "la app la hacemos nosotros, siempre nos va a dar el id correcto", sin imaginar que Alice podría estar hackeando la app o los mensajes al server. Le devuelve los datos del 42.</p>
-  <div class="callout"><b>IDOR (Insecure Direct Object Reference).</b> El sistema usa un identificador que viene del cliente (un user id, un número de factura) para acceder a un objeto sin chequear que ese cliente tenga permiso sobre ese objeto. Cambiar el id da acceso a datos ajenos.</div>
-
-  <h4 id="threatmodel-sqli">SQL injection: confiar en que el input es un entero</h4>
-  <p>Ahora Alice manda <code>0 or 1=1</code> como id. La query arma algo así:</p>
-  <pre><code>select * from users where id = 0 or 1=1</code></pre>
-  <p>Devuelve los usuarios con id 0 o donde <code>1=1</code> sea cierto, es decir, todos. El web server confiaba en que la app manda un entero (no lo hace), y el código que arma la query confiaba en que los argumentos son enteros (tampoco).</p>
-  <div class="callout"><b>SQL injection (SQLi).</b> El atacante mete sintaxis de SQL dentro de un dato que el programa concatena a la query, cambiando lo que la query hace (leer de más, saltear un login con <code>' or 1=1</code>, borrar, ejecutar).</div>
-  <p><b>El fix no es una sola cosa, es en profundidad:</b></p>
-  <ul>
-    <li>Forzar que el user id sea siempre un entero y el del usuario logueado (para Alice, el 23). Esto frena el ataque, pero no alcanza.</li>
-    <li>Usar <b>template parameters</b> (consultas parametrizadas) al armar la query, para evitar otro SQLi sin importar los checks de enteros.</li>
-    <li>Aunque el SQLi ya no sea posible, <b>separar los datos más sensibles en una base aparte</b>.</li>
-  </ul>
-
-  <h3 id="threatmodel-interfaces-y-profundidad">Interfaces, seguridad en profundidad y attack path</h3>
-  <p>Los puntos de contacto donde se intercambian datos entre componentes son las <b>interfaces o boundaries</b>. Un control mal implementado o inexistente, o una confianza innecesaria, y un componente puede bypassear, robar o tomar ownership de otro.</p>
-  <div class="callout"><b>Seguridad en profundidad (defense in depth).</b> Poner controles no solo en la interfaz más expuesta (app y web server) sino en todas, para que si una falla haya otra detras. No confiar ni en tu propio código: trabajar a la defensiva con controles a lo largo de todo el sistema.</div>
-  <div class="callout blue"><b>Attack path.</b> En general un fallo de seguridad no es puntual sino la combinación de varios ataques encadenados que van rompiendo los chequeos interfaz por interfaz (abuse of trust), un camino hacia la cookie, el flag o las tarjetas de credito. El defensor mejora el todo, no solo tapa un agujero.</div>
-
-  <h3 id="threatmodel-usb-badusb">Confianza ciega del OS en los dispositivos USB</h3>
-  <p>Las apps del usuario hablan con el sistema operativo (vía syscalls) y el OS habla con el hardware. Hay dos interfaces claras: apps con OS, y OS con hardware. Cuando un device USB se conecta, el primer mensaje es el device diciendole al OS que es:</p>
-  <ul>
-    <li>Un teclado dice "soy un teclado" y el OS acepta e interpreta los key strokes que lleguen de el.</li>
-    <li>Un pendrive dice "soy almacenamiento" y el OS monta un file system para leer y escribir.</li>
-  </ul>
-  <div class="callout danger"><b>El OS confía ciegamente en lo que el device dice ser.</b> Si el pendrive dice "soy un teclado", el OS no tiene como detectar la mentira (así funciona USB, no tiene mucho como protegerse). El firmware del pendrive puede hacerse pasar por teclado y "tipear" solo un shellcode para tomar la máquina: eso es un <b>BadUSB</b>. Si en vez de un pendrive es el cable USB con el que cargas el celular, es un <b>OMG cable</b>.</div>
-  <p class="ref">Este mismo patrón (confiar ciegamente en el que esta del otro lado de una interfaz) reaparece en toda la materia. La ofensiva de la <a href="#offense">clase 2</a> es, justamente, el oficio de encontrar y encadenar estos abusos de confianza.</p>
-
-  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Diferenciar mecanismo de política con un ejemplo (cerradura/llave, sudo/sudoers). Dado un caso, identificar el threat model, la política y el mecanismo, y decir cuál de las tres falló (pawn del admin fuera del modelo, shell escape como bad policy, bug en sudo como falla de mecanismo). Explicar IDOR y SQLi sobre el ejemplo app/web/DB y proponer el fix en profundidad. Por que las assumptions son superficie de ataque. Que es un BadUSB y por que el OS no puede detectarlo.</div>
+  <h3 id="s-threatmodel-zero-trust">Zero trust e interfaces</h3>
+  <p><b>Zero trust</b>: nunca confiar, siempre verificar, ni en el propio código ni en lo que un componente dice ser (un pendrive que se declara teclado y tipea un shellcode, código que toma control de la máquina: <b>bad USB</b>, <b>OMG cable</b>). Acceso con <b>mínimo privilegio</b>. Los puntos de intercambio de datos entre componentes son <b>interfaces</b> o <b>boundaries</b> (transferencia de datos, cambios de rol, transiciones), y se controlan todas, en capas, no solo la más expuesta (<b>seguridad en profundidad</b>).</p>
 
     </section>
 
-    <section class="chapter" id="offense" data-title="ofensiva red team pentester researcher todas las defensas son perfectas hasta que prueban los tres roles donde trabaja cada uno hace encontrar una vulnerabilidad pipeline vuln del hallazgo exploit publico registros puntajes clasificaciones weaponizacion days compliance marco normativo scope acuerda antes tocar nada engagement recon find vulns information gathering caso completo exfiltrar base produccion reporte recomendaciones resumen">
+    <section class="chapter" id="s-offense" data-title="pentesting red team pentester researcher por que hace pentest los tres jugadores disclosure cve cvss marco normativo scope engagement reporte">
       <div class="chapter-head">
         <div class="chapter-number">2</div>
-        <div><h2>Ofensiva: red team, pentester y researcher</h2></div>
+        <div><h2>Pentesting: red team, pentester y researcher</h2></div>
       </div>
-  <p class="intro">Con el threat model ya pensado y los mecanismos y políticas puestos en cada interfaz, aparece la pregunta incómoda: están bien configurados, me olvidé de algo, un ataque real lo bloquearía, lo notaría, sabría reaccionar. La única forma de saberlo es probarlo de verdad: un penetration test. Esta clase presenta a los tres jugadores de la ofensiva, qué se hace con una vulnerabilidad una vez encontrada (disclosure, CVE, CVSS, weaponización), el marco normativo que obliga a las empresas a testearse, y sobre todo la metodología del engagement (recon, find vulns, exploit) con un caso completo de punta a punta.</p>
+  <p class="intro">Síntesis de la clase 2: quién ataca profesionalmente, qué se hace con una vulnerabilidad una vez encontrada, y con qué metodología se recorre un engagement. Es la contracara del threat model de la clase 1, la parte que lo pone a prueba.</p>
 
-  <h3 id="offense-por-que-probar">Todas las defensas son perfectas hasta que se prueban</h3>
-  <p>Un threat model bien pensado y mecanismos y políticas en su lugar no garantizan nada por si solos. Hay que preguntarse: están correctamente configurados? Me olvidé de algo? Ante un ataque, lo bloquearía? Lo notaría? Sabría cómo reaccionar?</p>
-  <div class="callout blue"><b>All the defences are perfect until they are tested for real.</b> De ahí el penetration test (pentest): simular el ataque para descubrir dónde las defensas no aguantan. Es el pilar de <a href="#defensa-test">testeo de la defensa</a> visto desde el lado ofensivo.</div>
+  <h3 id="s-offense-por-que">Por qué se hace un pentest</h3>
+  <p>Con el threat model armado y los mecanismos y políticas activos, la única forma de saber si está todo bien configurado, si no se olvidó nada, y si un ataque sería detectado, bloqueado y se sabría cómo reaccionar, es un <b>penetration test</b>. Las defensas son perfectas hasta que se prueban en serio.</p>
 
-  <h3 id="offense-tres-roles">Los tres roles de la ofensiva</h3>
-  <p>En el plano ofensivo hay tres players, del más cercano al más lejano del campo de batalla: red team, pentester y researcher. No es una separación tajante, hay mucha sinergia: un red team tiene pentesters en su equipo, los pentesters y red teams aprenden de las técnicas nuevas de los researchers, y en general tanto los miembros de un red team como los pentesters van rotando de rol.</p>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Rol</th><th>Alcance</th><th>Objetivo (goal)</th></tr></thead>
-    <tbody>
-      <tr><td><b>Red team</b></td><td>Multidisciplinario: físico, personas (social) y software (front y backend).</td><td>Simular ataques reales.</td></tr>
-      <tr><td><b>Pentester</b></td><td>Especializado: web, android, hardware, intrusión física, social eng. Cuanto más hábil, más áreas cubre.</td><td>Simular ataques reales, pero en scopes más reducidos.</td></tr>
-      <tr><td><b>Researcher</b></td><td>Altamente especializado en un área, lejos del campo de batalla.</td><td>Desarrollar vulnerabilidades y técnicas nuevas.</td></tr>
-    </tbody>
-  </table></div>
+  <h3 id="s-offense-jugadores">Los tres jugadores</h3>
+  <p>En el plano ofensivo hay 3 jugadores, sin separación tajante entre ellos. El <b>red team</b> es multidisciplinario (físico, social, software) y simula ataques reales, siempre dentro de la ley: la cadena es tan fuerte como su eslabón más débil, así que cubre todos. El <b>pentester</b> es especializado (web, android, hardware, social engineering), con el mismo objetivo pero en scopes más reducidos. El <b>researcher</b> es altamente especializado (exploit writing, reversing, cryptography, malware) y busca vulnerabilidades y ataques <b>nuevos</b>: no un SQLi (SQL injection) en una app, sino nuevas formas de hacer SQLi.</p>
+  <p>Red team y pentester trabajan en <b>consultoría y auditoría</b> (in-house o externos), <b>bug bounties</b> y <b>CTFs</b>. Los researchers, en <b>academia</b> (resultados públicos) o <b>sector privado</b> (productos de seguridad). Al encontrar una vuln, los primeros la reportan al cliente o cobran la recompensa. Nada obliga a reportar: es ética.</p>
 
-  <h4 id="offense-red-team">Red team</h4>
-  <p>Un equipo multidisciplinario que cubre todos los aspectos de la seguridad: físico, personas y software. Pensá en un equipo que puede planear entrar a un edificio lockpickeando las cerraduras, llegar al datacenter abriéndose paso con tarjetas de acceso clonadas y plantar software que vulnere a la empresa desde adentro.</p>
-  <div class="callout example"><b>Muy hardcore?</b> Imaginate una campaña de investigación mirando los gustos personales del admin de IT para mandarle un mail específicamente targeteado, que le instale software en su desktop, y de ahí tomar control de toda la infra.</div>
-  <div class="callout blue"><b>A chain is only as strong as its weakest link.</b> Por eso el red team es multidisciplinario: no sirve blindar el software si el eslabón débil es una cerradura o una persona. La versión chistosa del principio: la crypto puede ser irrompible, pero siempre queda la opción de agarrar al dueño de la laptop y pegarle con una llave inglesa de 5 dólares hasta que largue la password.</div>
-  <p class="nota">El objetivo es simular ataques reales, aunque a veces eso implique medidas poco usuales. Siempre bajo la ley.</p>
+  <h3 id="s-offense-disclosure">Disclosure, CVE y CVSS</h3>
+  <p>El <b>disclosure</b> de un researcher empieza por una comunicación privada con el responsable (conviene un pseudónimo hasta confirmar que quieren fixear y no demandar), con <b>plazos coordinados</b> de fix y publicación (típicamente 90 días) para que no procrastinen, y un tiempo de gracia post fix para que todos actualicen, aunque otros researchers ya están haciendo ingeniería inversa del update para encontrarla. Después se publica con un identificador <b>CVE</b> (Common Vulnerability Exposure), una explicación y opcionalmente un <b>PoC</b> (proof of concept, un exploit de demostración), muchas veces no funcional a propósito. Otros registros: <b>QID</b> (Qualys), <b>NVD</b> (gobierno de EEUU). La severidad se puntúa con <b>CVSS</b> (1 a 10, riesgo e impacto) y se clasifica por familia de ataque, requerimientos, remoto o local, con <b>OWASP</b> y <b>MITRE ATT&amp;CK</b>.</p>
+  <p>Las vulns se <b>weaponizan</b>: los PoCs se vuelven exploits fáciles de usar. Los que aparecen después de la publicación son <b>N-day</b> (en la jerga, <b>1-day</b>); los que no tienen vuln pública son <b>0-day</b>.</p>
 
-  <h4 id="offense-pentester">Pentester</h4>
-  <p>Una persona más especializada. Los hay especialistas en apps web, apps de Android, hardware, intrusión física, ingeniería social, front y backend. Obviamente, cuanto más hábil es el pentester, más áreas cubre.</p>
-  <p>El objetivo es el mismo que el del red team (simular ataques reales), pero en alcances (scopes) más reducidos: por ejemplo "buscar vulnerabilidades en una app pero sin acceder a los servidores".</p>
-  <div class="callout warning"><b>No hay una distinción clara entre red team y pentester.</b> Es un espectro: en un extremo, un grupo capaz de vulnerar un edificio entero; en el otro, una sola persona revisando el código de una app web. La diferencia práctica es la amplitud del scope, no el título.</div>
+  <h3 id="s-offense-normativa">El marco normativo</h3>
+  <p>El <b>marco normativo</b> impone estándares: <b>PCI-DSS</b> (tarjetas de crédito), <b>HIPAA</b> (registros médicos), <b>FIPS</b> (software con criptografía), <b>GDPR</b> (datos personales en la UE). Son mínimos, y bastante laxos y ambiguos. Algunos exigen pentests periódicos externos, y los resultados se presentan en términos del estándar para que el cliente pueda priorizar.</p>
 
-  <h4 id="offense-researcher">Researcher</h4>
-  <p>Los researchers (investigadores) son un bicho aparte: altamente especializados en un área y usualmente lejos del campo de batalla. Se enfocan en encontrar vulnerabilidades y ataques nuevos.</p>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Área</th><th>Ejemplos de especialización</th></tr></thead>
-    <tbody>
-      <tr><td><b>Exploit writing</b></td><td>Kernel de Windows, kernel de Android, hypervisor Xen.</td></tr>
-      <tr><td><b>Reversing engineering</b></td><td>BIOS, hardware.</td></tr>
-      <tr><td><b>Cryptography</b></td><td>Signing schemes, chain analysis.</td></tr>
-      <tr><td><b>Malware analysis</b></td><td>Detección de antivirus, sandboxes.</td></tr>
-    </tbody>
-  </table></div>
-  <div class="callout blue"><b>Pentester vs researcher.</b> El pentester busca un SQLi en una app concreta; el researcher busca formas nuevas de hacer SQLi en general.</div>
+  <h3 id="s-offense-scope">El scope</h3>
+  <p>Un pentest empieza definiendo el <b>scope</b>: objetivo (pawnear la DB, o sea tomar control de ella, entrar al datacenter, validar un estándar), qué se permite (interactuar con empleados, atacar prod) con <b>permisos legales explícitos</b>, tiempo, y a quién llamar si algo sale mal. La información inicial define el modelo: <b>black box</b> (desde cero, más realista) o <b>grey/white box</b> (con info de la infra, para gastar el tiempo en atacar y no en buscar). Si el objetivo tiene datos reales sensibles, filtrarlos es delito: se prueba que se puede sin hacerlo.</p>
 
-  <h3 id="offense-jobs">Dónde trabaja cada uno</h3>
-  <ul class="study-list">
-    <li><b>Consultoría y auditorías</b> (red team y pentester): algunas empresas tienen equipos in house, otras contratan equipos externos.</li>
-    <li><b>CTFs</b> (red team y pentester).</li>
-    <li><b>Bug bounties</b> (pentester y researcher): organizaciones que pagan una recompensa a quien encuentre una vulnerabilidad en su software.</li>
-    <li><b>Academia</b> (researcher): los resultados de investigación se hacen públicos.</li>
-    <li><b>Sector privado</b> (researcher): los resultados terminan usados por empresas privadas en sus productos de seguridad.</li>
-  </ul>
-  <div class="callout example"><b>Researchers en el sector privado.</b> Una empresa X cuyo producto es la automatización de ataques para pentesters y red teams tiene entre sus empleados a researchers que encuentran vulns y ataques nuevos. Una empresa Y que ofrece logins de Windows con biometría necesita researchers para entender cómo funciona el login de Windows, hackearlo e integrar el login biométrico, porque Windows no ofrece ni la forma ni la documentación para hacerlo.</div>
-
-  <h3 id="offense-disclosure">Qué se hace al encontrar una vulnerabilidad</h3>
-  <p>Los red teams y pentesters la reportan como parte de sus informes al cliente (cuando hay un contrato de por medio) o la cobran como recompensa (bug bounty). En general no hay forma de enforzar que toda vulnerabilidad sea reportada: depende de la ética de la persona o de la empresa para la que trabaja.</p>
-  <div class="callout"><b>Responsible disclosure.</b> Reportar chequeando primero con los aspectos legales, compartir los findings, coordinar un cronograma para el fix, la revalidación y la publicación, con un plazo típico de 90 días para el full disclosure. No debería ser necesario, pero a veces hay que esconderse (hide yourself) para que el reporte sea tomado en serio.</div>
-
-  <h4 id="offense-pipeline">El pipeline de una vuln, del hallazgo al exploit público</h4>
-  <p>La publicación de una vulnerabilidad arranca una comunicación, habitualmente privada, entre el researcher y el responsable del software vulnerable (los stakeholders).</p>
-
-  <figure class="diag">
-    <svg viewBox="0 0 600 250" role="img" aria-label="Pipeline de disclosure: el researcher encuentra una vuln y hace private disclosure a los stakeholders, que publican un fix y lo deployean; en paralelo la vuln se publica con public disclosure hacia registros como QID, NVD y VulnDB, se le asigna un CVE con puntaje CVSS, se clasifica en OWASP o ATT and CK y se publica una PoC en un blog que eventualmente se weaponiza">
-      <rect x="8" y="90" width="95" height="34" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
-      <text x="55" y="112" text-anchor="middle" fill="currentColor" font-size="12">researcher</text>
-      <rect x="125" y="90" width="95" height="34" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="172" y="112" text-anchor="middle" fill="currentColor" font-size="12">new vuln</text>
-      <line x1="103" y1="107" x2="123" y2="107" stroke="var(--linea)" stroke-width="2" marker-end="url(#aro1)"/>
-
-      <path d="M 220 107 C 236 107, 236 22, 250 22" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
-      <path d="M 220 107 C 236 107, 236 62, 250 62" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
-      <path d="M 220 107 C 236 107, 236 102, 250 102" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
-      <path d="M 220 107 C 236 107, 236 142, 250 142" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
-
-      <rect x="252" y="7" width="118" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
-      <text x="311" y="26" text-anchor="middle" fill="currentColor" font-size="11">public disclosure</text>
-      <rect x="252" y="47" width="118" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
-      <text x="311" y="66" text-anchor="middle" fill="currentColor" font-size="11">CVE</text>
-      <rect x="252" y="87" width="118" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
-      <text x="311" y="106" text-anchor="middle" fill="currentColor" font-size="11">classify</text>
-      <rect x="252" y="127" width="118" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
-      <text x="311" y="146" text-anchor="middle" fill="currentColor" font-size="11">public PoC</text>
-
-      <line x1="370" y1="22" x2="398" y2="22" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
-      <line x1="370" y1="62" x2="398" y2="62" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
-      <line x1="370" y1="102" x2="398" y2="102" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
-      <line x1="370" y1="142" x2="398" y2="142" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro1)"/>
-
-      <text x="402" y="26" fill="currentColor" opacity="0.7" font-size="11">QID, NVD id, VulnDB</text>
-      <text x="402" y="66" fill="currentColor" opacity="0.7" font-size="11">CVSS (severidad 1 a 10)</text>
-      <text x="402" y="106" fill="currentColor" opacity="0.7" font-size="11">OWASP, ATT&amp;CK</text>
-      <text x="402" y="146" fill="currentColor" opacity="0.7" font-size="11">blog</text>
-      <path d="M 470 152 C 470 172, 460 175, 452 180" fill="none" stroke="var(--acc4)" stroke-width="1.5" marker-end="url(#aro2)"/>
-      <rect x="340" y="180" width="110" height="30" rx="6" fill="none" stroke="var(--acc4)" stroke-width="2"/>
-      <text x="395" y="199" text-anchor="middle" fill="var(--acc4)" font-size="11">weaponize</text>
-
-      <rect x="8" y="188" width="95" height="34" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
-      <text x="55" y="210" text-anchor="middle" fill="currentColor" font-size="12">stakeholders</text>
-      <line x1="42" y1="124" x2="42" y2="186" stroke="var(--acc2)" stroke-width="1.5" marker-end="url(#aro2)"/>
-      <line x1="68" y1="186" x2="68" y2="126" stroke="var(--acc2)" stroke-width="1.5" marker-end="url(#aro2)"/>
-      <text x="78" y="152" fill="var(--acc2)" font-size="10">private</text>
-      <text x="78" y="164" fill="var(--acc2)" font-size="10">disclosure</text>
-      <line x1="103" y1="205" x2="123" y2="205" stroke="var(--linea)" stroke-width="2" marker-end="url(#aro1)"/>
-      <rect x="125" y="188" width="95" height="34" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
-      <text x="172" y="210" text-anchor="middle" fill="currentColor" font-size="12">public fix</text>
-      <line x1="220" y1="205" x2="240" y2="205" stroke="var(--linea)" stroke-width="2" marker-end="url(#aro1)"/>
-      <rect x="242" y="188" width="80" height="34" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="282" y="210" text-anchor="middle" fill="currentColor" font-size="12">deploy</text>
-
-      <defs>
-        <marker id="aro1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
-        </marker>
-        <marker id="aro2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc2)"/>
-        </marker>
-      </defs>
-    </svg>
-    <figcaption>De un hallazgo privado a un exploit listo para usar. La rama de abajo (fix y deploy) corre contra la rama de arriba (publicación, PoC y weaponización).</figcaption>
-  </figure>
-
-  <ol class="study-list">
-    <li><b>Private disclosure.</b> El researcher avisa a los stakeholders. En un mundo ideal no debería tener problemas por comunicar el finding; en la práctica no es mala idea usar un pseudónimo hasta estar seguro de que los responsables tienen intenciones de fixear el bug (y no de iniciarle una demanda).</li>
-    <li><b>Coordinación de plazos.</b> Se acuerdan fechas de fix y de publicación, justamente para incentivar a los responsables a hacer el fix y que no procrastinen.</li>
-    <li><b>Public fix y deploy.</b> Tras el fix, este se publica y eventualmente se deployea en los sistemas.</li>
-    <li><b>Public disclosure.</b> Recién ahí el researcher publica la vuln. Qué incluye depende de él, pero lo habitual es pedir que se le asigne un identificador único CVE junto con una explicación.</li>
-    <li><b>PoC.</b> Puede publicar también una prueba de concepto del exploit, muchas veces en un blog.</li>
-  </ol>
-  <div class="callout warning"><b>Cuánto se espera entre el fix y la publicación</b> depende de la sensibilidad de la vuln: si afecta a muchos sistemas puede haber un tiempo de gracia para que todos updateen sin revelarle al mundo la vulnerabilidad. Pero es una carrera contra el reloj: otros researchers saben que los updates contienen fixes de seguridad y están reverseándolos.</div>
-  <p class="nota">Muchas PoCs son a propósito no funcionales, para que no sean usadas por algún adversario directamente.</p>
-
-  <h4 id="offense-registros">Registros, puntajes y clasificaciones</h4>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Sistema</th><th>Qué hace</th></tr></thead>
-    <tbody>
-      <tr><td><b>CVE</b> (Common Vulnerability Exposure)</td><td>Identificador único de la vuln. Es solo uno de muchos sistemas de registro: otros son de empresas (QID, de Qualys) u organismos gubernamentales (NVD id, de EEUU), además de VulnDB y otros.</td></tr>
-      <tr><td><b>CVSS</b> (Common Vulnerability Score)</td><td>Puntaje del 1 al 10 que dice qué tan riesgosa es y de cuánto impacto. Es una de varias formas de evaluar la severidad.</td></tr>
-      <tr><td><b>OWASP, ATT&amp;CK</b> (de Mitre)</td><td>Sistemas de categorización: a qué familia de ataques pertenece, cuántos requerimientos iniciales necesita, si es remota o local.</td></tr>
-    </tbody>
-  </table></div>
-
-  <h4 id="offense-weaponize">Weaponización, N-days y 0-days</h4>
-  <p>Eventualmente las vulns son weaponizadas: las PoCs se convierten en exploits fáciles de usar.</p>
-  <div class="callout"><b>N-day, 1-day y 0-day.</b> Los exploits que aparecen a N días de la publicación de la vuln se llaman N-days (aunque en la jerga se les dice 1-day a todos). Los exploits sin una vuln pública detrás son 0-days.</div>
-  <div class="callout danger"><b>No toda vuln llega a este pipeline.</b> No todas son comunicadas a los vendors para el fix, y muchas menos son hechas públicas. Las que quedan fuera son exactamente las que alimentan los 0-days.</div>
-
-  <h3 id="offense-compliance">Compliance: el marco normativo</h3>
-  <p>El marco normativo impone estándares que las compañías deben cumplir. Se ordenan en tres niveles: estándares gubernamentales, que bajan a estándares cross-industry y estándares de industria, y de ahí al compliance que una compañía concreta tiene que demostrar.</p>
-
-  <figure class="diag">
-    <svg viewBox="0 0 520 210" role="img" aria-label="Jerarquia de estandares: los gubernamentales derivan en estandares cross-industry y de industria, y ambos determinan el compliance que debe cumplir la compania">
-      <rect x="180" y="8" width="160" height="36" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="260" y="26" text-anchor="middle" fill="currentColor" font-size="12">Governmental</text>
-      <text x="260" y="39" text-anchor="middle" fill="currentColor" font-size="12">Standards</text>
-      <path d="M 220 44 C 200 60, 180 62, 165 76" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro3)"/>
-      <path d="M 300 44 C 320 60, 340 62, 355 76" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro3)"/>
-      <rect x="70" y="78" width="160" height="36" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
-      <text x="150" y="96" text-anchor="middle" fill="currentColor" font-size="12">Cross-Industry</text>
-      <text x="150" y="109" text-anchor="middle" fill="currentColor" font-size="12">Standards</text>
-      <rect x="290" y="78" width="160" height="36" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
-      <text x="370" y="96" text-anchor="middle" fill="currentColor" font-size="12">Industry</text>
-      <text x="370" y="109" text-anchor="middle" fill="currentColor" font-size="12">Standards</text>
-      <path d="M 150 114 C 150 140, 200 145, 235 152" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro3)"/>
-      <path d="M 370 114 C 370 140, 320 145, 285 152" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro3)"/>
-      <rect x="200" y="152" width="120" height="36" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="260" y="175" text-anchor="middle" fill="currentColor" font-size="12">Company</text>
-      <text x="340" y="175" fill="var(--acc2)" font-size="11">compliance</text>
-      <defs>
-        <marker id="aro3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
-        </marker>
-      </defs>
-    </svg>
-    <figcaption>La compañía no elige si se testea: hereda obligaciones de los estándares que le aplican por industria y por jurisdicción.</figcaption>
-  </figure>
-
-  <div class="table-wrap"><table>
-    <thead><tr><th>Estándar</th><th>Tipo</th><th>A quién aplica</th></tr></thead>
-    <tbody>
-      <tr><td><b>PCI-DSS</b></td><td>Industria</td><td>Empresas que manejan tarjetas de crédito (payments).</td></tr>
-      <tr><td><b>HIPAA</b></td><td>Industria</td><td>Instituciones que manejan registros médicos (health).</td></tr>
-      <tr><td><b>FIPS</b></td><td>Cross-industry</td><td>Software que use criptografía.</td></tr>
-      <tr><td><b>GDPR</b></td><td>Cross-industry</td><td>Empresas en la Unión Europea que manejen datos personales.</td></tr>
-      <tr><td><b>SOC2, ISO/27001</b></td><td>Cross-industry</td><td>Marcos generales de gestión de la seguridad.</td></tr>
-    </tbody>
-  </table></div>
-  <div class="callout warning"><b>Cumplir un estándar no es ser seguro.</b> Los estándares imponen restricciones y exigen niveles mínimos de seguridad, pero muchos son bastante laxos y ambiguos en sus especificaciones.</div>
-  <p>El compliance es una de las razones por las que existe el mercado del pentesting: las compañías contratan pentesters y red teams para evaluar si cumplen o no con algún estándar en específico. Ciertos estándares incluso <b>requieren que haya un pentest periódico hecho por personas ajenas a la compañía</b>. Y en otros casos los pentesters presentan los resultados en términos de un estándar, para que quien esté a cargo de la seguridad del lado de la compañía pueda priorizarlos y entenderlos.</p>
-
-  <h3 id="offense-scope">Scope: lo que se acuerda antes de tocar nada</h3>
-  <p>Un cliente contrata el pentest. Antes de empezar se define el scope, que se cierra con un <b>contrato escrito</b> entre el cliente y el red team. Las cinco preguntas del scope:</p>
-  <ul class="study-list">
-    <li><b>What should we focus on?</b> Qué se quiere lograr: pawnear la DB, validar un estándar, ver si es posible acceder físicamente al datacenter.</li>
-    <li><b>What is and isn't allowed?</b> Se puede interactuar con los empleados, se pueden explotar vulns sobre servicios en producción. Acá hay que considerar los aspectos legales y pedir permisos explícitos.</li>
-    <li><b>What initial info do we have?</b> Ver black box vs white box.</li>
-    <li><b>What is the timeframe? Any schedule restriction?</b></li>
-    <li><b>What is the legal framework?</b> Y a quién se llama si algo sale mal: si el objetivo es entrar a un edificio y te descubren y llaman a la policía, a quién llamás.</li>
-  </ul>
-  <div class="callout"><b>Black box vs white/grey box.</b> En black box el equipo arranca de cero: es el escenario más realista para simular un ataque. En white/grey box el cliente da info de la infra para que el equipo no pierda tanto tiempo buscando y se enfoque más en el ataque. Idealmente se trata de convencer al cliente de ir por un modelo con más información.</div>
-
-  <h3 id="offense-engagement">El engagement: recon, find vulns, exploit</h3>
-  <p>Definido el scope se pasa al engagement, el core del pentest: la recolección de información, la búsqueda de vulnerabilidades, el planning y el ataque. Puesto en tres objetivos: <b>learn about the env</b>, <b>find impactful vulnerabilities</b> y <b>test them (proof)</b>. A alto nivel son tres etapas, pero forman un ciclo, porque el exploit habilita más recon.</p>
-
-  <figure class="diag">
-    <svg viewBox="0 0 480 210" role="img" aria-label="El engagement como ciclo: entra el scope, adentro Recon lleva a Vuln Finding y a Exploit, que vuelve a Recon, y sale el Report">
-      <circle cx="180" cy="105" r="95" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="180" y="42" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">Engagement</text>
-      <text x="180" y="82" text-anchor="middle" fill="currentColor" font-size="13">Recon</text>
-      <text x="228" y="128" text-anchor="middle" fill="currentColor" font-size="13">Vuln finding</text>
-      <text x="118" y="128" text-anchor="middle" fill="currentColor" font-size="13">Exploit</text>
-      <path d="M 205 88 C 232 96, 238 106, 236 114" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro4)"/>
-      <path d="M 196 140 C 170 152, 130 148, 116 138" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro4)"/>
-      <path d="M 116 118 C 118 100, 128 90, 152 82" fill="none" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#aro4)"/>
-      <path d="M 300 28 C 268 20, 250 30, 244 42" fill="none" stroke="var(--acc2)" stroke-width="2" marker-end="url(#aro5)"/>
-      <text x="330" y="32" fill="var(--acc2)" font-size="12">Scope</text>
-      <path d="M 244 168 C 252 180, 272 190, 300 184" fill="none" stroke="var(--acc2)" stroke-width="2" marker-end="url(#aro5)"/>
-      <text x="330" y="188" fill="var(--acc2)" font-size="12">Report</text>
-      <defs>
-        <marker id="aro4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
-        </marker>
-        <marker id="aro5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc2)"/>
-        </marker>
-      </defs>
-    </svg>
-    <figcaption>El exploit no es el fin sino el habilitador: cada acceso ganado abre más reconocimiento y más vulnerabilidades por encontrar. El scope entra al ciclo y el reporte sale de él.</figcaption>
-  </figure>
-
-  <h4 id="offense-recon">Recon / Information Gathering (IG)</h4>
-  <p>Qué hay? Qué máquinas están corriendo? Qué puertos están abiertos? Qué servicios y qué versiones están live? Qué personas tienen acceso? Qué roles hay? El recon busca ver dónde está cada cosa y cómo se conectan las piezas. Lo que se releva:</p>
-  <ul class="study-list">
-    <li><b>Red:</b> hosts, puertos, reglas de firewall, DNS.</li>
-    <li><b>Máquina:</b> procesos, usuarios, servicios, permisos, versiones de programas.</li>
-    <li><b>Personas:</b> nombres, emails, roles.</li>
-  </ul>
-  <div class="callout blue"><b>Learn, visibility and plan the next step.</b> En resumen: tener visibilidad y saber qué hay. En un modelo white box el cliente aporta parte de esta info; en black box hay que buscar todo desde cero.</div>
-
-  <h4 id="offense-find-vulns">Find vulns</h4>
-  <p>De lo que se descubrió en el recon, buscar qué cosas pueden ser vulnerables: hay máquinas accesibles por red que no deberían estarlo? Hay puertos abiertos que no deberían? Hay servicios corriendo con versiones viejas vulnerables? Hay roles con demasiados accesos? La pregunta guía es <b>what can we read, write or exec that we shouldn't?</b>, más los info leaks y las escaladas de privilegio, y hay que dejar prueba de su existencia.</p>
-  <div class="callout warning"><b>Buscar vulns relevantes al cliente y al engagement, no ruido.</b> "Una máquina interna respondió un ping" es bullshit. "El SSH está abierto con credenciales por default" es una cookie: sirve para movernos dentro de la empresa, ganar accesos y habilitar más recon.</div>
-  <div class="callout blue"><b>En general las cosas NO son vulnerables.</b> Por eso el IG/recon es importantísimo: es lo que permite encontrar muchas más cosas con las que después intentar romper. Sin superficie relevada no hay nada que probar.</div>
-
-  <h4 id="offense-exploit">Exploit</h4>
-  <p>Es el uso de una vuln a nuestra ventaja: tomar ventaja de ella para efectivamente leer, escribir o ejecutar. No toda vuln es explotable: puede existir pero no poder ejecutarse o no servir para hacer nada útil con ella. Se reporta igual, pero no sirve para adquirir más accesos.</p>
-  <p>Cuando funciona se traduce en cuatro cosas: <b>privilege escalation</b> (tener más privilegios), <b>lateral movement</b> (moverse lateralmente), <b>see further</b> (poder ver más, o sea habilitar más IG/recon) y <b>get the cookie</b>.</p>
-  <div class="callout danger"><b>Do not cross scope or legals.</b> El exploit toma ventaja real de la vuln, pero siempre dentro de lo acordado: si el objetivo es exfiltrar la DB de producción con datos privados sensibles de usuarios reales, hacerlo podría ser un delito. El objetivo real pasa a ser probarle al cliente que se puede filtrar toda la DB, sin hacerlo.</div>
-
-  <h3 id="offense-caso">Caso completo: exfiltrar la base de producción</h3>
-  <p>El cliente contrata un pentest y define el scope:</p>
-  <ul class="study-list">
-    <li><b>Goal:</b> exfiltrar la DB de producción. Como eso no es para los legales, el objetivo real es <b>probar</b> que la DB de producción puede ser exfiltrada.</li>
-    <li><b>Permitido:</b> escanear está OK; usar credenciales está OK, pero no se dan credenciales.</li>
-    <li><b>Prohibido:</b> ingeniería social NO, usar exploits sobre producción NO.</li>
-    <li><b>Info inicial:</b> black box, solo se dice que hay dos IPs públicas accesibles, <code>pub.47</code> y <code>pub.48</code>.</li>
-  </ul>
-
-  <ol class="study-list">
-    <li><b>Recon con nmap.</b> <code>nmap pub.47</code> y <code>nmap pub.48</code>: se ve el puerto 443 en la .47 y el 7172 en la .48, se infiere qué OS están corriendo (Linux en las dos) y qué servicios y versiones están live.</li>
-    <li><b>Más recon, no atacar el servicio.</b> Hay un server HTTP y se podría ver si es explotable, pero ese camino se descarta porque el cliente dijo explícitamente "nada de atacar un servicio". Queda intentar loguearse y ver si hay algo más detrás.</li>
-    <li><b>Probar el login.</b> Se prueban mails y passwords: nada. Se podría engañar a un empleado para que nos dé acceso, pero el cliente dijo "nada de ingeniería social". Los mails salen de redes sociales, sitios públicos y listas de defaults.</li>
-    <li><b>Otros caminos de entrada, descartados.</b> Crearse una cuenta? Pide un registration code que no tenemos. Abusar del password recovery? Se ve sólido.</li>
-    <li><b>Entra por la lista de defaults.</b> En la .47 no hubo suerte, pero en la .48 sí: <code>email: test@test.com</code>, <code>pass: testing</code>.</li>
-    <li><b>Find vulns: probar SQLi.</b> Sobre un formulario interno se prueba <code>john' or 1=1</code> y <code>john" or 1=1</code> (dudosos) y finalmente <code>john' || pg_sleep(1) --</code>, que confirma. Con eso se sabe que hay un SQL detrás, que el input es vulnerable a SQL injection, que es un <b>blind SQLi</b> (por cómo se comporta) y hasta qué base de datos es.</li>
-    <li><b>Recon vía SQLi.</b> Inyectando queries se aprende sobre la DB y el entorno: Postgres 12.1, corriendo con rol superuser.</li>
-    <li><b>Exploit: reverse shell.</b> Con esa info se arma el exploit: <code>COPY (SELECT '') TO PROGRAM '...shellcode...';</code> ejecuta un programa en la máquina que hostea la DB, que se conecta de vuelta hacia nuestros servidores (<code>pub.attacker:80</code>) para establecer un shell. Queda un agente adentro.</li>
-    <li><b>Más recon, ahora desde adentro.</b> <code>ps aux</code>, <code>ip addr</code>, <code>ss -tuplan</code>, <code>groups</code>: qué procesos corren, qué usuarios hay, qué puertos están en uso. Aparece un Apache usando el mismo puerto 7172 y la misma IP pública .48. Conclusión: la máquina de la DB y la del Apache son la misma (<code>int.16</code>). Tiene sentido, en ambientes de testing muchas veces se levanta toda la infra en una única máquina.</li>
-    <li><b>Recon de la red interna.</b> <code>nmap int.0/24</code> desde adentro revela cosas invisibles desde afuera: aparecen <code>int.17</code>, <code>int.18</code> y un servidor DNS.</li>
-    <li><b>Mapear roles con el DNS.</b> Un DNS no solo mapea hostnames a IPs sino, muchas veces, IPs a hostnames. Con <code>nslookup</code> se aprende el rol de cada máquina: <code>web.prod = int.17</code>, <code>db.prod = int.18</code>, <code>web.test = int.16</code>, <code>db.test = int.16</code>. Un saludo al personal de IT por simplificarnos el trabajo.</li>
-    <li><b>Identificar producción y atacar.</b> El entorno de testing tenía credenciales por default. Identificada la <code>db.prod</code> en <code>int.18</code>, se ataca y profit (probando que se puede, sin exfiltrar de verdad).</li>
-  </ol>
-
-  <figure class="diag">
-    <svg viewBox="0 0 580 230" role="img" aria-label="Attack path del caso: el atacante externo entra por la IP publica .48 con un SQLi sobre Postgres, obtiene un reverse shell hacia pub.attacker, descubre que es la misma maquina int.16 que hostea web.test y db.test, hace recon interno, consulta el DNS y llega a db.prod en int.18">
-      <rect x="10" y="92" width="105" height="44" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
-      <text x="62" y="110" text-anchor="middle" fill="currentColor" font-size="12">atacante</text>
-      <text x="62" y="126" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">pub.attacker</text>
-      <rect x="165" y="92" width="130" height="44" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="230" y="110" text-anchor="middle" fill="currentColor" font-size="12">pub.48 = int.16</text>
-      <text x="230" y="126" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">web.test + db.test</text>
-      <text x="230" y="152" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="10">creds default, SQLi, Postgres 12.1 superuser</text>
-      <rect x="350" y="20" width="120" height="44" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="410" y="38" text-anchor="middle" fill="currentColor" font-size="12">DNS interno</text>
-      <text x="410" y="54" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">roles de cada IP</text>
-      <rect x="350" y="160" width="120" height="44" rx="8" fill="none" stroke="var(--acc4)" stroke-width="2"/>
-      <text x="410" y="178" text-anchor="middle" fill="currentColor" font-size="12">db.prod = int.18</text>
-      <text x="410" y="194" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">objetivo</text>
-      <line x1="115" y1="106" x2="163" y2="106" stroke="var(--linea)" stroke-width="2" marker-end="url(#aro6)"/>
-      <text x="139" y="100" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="10">login</text>
-      <line x1="163" y1="124" x2="117" y2="124" stroke="var(--acc4)" stroke-width="2" marker-end="url(#aro7)"/>
-      <text x="139" y="140" text-anchor="middle" fill="var(--acc4)" font-size="10">reverse shell</text>
-      <path d="M 295 100 C 330 88, 340 66, 348 50" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#aro8)"/>
-      <text x="332" y="76" text-anchor="middle" fill="var(--acc2)" font-size="10">nmap int.0/24</text>
-      <path d="M 410 64 C 410 100, 410 130, 410 158" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#aro8)"/>
-      <text x="460" y="115" text-anchor="middle" fill="var(--acc2)" font-size="10">nslookup</text>
-      <defs>
-        <marker id="aro6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
-        </marker>
-        <marker id="aro7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc4)"/>
-        </marker>
-        <marker id="aro8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc2)"/>
-        </marker>
-      </defs>
-    </svg>
-    <figcaption>El attack path encadena abusos: credenciales por default, SQLi, reverse shell, recon interno y el DNS que regala los roles hasta llegar a la base de producción.</figcaption>
-  </figure>
-
-  <div class="callout blue"><b>En un pentest siempre se trabaja con supuestos.</b> Si la .48 tiene usuarios de testing, es probable (aunque no confirmado) que la .47 sea la máquina de producción. Si la .48 tiene Postgres, la .47 también. A medida que se avanza en el engagement hay que ir cambiándolos.</div>
-
-  <h4 id="offense-reporte">El reporte y las recomendaciones</h4>
-  <p>Al finalizar se arma el reporte. No solo le decimos al cliente qué vulns encontramos, sino que lo orientamos en cómo arreglarlas y priorizarlas. Qué lleva:</p>
-  <ul class="study-list">
-    <li><b>Findings:</b> las vulns encontradas, incluyendo el attack path (cómo se accedió y se llegó a la DB) y las otras vulns vistas en el camino.</li>
-    <li><b>Impact / risk.</b></li>
-    <li><b>How to trigger it (proof):</b> la prueba de que existe.</li>
-    <li><b>How to fix it.</b></li>
-    <li><b>Recommendations.</b></li>
-  </ul>
-  <div class="callout blue"><b>Es crítico darle valor al cliente, no solo un listado de vulns.</b> Presentarlas en términos de una clasificación (como <a href="#offense-registros">OWASP</a>) u ordenarlas por puntaje (como el CVSS) ayuda al cliente a priorizar qué arreglar primero.</div>
-  <p>En el caso, las recomendaciones fueron: no usar credenciales por default, fixear el SQLi, no exponer el entorno de testing, aislar producción de testing y poner un firewall. No es bloquear una parte, es mejorar el todo: <a href="#defensa-sec-in-depth">sec in depth</a>.</p>
-
-  <h3 id="offense-resumen">El resumen del engagement</h3>
-  <p>Get info, find weak points, exploit. Y repetir: cada vuelta del ciclo suma información y accesos. Con eso se construye el <b>attack path</b>, y recién ahí, profit.</p>
-  <p class="ref">La metodología de esta clase (recon, find vulns, exploit, trabajar con supuestos) es la que se aplica en cada challenge del laboratorio: ver <a href="#permisos">permisos de Unix</a> y <a href="#escalada">escalada de privilegios</a>. Los conceptos de confianza mal ubicada que se explotan acá vienen del <a href="#threatmodel">threat model de la clase 1</a>, y el lado defensivo de todo esto es la <a href="#defensa">clase 3</a>.</p>
-
-  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Diferenciar red team, pentester y researcher (alcance y objetivo de cada uno). Qué es el scope, las cinco preguntas que lo definen y por qué se cierra con un contrato escrito; black box vs white box. Las tres etapas del engagement y por qué forman un ciclo (el exploit habilita más recon). Distinguir una vuln relevante de ruido (ping interno vs SSH con creds default). Por qué no toda vuln es explotable y en qué se traduce un exploit exitoso. El pipeline de disclosure completo: private disclosure, fix, deploy, public disclosure, CVE, PoC, weaponización; diferenciar CVE de CVSS y de OWASP/ATT&amp;CK; qué es un N-day y qué es un 0-day. Qué es el compliance, ejemplos de estándares de industria vs cross-industry, y por qué el marco normativo es una fuente de trabajo para los pentesters. Reconstruir el caso completo: cómo se pasa de dos IPs públicas a la DB de producción encadenando credenciales default, SQLi, reverse shell, recon interno y DNS. Qué va en el reporte.</div>
+  <h3 id="s-offense-engagement">El engagement y el reporte</h3>
+  <p>El <b>engagement</b> tiene 3 etapas que se realimentan. <b>IG/Recon</b> (information gathering, reconocimiento): qué máquinas, puertos, servicios y versiones hay, qué personas y roles, cómo se conecta todo; es lo más importante porque en general las cosas no son vulnerables y hay que encontrar mucho para poder romper algo. <b>Find vulns</b>: qué se puede leer, escribir, ejecutar o acceder que no se debería, priorizando lo que permite moverse. <b>Exploit</b>: usar la vuln para ganar <b>privilegios</b>, <b>moverse lateralmente</b> (a otras máquinas de la red) y <b>ver más</b>, habilitando más recon desde adentro (un shell en una máquina, un DNS interno que mapea IPs a roles). No toda vuln es exploitable, pero se reporta igual. Siempre se trabaja con <b>supuestos</b> que se van corrigiendo.</p>
+  <p>El <b>reporte</b> incluye el <b>attack path</b>, las otras vulns vistas en el camino y cómo arreglarlas y priorizarlas (por OWASP o CVSS). No es bloquear una parte sino mejorar el todo: sec in depth.</p>
 
     </section>
 
-    <section class="chapter" id="defensa" data-title="defensa prevenir mitigar responder testear los cuatro pilares prevent que ataque entre simplicity open security obscurity minimum reducir superficie home made sec mitigate duela poco depth separation minimo privilegio fail safe respond detectar reaccionar monitoring auditing incident response test poner las defensas prueba casos cuando falta pilar barings bank sin separacion roles wep rc4 sobre crypto cerrada chrome por procesos termocupla hardware maquinas votacion opaco complejo takeaways">
+    <section class="chapter" id="s-defensa" data-title="defensa prevenir mitigar responder testear los cuatro pilares casos">
       <div class="chapter-head">
         <div class="chapter-number">3</div>
         <div><h2>Defensa: prevenir, mitigar, responder y testear</h2></div>
       </div>
-  <p class="intro">Del otro lado del pentest está el blue team: el que tiene que diseñar el sistema para que el ataque no entre, y para que cuando entre igual duela poco. Esta clase da los cuatro pilares de la defensa (prevención, mitigación, respuesta y testeo) con los principios concretos que cuelgan de cada uno, y los ilustra con casos reales donde faltó justo uno: el banco Barings, el WEP de la wifi, la arquitectura de Chrome, una termocupla de estufa y las máquinas de votación electrónica.</p>
+  <p class="intro">Síntesis de la clase 3: los cuatro pilares con los que se diseña una defensa y los principios concretos que cuelgan de cada uno. Cierra con los casos que la cátedra usa para mostrar qué pasa cuando falta justo uno.</p>
 
-  <h3 id="defensa-cuatro-pilares">Los cuatro pilares</h3>
-  <p>En el plano defensivo hay cuatro pilares: prevención, mitigación, respuesta y testeo. No es una taxonomía completa ni pretende serlo, pero funciona bastante bien como guía o blueprint para diseñar e implementar mecanismos de defensa: para cada mecanismo que se agrega conviene preguntarse a cuál de los cuatro contribuye, y qué pilar quedó vacío.</p>
+  <h3 id="s-defensa-pilares">Los cuatro pilares</h3>
+  <p>En el plano defensivo hay 4 pilares: <b>prevención, mitigación, respuesta y testeo</b>. No es una taxonomía completa, es un blueprint para diseñar mecanismos de defensa. La seguridad va más allá del software (hardware y personas) y no es solo contra un hack externo: también contra errores y accidentes.</p>
 
-  <figure class="diag">
-    <svg viewBox="0 0 520 300" role="img" aria-label="Los cuatro pilares de la defensa y sus principios: Prevent con Simplicity, Open, Minimum y No home made sec; Mitigate con Sec in depth, Separation, Minimum y Fail safe; Respond con Monitoring, Auditing e Incident response; Test con Test your defenses">
-      <rect x="12" y="14" width="120" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="72" y="39" text-anchor="middle" fill="currentColor" font-size="14">Prevent</text>
-      <text x="175" y="24" fill="currentColor" font-size="12">Simplicity</text>
-      <text x="175" y="42" fill="currentColor" font-size="12">Open</text>
-      <text x="175" y="60" fill="currentColor" font-size="12">Minimum</text>
-      <text x="175" y="78" fill="currentColor" font-size="12">No home made sec</text>
-      <path d="M 132 34 L 152 34 L 152 20 L 168 20 M 152 34 L 168 34 M 152 34 L 152 56 L 168 56 M 152 56 L 152 74 L 168 74" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+  <h3 id="s-defensa-prevenir">Prevenir</h3>
+  <p><b>Prevenir</b> es más barato que recuperarse de un hack. <b>Simplicidad</b>: un sistema difícil de configurar deja agujeros, uno tedioso de usar hace que los usuarios bypasseen los controles, y uno complejo tiene demasiadas piezas móviles cuyas interacciones esconden vulns. <b>Open</b>, principio de Kerckhoffs: un sistema criptográfico debe ser seguro aunque el adversario sepa todo salvo la clave, y se extrapola a cualquier sistema. Ocultar la implementación como única protección es frágil, es cuestión de tiempo hasta que alguien lo reversee; ocultar detalles puede potenciar la defensa pero nunca ser la única. <b>Mínimo</b>: sistema lo más chico posible para reducir la superficie de ataque. <b>No home made sec</b>: implementar seguridad es difícil y cripto mucho más, usar implementaciones estándar salvo casos puntuales.</p>
 
-      <rect x="12" y="98" width="120" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="72" y="123" text-anchor="middle" fill="currentColor" font-size="14">Mitigate</text>
-      <text x="175" y="108" fill="currentColor" font-size="12">Sec in depth</text>
-      <text x="175" y="126" fill="currentColor" font-size="12">Separation</text>
-      <text x="175" y="144" fill="currentColor" font-size="12">Minimum</text>
-      <text x="175" y="162" fill="currentColor" font-size="12">Fail safe</text>
-      <path d="M 132 118 L 152 118 L 152 104 L 168 104 M 152 118 L 168 118 M 152 118 L 152 140 L 168 140 M 152 140 L 152 158 L 168 158" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+  <h3 id="s-defensa-mitigar">Mitigar</h3>
+  <p><b>Mitigar</b>: si igual entran, que el daño sea menor. <b>Sec in depth</b>: checks a lo largo de toda la cadena, si llegan a prod que no lleguen a la DB. <b>Separación</b> o <b>aislación</b> de espacio, memoria, físico y responsabilidades (quien opera algo no es quien lo controla), para que el adversario no pueda moverse a otras áreas; nunca es total pero cuanto más mejor, y aplica también a nivel humano. <b>Mínimo</b> privilegio, recursos, accesos y confianza, así una cuenta hackeada tiene poco poder. <b>Fail safe</b>: ante error, entrada inválida, falta de algo o lo inesperado, el sistema defaultea a un estado seguro sin acceso ni privilegios.</p>
 
-      <rect x="12" y="182" width="120" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="72" y="207" text-anchor="middle" fill="currentColor" font-size="14">Respond</text>
-      <text x="175" y="192" fill="currentColor" font-size="12">Monitoring</text>
-      <text x="175" y="210" fill="currentColor" font-size="12">Auditing</text>
-      <text x="175" y="228" fill="currentColor" font-size="12">Incident response</text>
-      <path d="M 132 202 L 152 202 L 152 188 L 168 188 M 152 202 L 168 202 M 152 202 L 152 224 L 168 224" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+  <h3 id="s-defensa-responder">Responder</h3>
+  <p><b>Responder</b> se apoya en el <b>monitoreo</b> con alertas para detección temprana y para saber cómo bloquear el ataque en curso; en la <b>auditoría</b>, para el forense de lo que ya pasó y cómo recuperarse; y en el <b>incident response</b>, un plan con próximos pasos, canales de comunicación y a quién involucrar, para responder rápido y minimizar daño.</p>
 
-      <rect x="12" y="248" width="120" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="72" y="273" text-anchor="middle" fill="currentColor" font-size="14">Test</text>
-      <text x="175" y="272" fill="currentColor" font-size="12">Test your defenses</text>
-      <path d="M 132 268 L 168 268" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+  <h3 id="s-defensa-testear">Testear</h3>
+  <p><b>Testear</b>: no importa qué tan bien estén las defensas, hay que ponerlas a prueba con un pentest o red team.</p>
 
-      <path d="M 500 60 C 505 130, 505 190, 500 250" fill="none" stroke="var(--acc2)" stroke-width="2" stroke-dasharray="5 4"/>
-      <text x="470" y="155" text-anchor="middle" fill="var(--acc2)" font-size="11">el testeo</text>
-      <text x="470" y="169" text-anchor="middle" fill="var(--acc2)" font-size="11">valida los</text>
-      <text x="470" y="183" text-anchor="middle" fill="var(--acc2)" font-size="11">otros tres</text>
-    </svg>
-    <figcaption>Blueprint de la defensa. Cada pilar aporta principios distintos y el testeo es el que confirma que los otros tres funcionan de verdad.</figcaption>
-  </figure>
-
-  <h3 id="defensa-prevent">Prevent: que el ataque no entre</h3>
-  <p>Prevenir es mejor que curar, frase milenaria totalmente vigente. En todo momento, si se puede evitar el hack, hay que evitarlo: recuperarse tras un hack va a ser mucho más costoso que haberlo prevenido. De la prevención cuelgan cuatro principios.</p>
-
-  <h4 id="defensa-simplicity">Simplicity</h4>
-  <p>Un sistema difícil de usar deja margen para errores, y ese margen es la vulnerabilidad:</p>
-  <ul class="study-list">
-    <li><b>Difícil de configurar:</b> se termina dejando agujeros abiertos, casi siempre sin darse cuenta.</li>
-    <li><b>Difícil o tedioso de usar:</b> los usuarios van a ser los primeros en saltearse los mecanismos de seguridad (la contraseña en un post it, el permiso abierto "por ahora").</li>
-  </ul>
-  <p>Pero simplicidad no se refiere solamente a "fácil de usar", sino a que el sistema en sí sea simple. Un sistema complejo tiene demasiadas piezas móviles y las posibles interacciones internas hacen que sea fácil pasarse por alto alguna vulnerabilidad.</p>
-  <div class="callout blue"><b>La complejidad es superficie de ataque.</b> No hace falta que ninguna pieza esté mal: alcanza con que nadie pueda razonar sobre todas las combinaciones a la vez.</div>
-
-  <h4 id="defensa-open">Open, no security by obscurity</h4>
-  <div class="callout"><b>Principio de Kerckhoff.</b> Un sistema criptográfico debe ser seguro aun si el adversario sabe absolutamente todo de él excepto la clave secreta.</div>
-  <p>El principio se extrapola a sistemas de seguridad en general: un sistema debe ser seguro aun si se conoce absolutamente todo de él. Ocultar los detalles de implementación como única protección es totalmente frágil, y es cuestión de tiempo hasta que alguien lo reversee y venga con un ataque. Open source rules.</p>
-  <div class="callout warning"><b>El asterisco.</b> En ciertas situaciones ocultar detalles sí potencia la defensa (no publicar la versión exacta de un servicio, por ejemplo), pero nunca debe ser la única capa. La regla es "no <i>rely</i> on obscurity", no "no obscurity".</div>
-
-  <h4 id="defensa-minimum-prevent">Minimum: reducir la superficie de ataque</h4>
-  <p>Alineado con simplicidad: un sistema lo más chico posible reduce el área expuesta a problemas. Menos servicios corriendo, menos puertos abiertos, menos features, menos dependencias, menos código: menos lugares donde puede haber un bug explotable.</p>
-
-  <h4 id="defensa-no-home-made">No home made sec</h4>
-  <p>Implementar mecanismos de seguridad es difícil, e implementarlos bien es más difícil aún. La regla es siempre usar implementaciones estándar y no salir a implementar cosas custom.</p>
-  <div class="callout danger"><b>Crypto is <i>super</i> hard.</b> En criptografía la regla es todavía más estricta: usar lo que ya está implementado y auditado. Una implementación propia puede pasar todos los tests funcionales (encripta y desencripta bien) y ser trivialmente rompible.</div>
-  <p class="nota">Dicho eso, ciertas situaciones sí requieren implementaciones hechas a medida. Es una excepción, no el default, y viene con la obligación de exponerla a revisión (ver <a href="#defensa-open">Open</a>).</p>
-
-  <h3 id="defensa-mitigate">Mitigate: que el ataque duela poco</h3>
-  <p>Si no podés evitar el hack, hacé que tenga el menor impacto y daño posible. La mitigación asume que el adversario ya está adentro y se pregunta hasta dónde puede llegar.</p>
-
-  <h4 id="defensa-sec-in-depth">Security in depth</h4>
-  <p>Seguridad en lo profundo: checks a lo largo de toda la cadena de procesamiento, no solo en la puerta de entrada. Si un adversario logró llegar al servidor productivo, que no pueda llegar a la base de datos. Tal vez tire producción por unas horas, pero al menos no se llevó la data de los clientes.</p>
-
-  <h4 id="defensa-separation">Separation</h4>
-  <p>Separar y aislar: cuando hay un hack, queremos que el adversario no pueda moverse hacia otras áreas, sistemas o procesos. Si dos sistemas conviven en la misma área, es probable que el adversario pueda infectar uno desde el otro. Si están totalmente aislados, queda en un callejón sin salida.</p>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Eje</th><th>Qué se separa</th></tr></thead>
-    <tbody>
-      <tr><td><b>Espacio</b></td><td>Memoria (un proceso no lee la memoria de otro) y físico (máquinas, redes y datacenters distintos).</td></tr>
-      <tr><td><b>Responsabilidades</b></td><td>Roles humanos: quien opera no es quien controla (operator vs controller).</td></tr>
-    </tbody>
-  </table></div>
-  <div class="callout warning"><b>La aislación total no existe.</b> En la práctica siempre queda algún canal (una red, un disco compartido, una persona con acceso a las dos partes). El objetivo no es el ideal sino el gradiente: cuanto más se pueda aislar, mejor. Y separación no es solo software y hardware, es también a nivel humano.</div>
-
-  <h4 id="defensa-minimum-mitigate">Minimum: mínimo privilegio</h4>
-  <p>Si una cuenta es hackeada, el adversario va a tener menos poder si esa cuenta tiene la mínima cantidad de recursos y accesos. Se minimiza en cuatro ejes: <b>trust</b> (en quién y en qué se confía), <b>resources</b> (CPU, memoria, disco, red), <b>privileges</b> (qué operaciones puede hacer) y <b>accesses</b> (a qué datos y sistemas llega).</p>
-
-  <h4 id="defensa-fail-safe">Fail safe</h4>
-  <p>Cuando algo salga mal, el sistema debería defaultear a un estado de mínimo privilegio, un estado seguro. El disparador es cualquiera de estos casos:</p>
-  <ul>
-    <li>Si un valor es <b>inválido</b>.</li>
-    <li>Si una operación <b>falla</b>.</li>
-    <li>Si pasa algo <b>inesperado</b>.</li>
-    <li>Si <b>falta</b> algo (un archivo de config, un permiso, un campo).</li>
-  </ul>
-  <div class="callout"><b>Fail safe.</b> Ante el error, el default es "no access, no privileges, no resources": denegar, no permitir. El sistema falla, pero falla de forma segura.</div>
-  <div class="callout warning"><b>El antipatrón.</b> El bug clásico es el <code>catch</code> que ante un error de autorización devuelve "permitido" porque nadie pensó ese camino, o la config faltante que se interpreta como "sin restricciones".</div>
-
-  <h3 id="defensa-respond">Respond: detectar y reaccionar</h3>
-  <h4 id="defensa-monitoring-auditing">Monitoring y auditing</h4>
-  <p>Son dos caras de la misma moneda, y las dos sirven para <b>detectar</b>, pero en tiempos distintos:</p>
-  <div class="table-wrap"><table>
-    <thead><tr><th></th><th>Cuándo</th><th>Para qué</th></tr></thead>
-    <tbody>
-      <tr><td><b>Monitoring</b></td><td>Ahora, con alertas.</td><td>Detección temprana, mientras el evento está pasando.</td></tr>
-      <tr><td><b>Auditing</b></td><td>Después.</td><td>Detección o análisis forense de un evento de seguridad que ya pasó.</td></tr>
-    </tbody>
-  </table></div>
-  <div class="callout blue">Sin logs y sin alertas no hay respuesta posible: no se puede reaccionar a algo que no se ve, ni reconstruir un incidente que no dejó rastro.</div>
-
-  <h4 id="defensa-incident-response">Incident response</h4>
-  <p>Shit happens. Y cuando pasa, cuáles son los next steps? Tener un plan escrito de antemano, saber a quién llamar y cómo encarar un incidente en curso hace que las respuestas sean más rápidas y minimiza el daño. El plan cubre:</p>
-  <ul class="study-list">
-    <li><b>How to block:</b> el ataque actual (current) y los futuros (future).</li>
-    <li><b>How to recover:</b> volver a un estado sano, con backups y procedimientos ya probados.</li>
-    <li><b>How to coordinate:</b> planear los próximos pasos, qué canales de comunicación se usan y qué personas hay que involucrar.</li>
-  </ul>
-  <div class="callout warning"><b>Un plan improvisado durante el incidente no es un plan.</b> En medio del ataque no es momento de averiguar quién tiene la contraseña del firewall ni si los backups restauran.</div>
-
-  <h3 id="defensa-test">Test: poner las defensas a prueba</h3>
-  <p>No importa qué tan bien hayas puesto las defensas: hay que ponerlas a prueba. Ese testeo es exactamente el <a href="#offense">pentest y el red team de la clase 2</a>, mirado desde el lado del que se defiende. El pilar de testeo es el que convierte a los otros tres de intención en hecho verificado.</p>
-
-  <h3 id="defensa-casos">Casos: cuando falta un pilar</h3>
-
-  <h4 id="defensa-barings">Barings Bank: sin separación de roles</h4>
-  <p>Barings, banco inglés fundado en 1762, donde hasta la Reina de Inglaterra tenía cuenta. Nick Leeson era a la vez <b>trading manager</b> y <b>su propio supervisor</b>: dos roles en una persona. El resultado directo de esa combinación:</p>
-  <ul class="study-list">
-    <li><b>No separation:</b> quien opera es quien controla.</li>
-    <li><b>No minimum:</b> una sola cuenta con todos los privilegios necesarios para operar y para tapar.</li>
-    <li><b>No monitoring:</b> nadie mirando las operaciones desde afuera.</li>
-  </ul>
-  <div class="callout example"><b>El desenlace.</b> Pérdidas por 1400 millones de dólares, quiebra en 1995 y el banco vendido por 1 libra esterlina: 264 años de historia liquidados. Leeson fue capturado en Kuala Lumpur tras casi un año prófugo. Es poner al zorro a cuidar el gallinero. (Fuente citada en clase: Washington Street Journal.)</div>
-  <div class="callout blue">El caso no tiene una línea de código: la vulnerabilidad era el organigrama. Separación y mínimo privilegio se aplican a personas igual que a procesos.</div>
-
-  <h4 id="defensa-wep">WEP y RC4: home made sec sobre crypto cerrada</h4>
-  <p>Con la aparición de la wifi hicieron falta mecanismos de encriptación, y el primero fue <b>WEP</b> (Wired Equivalent Privacy). El problema: código cerrado, no se sabía cómo estaba hecho. Recién via research se confirmó que por debajo usaba <b>RC4</b> como stream cipher.</p>
-
-  <figure class="diag">
-    <svg viewBox="0 0 540 190" role="img" aria-label="Linea de tiempo de WEP y RC4: RC4 implementado en 1987, leakeado en 1994, biases conocidos en 1995, ataques completos en 2001 y 2003; WEP implementado en 1997 y confirmado como RC4 alrededor de 2001">
-      <line x1="60" y1="55" x2="500" y2="55" stroke="var(--linea)" stroke-width="2"/>
-      <text x="20" y="50" fill="currentColor" font-size="13">WEP</text>
-      <text x="8" y="66" fill="currentColor" opacity="0.55" font-size="10">(closed-ish)</text>
-      <line x1="300" y1="48" x2="300" y2="62" stroke="var(--acc)" stroke-width="2"/>
-      <text x="300" y="42" text-anchor="middle" fill="currentColor" font-size="11">1997 impl</text>
-      <line x1="420" y1="48" x2="420" y2="62" stroke="var(--acc)" stroke-width="2"/>
-      <text x="420" y="42" text-anchor="middle" fill="currentColor" font-size="11">2001 RC4 confirmado</text>
-
-      <line x1="60" y1="135" x2="500" y2="135" stroke="var(--linea)" stroke-width="2"/>
-      <text x="20" y="130" fill="currentColor" font-size="13">RC4</text>
-      <text x="16" y="146" fill="currentColor" opacity="0.55" font-size="10">(closed)</text>
-      <line x1="120" y1="128" x2="120" y2="142" stroke="var(--acc)" stroke-width="2"/>
-      <text x="120" y="122" text-anchor="middle" fill="currentColor" font-size="11">1987 impl</text>
-      <line x1="230" y1="128" x2="230" y2="142" stroke="var(--acc)" stroke-width="2"/>
-      <text x="230" y="122" text-anchor="middle" fill="currentColor" font-size="11">1994 leaked</text>
-      <line x1="270" y1="128" x2="270" y2="142" stroke="var(--acc)" stroke-width="2"/>
-      <text x="262" y="160" text-anchor="middle" fill="currentColor" font-size="11">1995 bias</text>
-      <line x1="420" y1="128" x2="420" y2="142" stroke="var(--acc4)" stroke-width="2"/>
-      <text x="420" y="122" text-anchor="middle" fill="var(--acc4)" font-size="11">2001 attack</text>
-      <line x1="470" y1="128" x2="470" y2="142" stroke="var(--acc4)" stroke-width="2"/>
-      <text x="470" y="160" text-anchor="middle" fill="var(--acc4)" font-size="11">2003 attack</text>
-
-      <path d="M 300 62 L 300 128" fill="none" stroke="var(--acc2)" stroke-width="1.5" stroke-dasharray="4 4"/>
-      <text x="300" y="182" text-anchor="middle" fill="var(--acc2)" font-size="11">WEP nació apoyado en un cipher que ya venía con biases conocidos</text>
-    </svg>
-    <figcaption>La línea de RC4 corría años por delante de la de WEP, pero al ser cerradas las dos, nadie del lado de WEP pudo cruzarlas a tiempo.</figcaption>
-  </figure>
-
-  <p>RC4 es un stream cipher viejo, cuyo código fue leakeado en los 90 y del que ya para 1995 se sabía que tenía biases. Para el 2000 esos biases se transformaron en ataques completos: un atacante podía romper la criptografía por completo en un par de horas, abusando tanto de las vulnerabilidades de RC4 como del protocolo WEP.</p>
-  <div class="callout danger"><b>Las dos causas raíz.</b> Desarrollar cripto in house (<a href="#defensa-no-home-made">home made sec</a>) y hacerlo a puertas cerradas (<a href="#defensa-open">sin disclosure</a>). Cuando se supo, ya había miles de dispositivos vendidos, con lo cual el fix ni siquiera era una decisión de software.</div>
-
-  <h4 id="defensa-chrome">Chrome: separación por procesos</h4>
-  <p>Cuando uno abre Chrome, en realidad hay un proceso encargado de dibujar en pantalla (el render) y un proceso por cada tab abierta. Al ser procesos distintos, un adversario que tomó el control de una tab (y de su proceso) no tiene acceso ni a las otras tabs ni al render: es el sistema operativo el que fuerza esa separación.</p>
-  <div class="callout blue">El adversario ahora necesita bypassear al OS o encontrar un bug en la comunicación entre las tabs y el render. No es imposible, pero es mucho más difícil: la separación no elimina el ataque, le sube el precio.</div>
-
-  <figure class="diag">
-    <svg viewBox="0 0 480 90" role="img" aria-label="Escalera de aislacion: procesos, luego containers, luego virtual machines, luego physical devices, de menor a mayor aislacion">
-      <rect x="10" y="26" width="96" height="38" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
-      <text x="58" y="50" text-anchor="middle" fill="currentColor" font-size="12">Processes</text>
-      <rect x="130" y="26" width="96" height="38" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
-      <text x="178" y="50" text-anchor="middle" fill="currentColor" font-size="12">Containers</text>
-      <rect x="250" y="26" width="96" height="38" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="298" y="50" text-anchor="middle" fill="currentColor" font-size="12">VMs</text>
-      <rect x="370" y="26" width="100" height="38" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
-      <text x="420" y="45" text-anchor="middle" fill="currentColor" font-size="12">Physical</text>
-      <text x="420" y="58" text-anchor="middle" fill="currentColor" font-size="12">devices</text>
-      <line x1="106" y1="45" x2="128" y2="45" stroke="var(--acc2)" stroke-width="2" marker-end="url(#ardef)"/>
-      <line x1="226" y1="45" x2="248" y2="45" stroke="var(--acc2)" stroke-width="2" marker-end="url(#ardef)"/>
-      <line x1="346" y1="45" x2="368" y2="45" stroke="var(--acc2)" stroke-width="2" marker-end="url(#ardef)"/>
-      <text x="240" y="16" text-anchor="middle" fill="var(--acc2)" font-size="11">más aislación, más costo</text>
-      <defs>
-        <marker id="ardef" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc2)"/>
-        </marker>
-      </defs>
-    </svg>
-    <figcaption>La misma idea de separación se puede profundizar por niveles: procesos, containers, máquinas virtuales, dispositivos físicos.</figcaption>
-  </figure>
-
-  <h4 id="defensa-termocupla">La termocupla: fail safe en hardware</h4>
-  <p>En una estufa a gas, la termocupla controla el paso de gas de las cañerías principal y piloto. Cuando el sistema está apagado la termocupla está fría y corta el suministro. Para encenderla hay que habilitar manualmente el paso de gas, prender el piloto y esperar a que la termocupla se caliente para que deje pasar el gas por sí sola.</p>
-  <div class="callout example"><b>Qué pasa si se corta el gas, o si se apaga el piloto?</b> No hay peligro. Aunque la válvula esté abierta, al apagarse el piloto la termocupla se enfría y cierra el suministro. El sistema falló, pero de forma segura. Es a la vez <a href="#defensa-simplicity">simple</a> (una pieza, un principio físico) y <a href="#defensa-fail-safe">fail safe</a>, sin una línea de software.</div>
-
-  <h4 id="defensa-voto">Máquinas de votación: opaco y complejo</h4>
-  <p>El esquema: el votante elige A, la máquina imprime una boleta con un chip NFC que dice "voto A" y al mismo tiempo manda un mensaje al centro de cómputos con el resultado. El sistema es cerrado, así que la pregunta es quién puede verificar que en el momento de la votación el voto a A no sea cambiado por B.</p>
-  <p>La respuesta que ofrece el diseño es que el votante acerque la boleta a la máquina para que lea el NFC y le muestre qué dice. Pero si modelamos que la máquina es adversarial y nos imprimió un "voto A" que en realidad es un voto B, no podemos confiar en que nos haga esa verificación honestamente.</p>
-  <div class="callout danger"><b>Dos pilares rotos a la vez.</b> <b>Opaque</b> (no open): el votante no puede chequear ni tiene por qué confiar. <b>No role separation</b>: la misma máquina vota y controla el voto, exactamente el error de <a href="#defensa-barings">Barings</a> trasladado a hardware.</div>
-  <p>Y encima no es simple. La máquina es mucho más que una impresora de boletas: tiene sistema operativo, drivers de impresora, interfaz de red con sus drivers, puertos USB y código cerrado. Es demasiado compleja, puede fallar de múltiples formas, expone una superficie grande para ser hackeada desde varios ángulos y no es transparente. Cómo puede alguien verificar que la máquina funciona como debería?</p>
-  <p class="nota">Charla citada en clase sobre el tema: <code>youtube.com/watch?v=HwyN6P83HcY</code>.</p>
-
-  <h3 id="defensa-takeaways">Takeaways</h3>
-  <ul class="study-list">
-    <li><b>La seguridad va más allá del software.</b> Los casos de la clase son software (Chrome), hardware (la termocupla) y personas (Barings). Un mecanismo perfecto en una capa no salva a las otras dos.</li>
-    <li><b>La defensa no es solo contra un hack externo,</b> es contra que pasen cosas malas en general: un empleado sin supervisión, un cipher que envejeció, una válvula que se queda abierta. El adversario no siempre es una persona atacando.</li>
-  </ul>
-  <p class="ref">Los mecanismos y políticas y la idea de seguridad en profundidad vienen del <a href="#threatmodel">threat model de la clase 1</a>; el pilar de testeo es el <a href="#offense">engagement ofensivo de la clase 2</a>. El mínimo privilegio se ve en la práctica en <a href="#permisos">permisos de Unix</a> y <a href="#escalada">escalada de privilegios</a>.</p>
-
-  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Enumerar los cuatro pilares y ubicar un mecanismo dado en el que corresponde. Los cuatro principios de prevención y qué ataca cada uno. Enunciar el principio de Kerckhoff y explicar por qué la obscuridad no puede ser la única defensa (con el asterisco). Por qué no implementar crypto propia. Diferenciar monitoring de auditing. Qué es fail safe y cuáles son sus cuatro disparadores. Separación en espacio vs en responsabilidades, y por qué la aislación total no es alcanzable. Analizar un caso (Barings, WEP, la máquina de votación) diciendo qué principios se violaron y qué habría cambiado el resultado.</div>
+  <h3 id="s-defensa-casos">Los casos</h3>
+  <p>Barings Bank quebró en 1995 porque un trader era su propio supervisor (sin separación de roles, sin mínimo privilegio, sin monitoreo). WEP usó cripto cerrada sobre RC4, cuyos sesgos estadísticos conocidos desde 1994 se volvieron ataques completos con miles de dispositivos ya vendidos (no home made, Kerckhoffs). Chrome corre un proceso por tab y otro para el render (el que dibuja en pantalla), así que controlar una tab no da acceso al resto salvo bypasseando al OS (separación; niveles: procesos, containers, VMs, físico, de menor a mayor). La termocupla corta el gas si se apaga el piloto (fail safe, simple). La máquina de votar que imprime y verifica su propio voto es cerrada, compleja y sin separación de roles: nadie puede verificar que funcione bien.</p>
 
     </section>
 
-    <section class="chapter" id="permisos" data-title="permisos unix identidad claves secretos modelo leer stat las ssh higiene privada publica authorized keys linea comandos movimiento lateral secuestro del agente">
+    <section class="chapter" id="s-crypto" data-title="cryptography stream cipher kdf prng mac canales seguros que canal seguro one time pad csprng aleatoriedad hash criptografico completo">
       <div class="chapter-head">
-        <div class="chapter-number">A</div>
-        <div><h2>Permisos de Unix: identidad, claves y secretos</h2></div>
+        <div class="chapter-number">4</div>
+        <div><h2>Cryptography I: stream cipher, KDF, PRNG, MAC y canales seguros</h2></div>
       </div>
-  <p class="intro">La primera categoría del laboratorio (A, permisos) recorre las formas típicas en que la protección de un sistema Unix se cae, no por una vulnerabilidad exótica, sino por higiene: una clave privada con permisos de más, una copia de esa clave dejada suelta, un password pasado por la línea de comandos, un permiso de sudo mal acotado, un agente SSH desprotegido. Todas son variaciones de la confianza mal ubicada de la que habla el <a href="#threatmodel">threat model</a>, y todas tienen su pregunta gemela de cómo se defienden. Este capítulo junta el modelo de permisos, la higiene de claves y secretos, y el secuestro del agente SSH.</p>
+  <p class="intro">Síntesis de la clase 4: qué propiedades da un canal seguro y con qué piezas se arma, desde el one time pad hasta el MAC. Es la base de toda la parte de criptografía de la materia.</p>
 
-  <h3 id="permisos-modelo">El modelo de permisos de Unix</h3>
-  <p>Cada archivo tiene un dueño, un grupo, y tres ternas de permisos (dueño, grupo, otros), cada una con tres bits: read, write, execute. Se leen en la primera columna de <code>ls -lah</code> (10 caracteres: tipo + 3 ternas) o, ya resueltos en octal, con <code>stat</code>.</p>
-  <div class="callout"><b>Notación octal.</b> Cada terna es un dígito que suma <code>r=4 w=2 x=1</code>: <code>rw-</code> es 6, <code>r-x</code> es 5, <code>rwx</code> es 7. Un cuarto dígito adelante (opcional) son los bits especiales: setuid=4000, setgid=2000, sticky=1000. Por ejemplo <code>0600</code> es <code>rw-------</code> (solo el dueño lee y escribe), <code>0700</code> es <code>rwx------</code>.</div>
-  <p>En archivos, el bit de ejecución permite correrlos; en directorios significa "poder atravesarlo" (entrar y acceder a lo de adentro por nombre). Los bits especiales cambian el comportamiento:</p>
-  <ul class="study-list">
-    <li><b>setuid</b> (la <code>s</code> en la ejecución del dueño): un ejecutable con este bit corre con la identidad de su dueño, no de quien lo lanza. Es la base de toda la categoría B (ver <a href="#escalada">escalada de privilegios</a>).</li>
-    <li><b>setgid</b> en un directorio (la <code>s</code> en la ejecución del grupo, se ve <code>drwxr-sr-x</code>): los archivos creados adentro heredan el grupo del directorio, no el del creador.</li>
-    <li><b>sticky</b> (la <code>t</code>, típica de <code>/tmp</code>): en un directorio compartido, cada quien solo puede borrar sus propios archivos.</li>
-  </ul>
-  <div class="callout warning"><b>El link count de un directorio no es un enumerador confiable.</b> En teoría es 2 más un enlace por cada subdirectorio, pero en filesystems tipo overlay o tmpfs (los de una VM de laboratorio) esa regla no se cumple. No sirve para inferir cuántos usuarios o subcarpetas hay: para eso, listar de verdad con <code>ls</code>.</div>
+  <h3 id="s-crypto-canal">Qué es un canal seguro</h3>
+  <p>Alice y Bob quieren hablar por un canal abierto donde Eve puede leer y escribir. Un <b>canal seguro</b> da tres propiedades: <b>confidencialidad</b> (Eve no deduce nada del mensaje, ni siquiera si un bit es más probable 0 que 1), <b>integridad</b> (si Eve modifica, reordena, duplica o borra mensajes, Alice y Bob lo detectan trivialmente y abortan) y <b>autenticidad</b> (Eve no puede hacer pasar un mensaje como de Alice). Lo que no protege: Eve sabe que se comunican, cuándo, cuánto y que usan cripto; puede bloquear el canal; y puede forzar a una parte a revelar los secretos o engañar a la otra.</p>
 
-  <h4 id="permisos-ls-stat">Leer permisos: ls y stat</h4>
-  <p>Son complementarios. <code>ls -lah</code> da el panorama de muchas entradas de un tiro; <code>stat</code> describe una ruta puntual en detalle, con los permisos ya en octal y las tres fechas (atime de acceso, mtime de modificación de contenido, ctime de cambio de metadata como permisos o dueño). El flujo natural es ancho primero (<code>ls -lah</code>) y angosto después (<code>stat</code> sobre lo que ya identificaste), el mismo patrón que aplica el <a href="#offense">recon de un pentest</a>.</p>
-  <div class="callout example"><b>Recon en el filesystem sin leer todo.</b> La raíz de Linux sigue un estándar (FHS): buena parte es plomería del sistema, idéntica en cualquier instalación (<code>/proc /sys /dev /bin /lib /usr</code>), y se puede descartar sin mirar. Lo específico de la instalación es <code>/etc</code>, <code>/var</code>, <code>/tmp</code> y los datos por usuario (<code>/home</code>). En vez de leer <code>ls /</code> de arriba a abajo, preguntarse a qué categoría pertenece lo que se busca y saltar ahí. El estándar se consulta con <code>man hier</code> desde cualquier máquina.</div>
+  <h3 id="s-crypto-otp">One Time Pad</h3>
+  <p>En el <b>One Time Pad</b> el <b>plaintext</b> (mensaje original) se combina bit a bit con XOR contra un <b>key stream</b> (secuencia de bits aleatorios tan larga como el mensaje) y da el <b>ciphertext</b>. Eso es <b>cifrar</b>; como XOR se cancela a sí mismo, hacer XOR del ciphertext con el mismo key stream devuelve el plaintext, y eso es <b>descifrar</b>. Si el key stream es uniforme, impredecible y se usa una sola vez da confidencialidad, y solo filtra la longitud del plaintext. El problema es compartir un key stream tan largo como el mensaje: si hubiera un medio seguro para eso, se usaría directamente.</p>
 
-  <h3 id="permisos-claves-ssh">Permisos de las claves SSH</h3>
-  <p>El cliente SSH es estricto con los permisos de tus claves privadas: si el archivo es legible por el grupo o por otros, no lo usa. La consecuencia es traicionera porque no falla con un error claro.</p>
-  <div class="callout danger"><b>SSH descarta en silencio una clave privada con permisos laxos.</b> Con <code>StrictModes</code> (activo por defecto), si <code>id_rsa</code> u otra clave está en <code>0644</code> (o cualquier cosa que no sea privada del dueño), el cliente la ignora y cae a otro método de autenticación (password), sin decir "permisos inválidos" de forma obvia. El síntoma es un login que falla sin razón aparente. La cura es <code>chmod 0600 clave</code> (el 6 es <code>rw-</code> para el dueño, nada para el resto).</div>
-  <p class="nota">La lógica es la de <a href="#threatmodel">defensa en profundidad</a>: el propio cliente fuerza la buena higiene en vez de confiar en que el usuario protegió el archivo.</p>
+  <h3 id="s-crypto-csprng">CSPRNG y stream cipher</h3>
+  <p>Un <b>CSPRNG</b> (cryptographically secure pseudo random number generator) es una función determinística que a partir de una clave corta genera una secuencia larga <b>uniformemente distribuida</b> (todo patrón de bits es igual de probable), <b>impredecible</b> (conociendo toda la salida no se predice el próximo bit) y <b>no reversible</b> (la salida no filtra nada de la clave). Un generador pseudoaleatorio común (PRNG) que no cumple las tres rompe todo el sistema. Las propiedades valen hasta cierta cantidad de bytes (cientos de MB), por eso se agrega un <b>nonce</b>: entrada adicional que no se repite y da una secuencia fresca. Un <b>stream cipher</b> es OTP más CSPRNG: Alice y Bob comparten una clave de 128 o 256 bits <b>fuera de banda</b> (por otro medio, en un papel), cada uno genera el mismo key stream con el CSPRNG, y cifran con XOR. Compartir unos pocos bits sí es factible.</p>
 
-  <h3 id="permisos-higiene-claves">Higiene de claves: privada, pública y authorized_keys</h3>
-  <p>Un error común es proteger bien el directorio <code>.ssh</code> (en <code>0700</code>, nadie más entra) pero dejar una copia de la clave privada suelta en otro lado, con permisos más laxos. La protección de Unix es por archivo y por ubicación, no "este tipo de archivo está protegido dondequiera que esté": una sola copia mal puesta tira abajo todo el resto.</p>
-  <p>Para no confundirse, conviene distinguir los tres archivos de SSH por su contenido (el nombre es solo convención, no garantía):</p>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Archivo</th><th>Contenido</th><th>Forma</th></tr></thead>
-    <tbody>
-      <tr><td>clave privada (<code>id_rsa</code>, <code>alice_ecdsa</code>)</td><td>el secreto, nunca se comparte</td><td>multilínea, entre <code>-----BEGIN ... KEY-----</code> y <code>-----END ... KEY-----</code></td></tr>
-      <tr><td>clave pública (<code>id_rsa.pub</code>)</td><td>se puede compartir</td><td>una sola línea: tipo + blob base64 + comentario</td></tr>
-      <tr><td><code>authorized_keys</code></td><td>lista de claves públicas autorizadas a loguearse como ese usuario</td><td>una línea por clave, mismo formato que la pública suelta</td></tr>
-    </tbody>
-  </table></div>
-  <div class="callout warning"><b>Una clave pública o un <code>authorized_keys</code> no te sirve para entrar.</b> Contienen material público: identifican quién PUEDE loguearse, no permiten hacerlo. Para autenticarte necesitás la clave PRIVADA. Confundirlas es una pérdida de tiempo clásica en un CTF.</div>
-  <div class="callout blue"><b>Trust On First Use (TOFU).</b> La primera vez que te conectás a un host nuevo, SSH te muestra el fingerprint de su <em>host key</em> y pide confirmar. Esa host key identifica al SERVIDOR y es distinta de la clave con la que vos (el cliente) te autenticás: son dos claves con roles opuestos. Aceptar a ciegas rompe la protección contra man in the middle (se relaciona con los certificados de la <a href="#offense">cadena de confianza</a>).</div>
+  <h3 id="s-crypto-entropia">Aleatoriedad y KDF</h3>
+  <p>Las computadoras son determinísticas, y la <b>entropía</b> es la medida de aleatoriedad. Se sacan bits de procesos físicos (entropy pool) y con unos pocos cientos de bits realmente aleatorios un CSPRNG genera el resto; en Linux, <code>/dev/random</code>. Para humanos, una <b>KDF</b> (key derivation function) toma una passphrase (no aleatoria pero no adivinable) y devuelve una clave uniforme. Es la parte más sensible: debe ser <b>cara de computar</b> para encarecer el bruteforce (probar todas las passwords) y no filtrar la password si la clave se leakea. Como es determinística, dos personas con la misma password tendrían la misma clave; el <b>salt</b> aleatorio lo evita y además sube la entropía de la entrada. La idea general es siempre pasar de baja a alta entropía.</p>
 
-  <h3 id="permisos-secretos-argv">Secretos en la línea de comandos</h3>
-  <p>Pasar un secreto como argumento de un programa (<code>--password=...</code>) lo expone a todo el sistema, no solo al dueño del proceso. A diferencia de un archivo, cuyos permisos se pueden restringir por usuario, el argv de un proceso es legible por cualquier usuario mientras el proceso viva.</p>
-  <pre><code>ps aux                          # lista los procesos y su linea de comando
-cat /proc/&lt;pid&gt;/cmdline | tr '\0' ' '   # el argv exacto de un proceso, sin truncar</code></pre>
-  <div class="callout warning"><b><code>ps aux</code> trunca la columna COMMAND al ancho de la terminal.</b> Lo que parece "el comando completo" puede estar cortado. Para el dato exacto conviene leer <code>/proc/&lt;pid&gt;/cmdline</code> directo del kernel (los campos vienen separados por bytes nulos, se traducen con <code>tr '\0' ' '</code>). El PID sale de la primera columna del <code>ps aux</code>, no se adivina.</div>
-  <div class="callout danger"><b>Por eso las claves pública/privada son categóricamente más seguras que un password en claro.</b> Un password hay que escribirlo en algún lado (un archivo, una variable, o la línea de comandos), y la línea de comandos es visible para todo el sistema. Si hay que manejar un secreto, va en una variable de entorno protegida, un prompt interactivo, o un archivo con permisos restrictivos, nunca en el argv.</div>
+  <h3 id="s-crypto-hash">Hash criptográfico</h3>
+  <p>Un <b>hash criptográfico</b> lleva un mensaje a una secuencia fija uniforme. Da <b>pre-image resistance</b> (del hash no se recupera el mensaje) y <b>collision resistance</b> (no se pueden encontrar dos mensajes con el mismo hash; las colisiones existen porque el dominio es mayor que la imagen, pero deben ser muy difíciles de encontrar y más aún de fabricar). Eso da integridad. Un hash no sirve de KDF porque es rápido por diseño; iterarlo muchas veces es un parche que el hardware termina alcanzando. Además no garantiza que no filtre bits del mensaje.</p>
 
-  <h3 id="permisos-movimiento-lateral">Movimiento lateral</h3>
-  <p>Un secreto robado en un lado rara vez es el fin: habilita alcanzar otras cuentas. Si un usuario tiene permiso de <code>sudo</code> para convertirse en otro (no hace falta que sea root), comprometer al primero compromete al segundo. Robar el password de charlie y, con una regla de sudoers que lo deja volverse darleen, pasar a la cuenta de darleen, es <b>movimiento lateral</b>: usar lo ya comprometido para llegar más lejos.</p>
-  <p class="nota">Es un concepto de metodología ofensiva (<a href="#offense">clase de ofensiva</a>): el exploit no es el objetivo sino el habilitador del siguiente paso. El detalle del abuso de <code>sudoers</code> se trata a fondo en <a href="#escalada">escalada de privilegios</a>.</p>
+  <h3 id="s-crypto-mac">MAC</h3>
+  <p>Un <b>MAC</b> (message authentication code) es el hash de un mensaje con un secreto, así solo quien lo conoce genera hashes válidos (<b>forgery resistant</b>): integridad más autenticación. Las formas caseras de combinar secreto y mensaje están rotas; el estándar es <b>HMAC</b>. Sobre qué mensaje autenticar, <b>encrypt then auth</b> (se cifra y el MAC se calcula sobre el ciphertext) es seguro si el cifrado y el MAC lo son, y de bonus el ciphertext queda inforjable porque tocar cualquier parte hace fallar el MAC; <b>auth then encrypt</b> (MAC sobre el plaintext y se cifra todo junto) es seguro en general pero puede fallar según las primitivas usadas; <b>encrypt and auth</b> (MAC sobre el plaintext, enviado junto al ciphertext) no es seguro. Muchos protocolos viejos están rotos por elegir mal.</p>
 
-  <h3 id="permisos-ssh-agent">Secuestro del agente SSH</h3>
-  <p>El <b>ssh-agent</b> mantiene en memoria las claves privadas ya desbloqueadas. No expone las claves: expone un <b>socket Unix</b>, y cualquier <code>ssh</code> que le hable por ese socket le pide firmar los desafíos de autenticación. Dónde está el socket lo dice la variable <code>SSH_AUTH_SOCK</code>.</p>
-  <div class="callout"><b>Agent forwarding (<code>ssh -A</code>).</b> Al saltar de una máquina a otra con forwarding, el destino recibe un socket local que tunelea los pedidos de firma de vuelta hacia el agente real en el origen. Permite seguir saltando a más hosts sin copiar la clave privada a ninguno: las firmas viajan de vuelta al agente.</div>
-  <p>El problema: ese socket es un archivo con permisos <code>0600</code>. El agente no protege sus claves por proceso ni por sesión, las protege con los permisos del socket. Quien pueda actuar como el dueño dentro del host, puede hablarle al socket, y el agente firma sin distinguir quién pregunta.</p>
-  <div class="callout example"><b>El ataque, paso a paso.</b> Actuando como el dueño del agente, se busca el socket en el filesystem (<code>find /tmp -type s</code>), se apunta el propio cliente a él (<code>export SSH_AUTH_SOCK=/tmp/ssh-.../agent.NN</code>), se confirma que tiene claves cargadas (<code>ssh-add -l</code> lista fingerprints, <code>-L</code> las públicas) y se usa para autenticar como el objetivo, sin tener ninguna clave privada.</div>
-  <div class="callout warning"><b>Un camino que no funciona: leer <code>/proc/&lt;pid&gt;/environ</code> del agente.</b> El valor de <code>SSH_AUTH_SOCK</code> está en el entorno del proceso, pero el kernel protege ese environ con reglas de tipo ptrace (el flag "dumpable" del proceso), más estrictas que el simple mismo UID: da Permission denied aun siendo el mismo usuario. El camino correcto es no pelear el environ ajeno sino buscar el socket como archivo (tiene su propio modelo de permisos, común y corriente). Además, una shell abierta con otra identidad (<code>su</code>) arranca con entorno limpio y NO hereda el <code>SSH_AUTH_SOCK</code> de la sesión real: hay que setear la variable a mano.</div>
-  <div class="callout danger"><b>Defensa (pregunta típica de quiz).</b> Cargar las claves en el agente con <code>ssh-add -c</code> (confirm): pide confirmación interactiva cada vez que la clave se usa para firmar, así el secuestro deja de ser silencioso y el dueño lo puede rechazar en el momento. Complementar con <code>ssh-add -t &lt;tiempo&gt;</code> (expiración de la clave en el agente). Y evitar el forwarding hacia hosts en los que no se confía.</div>
-
-  <div class="callout exam"><b>Preguntas típicas de esta sección (A, permisos).</b> Leer una línea de <code>ls -lah</code> o un <code>stat</code>: identificar dueño, grupo, permisos en octal, y los bits especiales (setuid, setgid en directorios, sticky). Por qué SSH descarta en silencio una clave privada con permisos laxos (StrictModes) y cae a password. Diferenciar clave privada, clave pública y <code>authorized_keys</code> por su forma, y por qué solo la privada sirve para entrar. Por qué proteger <code>.ssh</code> no alcanza si se deja una copia de la clave suelta (la protección es por archivo). Qué es TOFU y por qué la host key no es la clave del cliente. Por qué el argv de un proceso no es privado (<code>ps</code>, <code>/proc/&lt;pid&gt;/cmdline</code>) y por qué un password en la línea de comandos es inseguro. Qué es el movimiento lateral y cómo un sudoers acotado lo habilita. Cómo funciona el ssh-agent, el agent forwarding y su secuestro (<code>SSH_AUTH_SOCK</code>, el socket como archivo), y cómo lo previene <code>ssh-add -c</code>.</div>
+  <h3 id="s-crypto-completo">El canal seguro completo</h3>
+  <p>Se comparte una passphrase fuera de banda una sola vez, la KDF la convierte en clave secreta, por sesión se elige un nonce, el CSPRNG genera el key stream, y cada mensaje se cifra con XOR y se autentica con un MAC. El key stream es <b>unidireccional</b>: para responder, Bob elige su propio nonce y genera otro key stream, si no se desincronizan. En comunicaciones largas se renuevan nonces para que el key stream no pierda sus propiedades. Hay otras formas de dar confidencialidad y autenticación, y el canal seguro no protege contra todos los ataques.</p>
 
     </section>
 
-    <section class="chapter" id="escalada" data-title="escalada privilegios sudo setuid base identidad permisos proceso leer que permite wildcard abuse path traversal shell escape gtfobins bit hijacking utilidades estandar con como defiende cada una">
+    <section class="chapter" id="s-permisos" data-title="permisos accesos modelo usuarios linux ssh claves encontrar secretos mal guardados procesos cambiar identidad sudo agent forwarding">
       <div class="chapter-head">
-        <div class="chapter-number">B</div>
-        <div><h2>Escalada de privilegios: sudo y setuid</h2></div>
+        <div class="chapter-number">A1</div>
+        <div><h2>Permisos y accesos</h2></div>
       </div>
-  <p class="intro">La segunda categoría del laboratorio (B, privilegios) es un paso más allá de los <a href="#permisos">permisos</a>: acá el objetivo es hacer que un programa actúe con una identidad más poderosa que la tuya. Todas las técnicas (abuso de sudoers, shell escape, el bit setuid, PATH hijacking) comparten esa forma y su pregunta gemela de cómo se defienden. Son justo el tipo de mecanismo que cae en el quiz.</p>
+  <p class="intro">Síntesis de las herramientas de la categoría A1: el modelo de permisos de Linux, las claves SSH y las formas típicas en que un secreto queda a la vista. Da los conceptos y las herramientas, no la solución de cada challenge.</p>
 
-  <h3 id="escalada-identidad-y-permisos">La base: identidad y permisos de un proceso</h3>
-  <p>Todo proceso corre con una identidad (un usuario). El kernel guarda en realidad varios UIDs: el <b>real UID</b> (ruid, quién lanzó el proceso) y el <b>effective UID</b> (euid, con quién se chequean los permisos al abrir un archivo o matar un proceso). Normalmente coinciden, pero los mecanismos de escalada viven justo en la brecha entre los dos.</p>
-  <div class="callout"><b>Effective UID (euid).</b> El UID contra el que el kernel evalúa cada operación privilegiada del proceso. Si un programa logra correr con euid distinto (y mayor) que tu ruid, hace por vos cosas que vos no podés.</div>
-  <p>Sobre los archivos, los permisos son tres ternas (owner, group, other) de tres bits (read, write, execute). Dos consecuencias que se explotan seguido:</p>
-  <ul>
-    <li>Ser dueño de un archivo no te deja leerlo si el bit de lectura del owner está en cero: el chequeo es siempre contra los bits, no contra "soy el dueño". Solo root (con CAP_DAC_OVERRIDE) los saltea.</li>
-    <li>Pero el dueño sí puede correr <code>chmod</code> sobre su archivo aunque no tenga permiso de leerlo: <code>chmod</code> se autoriza por ownership, no por los permisos actuales. Es una primitiva de escritura sobre los metadatos que habilita la de lectura.</li>
-  </ul>
-  <p class="nota">La notación de <code>chmod</code> y el detalle del modelo de permisos octal están en el <a href="#permisos-modelo">capítulo de permisos</a>. Acá alcanza con recordar que <code>chmod +r archivo</code> agrega lectura para todos, y que un <code>chmod</code> lo puede hacer el dueño aunque no pueda leer el archivo.</p>
+  <h3 id="s-permisos-modelo">Modelo de usuarios y permisos de Linux</h3>
+  <p>Cada archivo tiene un <b>owner</b>, un <b>grupo</b> y tres ternas de permisos <b>rwx</b> (lectura, escritura, ejecución) para owner, grupo y otros. En un directorio, <code>r</code> lista, <code>w</code> crea o borra entradas y <code>x</code> (execute o <b>search</b>) permite atravesarlo para llegar a lo de adentro: sin <code>x</code> en la carpeta no accedés a un archivo aunque el archivo te dé permiso. Se leen con <code>ls -lah</code> (la primera columna es el modo) y con <code>stat</code> (owner, permisos en octal y timestamps). <code>id</code> muestra tu uid, gid y grupos; <code>whoami</code> el usuario actual. La idea de fondo de toda la categoría es que el esquema de Linux es correcto pero la gente lo usa mal: permisos demasiado laxos, secretos dejados a la vista.</p>
 
-  <h3 id="escalada-sudo-sudoers">Leer lo que sudo te permite</h3>
-  <p>El <a href="#threatmodel">ejemplo de sudo del threat model</a> mostró la idea: en vez de dar root, el admin define en <code>sudoers</code> exactamente qué comando privilegiado puede correr cada usuario. Como atacante, el primer paso es siempre leer esa política:</p>
-  <pre><code>sudo -l</code></pre>
-  <p>La salida es críptica pero tiene un formato fijo. Cada línea es <code>(usuario-destino) ETIQUETAS: /ruta/exacta/del/comando [argumentos]</code>. Por ejemplo <code>(bob) NOPASSWD: /bin/cat /home/bob/nota</code> significa: podés correr <em>ese</em> <code>cat</code>, con <em>ese</em> argumento, como <b>bob</b>, sin contraseña. El <code>-u</code> de sudo elige el usuario destino: <code>sudo -u bob /bin/cat /home/bob/nota</code>.</p>
-  <div class="callout blue"><b>Pensar en primitivas.</b> De una lista de comandos permitidos, no todos sirven igual. Un atacante clasifica cada uno por la primitiva que da: leer un contenido (una primitiva de <em>lectura</em>), escribir en algún lado, o ejecutar código arbitrario. <code>ls</code> y <code>stat</code> solo dan metadata, <code>sha1sum</code> da un hash; el que devuelve el contenido tal cual (un <code>cat</code>) es la primitiva de lectura.</div>
+  <h3 id="s-permisos-ssh">SSH y claves</h3>
+  <p><b>SSH</b> abre una shell remota autenticando por clave pública o por password. La <b>clave privada</b> se queda con el usuario y la <b>pública</b> va en el servidor, en <code>~/.ssh/authorized_keys</code>. Para entrar con una clave, <code>ssh -i &lt;clave&gt; -p &lt;puerto&gt; user@host</code>, y ojo con el puerto, que el default 22 no siempre es el del challenge. SSH exige que la clave privada tenga permisos restrictivos (<code>chmod 600</code>) o se niega a usarla. <code>scp -i &lt;clave&gt; -P &lt;puerto&gt;</code> (P mayúscula) copia archivos entre máquinas por el mismo canal. Vale la pena poder hacer las dos cosas: saltar de un usuario a otro con <code>ssh</code> dentro de la propia VM, y bajar una clave a tu Kali con <code>scp</code> y entrar desde ahí.</p>
 
-  <h4 id="escalada-wildcard">Wildcard abuse y path traversal</h4>
-  <p>Cuando una regla usa un comodín, como <code>/bin/cat /var/log/*</code>, es tentador leerlo como "solo archivos de <code>/var/log</code>". No lo es: el <code>*</code> es un glob y sudo compara el string final del comando contra el patrón. Nada impide que el argumento arranque literalmente en <code>/var/log/</code> y con <code>..</code> salga a cualquier otro directorio:</p>
-  <pre><code>sudo -u darleen /bin/cat /var/log/../../home/darleen/secreto</code></pre>
-  <div class="callout"><b>Path traversal.</b> Usar <code>..</code> (u otras formas de reescribir una ruta) para salir del directorio al que en teoría estaba acotado un acceso. Es una de las técnicas más frecuentes de la industria: la misma lógica está detrás de los LFI en aplicaciones web y del zip slip.</div>
-  <div class="callout danger"><b>Un comodín en sudoers no es un sandbox de directorio.</b> Es un match de texto contra el comando final. Cualquier <code>*</code> es candidato a wildcard abuse, y cualquier comando que reciba una ruta como argumento es candidato a path traversal si esa ruta no se normaliza y valida antes de usarla.</div>
+  <h3 id="s-permisos-secretos">Encontrar secretos mal guardados</h3>
+  <p>Una clave privada ajena legible es una llave que podés usar. Para barrer homes y archivos ajenos sirven <code>ls -lah /home/*</code>, <code>find / -name id_* 2&gt;/dev/null</code> y <code>find / -perm -o=r</code> para lo que es legible por todos. Los formatos de clave privada típicos son <code>id_rsa</code>, <code>id_ecdsa</code> e <code>id_ed25519</code>, texto que empieza con <code>-----BEGIN ... PRIVATE KEY-----</code>.</p>
 
-  <h4 id="escalada-shell-escape">Shell escape (GTFOBins)</h4>
-  <p>Muchos programas "inocentes" e interactivos tienen una función legítima para lanzar un comando de shell sin salir: <code>less</code> y <code>vi</code> con <code>!comando</code>, <code>man</code>, <code>awk</code>, <code>find</code>, <code>tar</code>, <code>ftp</code>. Si sudoers te deja correr uno de esos como otro usuario, el shell que abrís hereda esa identidad, aunque <code>sudo -u gaia /bin/bash</code> esté prohibido.</p>
-  <div class="callout example"><b>La idea concreta.</b> <code>sudo -u gaia /usr/bin/less /home/gaia/manifiesto</code> corre <code>less</code> como gaia. Dentro, <code>!sh</code> (o <code>!cualquier-comando</code>) abre una subshell que también corre como gaia. Desde ahí ya ejecutás lo que quieras con esa identidad.</div>
-  <p class="nota">El catálogo de referencia de estas técnicas es GTFOBins: para cada binario lista cómo abusar de él (shell, lectura de archivos, escritura, escalada vía sudo o setuid).</p>
+  <h3 id="s-permisos-procesos">Secretos en procesos</h3>
+  <p>Todo lo que pasa por la <b>línea de comandos</b> de un proceso es visible para cualquier usuario, porque los argumentos aparecen en <code>/proc/&lt;pid&gt;/cmdline</code> y en la salida de <code>ps</code>. Por eso pasar un password como argumento es inseguro. Las herramientas son <code>ps aux</code> o <code>ps -ef</code> (listan todos los procesos con su línea de comandos completa), <code>ps -eo user,pid,args</code>, y mirar <code>/proc/&lt;pid&gt;/cmdline</code>, donde los argumentos van separados por bytes nulos y se ven con <code>tr '\0' ' ' &lt; /proc/&lt;pid&gt;/cmdline</code>. Un password encontrado así habilita <code>ssh</code> o <code>su</code> como ese usuario.</p>
 
-  <h3 id="escalada-setuid">El bit setuid</h3>
-  <p>El bit <b>setuid</b> (la <code>s</code> en la posición de ejecución del owner, un permiso <code>4755</code> que se ve <code>-rwsr-xr-x</code>) hace que al ejecutar el binario, el proceso tome como euid al <em>dueño del archivo</em>, no a quien lo lanza. Es el mecanismo con el que un programa de bob puede leer un archivo de bob aunque lo corra alice.</p>
-  <div class="callout warning"><b>Ser dueño de un binario no otorga nada por sí solo.</b> Sin el bit <code>s</code>, un programa de bob que corre alice tiene euid alice y falla. El <code>s</code> convierte "soy dueño de este programa" en "quien lo corre actúa como yo". Por eso, para encontrar el binario útil, se filtra por dueño <em>y</em> por el bit setuid: <code>find / -user bob -perm -4000 2&gt;/dev/null</code>.</div>
+  <h3 id="s-permisos-identidad">Cambiar de identidad: su y sudo</h3>
+  <p><code>su &lt;user&gt;</code> abre una shell como otro usuario, pidiendo el password de ese usuario. <code>sudo</code> ejecuta como otro usuario según lo que permita el archivo <code>sudoers</code>, y <code>sudo -l</code> lista qué te está permitido. Un <b>sudoer</b> que puede volverse otro usuario habilita el <b>movimiento lateral</b>: comprometer una cuenta y desde ella saltar a otras del mismo sistema. Ese encadenamiento, un password robado que compromete a un tercero, es el concepto central de A1.</p>
 
-  <h4 id="escalada-path-hijacking">PATH hijacking de un setuid</h4>
-  <p>Si el binario setuid, en su código, ejecuta a otro programa <b>por nombre y no por ruta absoluta</b>, la víctima elige el programa que se ejecuta. Esto pasa cuando usa <code>system("prog ...")</code> (que siempre lanza <code>/bin/sh -c</code>) o <code>execlp</code>/<code>execvp</code> (la <code>p</code> = "resolver el nombre recorriendo <code>$PATH</code>"). Como <code>$PATH</code> lo controla el atacante, se puede anteponer un directorio con un ejecutable propio que se llame igual:</p>
-  <pre><code># el setuid hace, por dentro:  execlp("stat", "stat", argv[1], NULL)
-echo '#!/bin/bash'                  &gt;  /tmp/stat
-echo '/ruta/al/programa/que/quiero' &gt;&gt; /tmp/stat
-chmod +x /tmp/stat
-export PATH=/tmp:$PATH              # nuestro directorio primero
-which stat                          # debe devolver /tmp/stat
-/ruta/al/binario_setuid  argumento  # resuelve "stat" -&gt; nuestro script</code></pre>
-  <div class="callout warning"><b>El escollo del shebang.</b> Si el programa intermediario es un script <code>#!/bin/bash</code>, el kernel mete un <code>/bin/bash</code> en el medio, y bash al arrancar con euid distinto de ruid <b>baja el euid a ruid</b> por seguridad: el privilegio heredado se pierde. Se resuelve pidiéndole que no lo haga, con <code>#!/bin/bash -p</code> (modo privilegiado), o haciendo que el intermediario sea un binario compilado (sin bash de por medio).</div>
+  <h3 id="s-permisos-agente">ssh-agent y agent forwarding</h3>
+  <p>El <b>ssh-agent</b> es un proceso que mantiene claves privadas desbloqueadas en memoria para no reescribir la passphrase cada vez. Se comunica por un socket cuya ruta está en la variable de entorno <code>SSH_AUTH_SOCK</code>, y el pid en <code>SSH_AGENT_PID</code>. Con <code>ssh-add -l</code> listás las claves cargadas y con <code>ssh-add &lt;clave&gt;</code> cargás una. El <b>agent forwarding</b> (<code>ssh -A</code>) reenvía ese socket a la máquina remota, así podés autenticarte a un tercer host usando una clave que nunca sale de tu máquina local. El riesgo es que si otro usuario en la VM puede leer el socket de tu agente (sabiendo el valor de <code>SSH_AUTH_SOCK</code> y teniendo permiso sobre ese archivo), puede pedirle firmas al agente y hacerse pasar por vos sin tener tu clave. Conceptos para investigar: variables de entorno de otro proceso (visibles en <code>/proc/&lt;pid&gt;/environ</code>), permisos del socket, y cómo <code>ssh-add</code> puede mitigar esto, con <code>-c</code> para pedir confirmación en cada uso y <code>-t</code> para ponerle un tiempo de vida a la clave.</p>
 
-  <h4 id="escalada-utilidades-setuid">Utilidades estándar con bit setuid</h4>
-  <p>Un caso especialmente peligroso es una utilidad conocida instalada como setuid de otro usuario. Muchas tienen features para ejecutar otro programa, y el <em>cómo</em> lo hacen decide si sirven:</p>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Utilidad</th><th>Feature que ejecuta otro comando</th><th>Hereda el euid?</th></tr></thead>
-    <tbody>
-      <tr><td><code>find</code></td><td><code>-exec cmd {} \;</code> (corre <code>cmd</code> por cada resultado)</td><td>Sí: find hace <code>exec</code> directo, sin shell.</td></tr>
-      <tr><td><code>tar</code></td><td><code>--checkpoint-action=exec=...</code> o <code>--to-command=...</code></td><td>Depende: si mete un shell, ese shell puede resetear el euid.</td></tr>
-    </tbody>
-  </table></div>
-  <p>Por eso <code>find</code> suele ser el camino fácil (ejecuta el comando él mismo y conserva el euid del proceso) mientras que <code>tar</code> exige rodeos: si termina lanzando un <code>/bin/sh</code>, se cae en el mismo reseteo de privilegios del shebang.</p>
+    </section>
 
-  <h3 id="escalada-defensas">Cómo se defiende cada una</h3>
-  <p>La pregunta gemela del quiz siempre es cómo evitar el abuso. En una línea por técnica:</p>
-  <div class="table-wrap"><table>
-    <thead><tr><th>Técnica</th><th>Defensa</th></tr></thead>
-    <tbody>
-      <tr><td>Wildcard / path traversal en sudoers</td><td>No usar comodines amplios; acotar a rutas exactas y normalizar/validar la ruta antes de abrirla (rechazar <code>..</code>).</td></tr>
-      <tr><td>Shell escape</td><td>No dar por sudo binarios con capacidad de lanzar shells; preferir un wrapper mínimo que haga solo la acción necesaria.</td></tr>
-      <tr><td>PATH hijacking de un setuid</td><td>Invocar siempre por ruta absoluta (nunca <code>system</code>/<code>execvp</code>); sanitizar el entorno (resetear <code>$PATH</code> e <code>IFS</code>); droppear privilegios (<code>setuid(getuid())</code>) antes de ejecutar si no se necesitan.</td></tr>
-      <tr><td>Utilidad estándar como setuid</td><td>No instalar utilidades potentes con el bit setuid; dar la capacidad justa (capabilities acotadas), no el poder genérico de find/tar como otro usuario.</td></tr>
-    </tbody>
-  </table></div>
-  <p class="ref">Todo esto es el mismo patrón del <a href="#threatmodel">threat model</a>: confianza mal ubicada en un boundary (el entorno, el <code>$PATH</code>, un socket, un comodín) y falta de mínimo privilegio. La metodología para encontrar estas grietas es la de la <a href="#offense">clase de ofensiva</a>: recon (leer permisos y sudoers), buscar la primitiva, y usar cada abuso como habilitador del siguiente.</p>
+    <section class="chapter" id="s-links" data-title="links race conditions symlinks hardlinks cuando script detecta archivos temporales inseguros mktemp toctou como leer objetivo">
+      <div class="chapter-head">
+        <div class="chapter-number">A2</div>
+        <div><h2>Links y race conditions</h2></div>
+      </div>
+  <p class="intro">Síntesis de las herramientas de la categoría A2, que gira alrededor de scripts privilegiados que procesan archivos de una carpeta que vos controlás. La familia de técnicas es links, archivos temporales inseguros y race conditions.</p>
 
-  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Diferencia entre real UID y effective UID, y por qué un binario setuid corre con el euid del dueño. Por qué el dueño de un archivo con cero permisos igual puede leerlo tras un <code>chmod</code> pero no antes. Leer una línea de <code>sudo -l</code> e identificar qué primitiva da cada comando permitido. Por qué un <code>*</code> en sudoers no limita el directorio (wildcard abuse y path traversal). Cómo funciona un shell escape y con qué binarios. Cómo funciona el PATH hijacking de un setuid y cómo se lo arregla (ruta absoluta, sanear entorno, droppear privilegios). Por qué <code>find</code> conserva el euid y un intermediario de bash lo pierde (el shebang y <code>-p</code>).</div>
+  <h3 id="s-links-tipos">Symlinks y hardlinks</h3>
+  <p>Un <b>symbolic link</b> (<code>ln -s &lt;destino&gt; &lt;nombre&gt;</code>) es un archivo chico que apunta a otra ruta por su nombre; abrir el symlink abre el destino, aunque el destino esté en otro dueño o fuera de la carpeta. Un programa que sigue symlinks ciegamente y corre con privilegios puede ser inducido a leer o escribir un archivo que vos no podés tocar directamente, si vos controlás el nombre al que apunta el link. Con <code>ls -l</code> un symlink se ve como <code>nombre -&gt; destino</code>.</p>
+  <p>Un <b>hard link</b> (<code>ln &lt;destino&gt; &lt;nombre&gt;</code>, sin <code>-s</code>) es un segundo nombre para el <b>mismo inodo</b>: no apunta a una ruta sino a los mismos datos en disco. Solo funciona dentro del mismo filesystem y sobre archivos, no carpetas, y no necesitás permiso de lectura sobre el archivo, solo poder acceder a él. La diferencia clave para explotar es que si un proceso privilegiado borra o limpia el archivo original, tu hardlink mantiene los datos <b>vivos</b> mientras exista, porque el inodo no se libera hasta que no queda ningún nombre apuntándolo. Eso da tiempo de leer algo que el script pensaba efímero.</p>
+
+  <h3 id="s-links-deteccion">Cuando un script detecta symlinks</h3>
+  <p>Un script defensivo puede chequear con <code>test -L</code> (o <code>[ -L archivo ]</code>) si algo es un symlink y abortar. Eso frena el link <b>directo</b> al secreto, pero no cierra todo: podés apuntar a algo intermedio, encadenar links, o usar un hardlink, que no es un symlink y no lo detecta ese chequeo. La lección es que no seguir symlinks es una condición más débil de lo que parece.</p>
+
+  <h3 id="s-links-temporales">Archivos temporales inseguros y mktemp</h3>
+  <p>Los scripts suelen crear carpetas o archivos temporales para trabajar, y hacerlo mal es una vuln clásica. <code>mktemp</code> genera nombres únicos, difíciles de adivinar, con creación <b>atómica</b> y permisos mínimos, y es la forma correcta. Los errores típicos que se explotan son el nombre <b>predecible</b> (si sabés cómo se va a llamar el temporal, lo creás vos antes), no verificar que la carpeta o archivo ya existe y es <b>tuyo</b>, o crear la carpeta y recién después ajustar permisos, lo que abre una ventana de tiempo. El concepto central: <b>si vos creás de antemano el recurso que el script espera crear, vos sos el owner</b> y controlás permisos y contenido; un <code>chmod</code> o <code>chown</code> del script por ser el creador deja de valer porque el creador fuiste vos. Para observar, <code>ls -la</code> sobre la carpeta temporal y <code>stat</code> para ver owner y timestamps.</p>
+
+  <h3 id="s-links-toctou">Race conditions y TOCTOU</h3>
+  <p>Una <b>race condition</b> aparece cuando el resultado depende del <b>orden temporal</b> entre tu acción y la del proceso privilegiado. La variante nombrada explícitamente es <b>TOCTOU</b> (time-of-check to time-of-use): el script primero <b>chequea</b> algo (por ejemplo, recorre la carpeta y valida que no haya symlinks) y <b>después</b> lo <b>usa</b> (vuelve a recorrer y loguea). Entre el check y el use hay una ventana; si en ese instante cambiás el archivo por un symlink, pasás el check como archivo común y sos usado como symlink. Para ganar la carrera hay que entender el timing del script.</p>
+  <p>Las pistas de timing que dan estos challenges y conviene tener presentes son que en bash <code>carpeta/*</code> expande los nombres en <b>orden alfabético</b>, así que el nombre que elegís define en qué momento del bucle se procesa; que un <code>for</code> sobre nombres corre <b>linealmente</b> con la cantidad de entradas, así que llenar la carpeta con muchos archivos <b>agranda la ventana</b> de tiempo; y que cuanto <b>más grande</b> es un archivo, más tarda un proceso en leerlo o escribirlo, lo que también alarga la ventana. Las herramientas útiles son <code>ln -s</code> y <code>ln</code> para poner y sacar links, <code>touch</code> y crear muchos archivos con un bucle o con nombres elegidos, y correr acciones en paralelo o en loop para pegarle al instante correcto.</p>
+
+  <h3 id="s-links-leer-script">Cómo leer el script objetivo</h3>
+  <p>Antes de atacar, leelo con <code>cat /bin/&lt;script&gt;.job.sh</code>. Fijate el orden de las operaciones (dónde chequea y dónde usa), si sigue o no symlinks, cómo nombra los temporales, quién es el owner de lo que crea, y con qué privilegios corre, mirando el <code>stat</code> del script y si tiene setuid, que es donde A2 se conecta con B2. Reflexionar dónde está exactamente la vuln es parte de lo que pide el challenge y suele caer en el quiz.</p>
+
+    </section>
+
+    <section class="chapter" id="s-sudo" data-title="sudo sudoers gtfobins binario como primitiva path traversal variables entorno metodo general">
+      <div class="chapter-head">
+        <div class="chapter-number">B1</div>
+        <div><h2>Sudo</h2></div>
+      </div>
+  <p class="intro">Síntesis de las herramientas de la categoría B1. Todos los challenges abusan de una config de <code>sudo</code> demasiado permisiva para conseguir una de las tres <b>primitivas</b> del atacante: leer, escribir o ejecutar como otro usuario.</p>
+
+  <h3 id="s-sudo-sudoers">sudo y sudoers</h3>
+  <p><code>sudo</code> deja correr un comando como <b>otro usuario</b> (por default root, con <code>-u &lt;user&gt;</code> otro) según reglas en <code>/etc/sudoers</code>. <b>No</b> te da un shell libre como ese usuario salvo que la regla lo permita, solo los comandos autorizados. <code>sudo -l</code> lista tus reglas, que se leen como <code>usuario ALL=(comoquien) etiquetas: comando</code>. Las etiquetas frecuentes son <code>NOPASSWD</code> (no pide password), <code>SETENV</code> (podés pasar variables de entorno) y <code>NOEXEC</code> (el programa lanzado no puede ejecutar otros). Un comando con <code>*</code> o rutas amplias es una puerta; uno restringido a un binario y argumento exacto es más cerrado, pero igual puede tener fugas según qué hace ese binario. La idea central de B1 es que el poder que te da <code>sudo</code> no es solo ese comando, es <b>todo lo que ese comando sabe hacer</b>.</p>
+
+  <h3 id="s-sudo-gtfobins">GTFOBins: el binario como primitiva</h3>
+  <p>Muchos programas comunes, pensados para otra cosa, pueden <b>leer archivos</b>, <b>escribir archivos</b> o <b>lanzar un shell</b>. Si podés correr uno de esos como otro usuario vía <code>sudo</code>, heredás esa primitiva con los permisos de ese usuario. El catálogo de referencia es <b>GTFOBins</b> (gtfobins.github.io): para cada binario lista cómo abusarlo (Sudo, Shell, File read, File write, SUID, etc.). Es la herramienta mental de toda la categoría: preguntarse cuál de los comandos que te deja <code>sudo</code> te da lectura, cuál escritura y cuál un shell.</p>
+  <p>Para <b>lectura</b>, los paginadores y visores como <code>less</code>, <code>more</code>, <code>cat</code>, <code>head</code> y <code>tail</code> vuelcan el contenido de un archivo: con uno de estos corriendo como el dueño del secreto, lo leés. Para <b>ejecución</b> o <b>shell escape</b>, los editores y herramientas interactivas (<code>vi</code> y <code>vim</code>, <code>less</code>, <code>man</code>, <code>awk</code>, <code>find</code>, <code>ftp</code>, <code>ed</code>) tienen formas de escapar a un shell desde adentro, por ejemplo <code>:!cmd</code> en vim o less y <code>!cmd</code> en man. Eso es un <b>shell escape</b>: de poder correr este programa pasás a poder correr cualquier cosa como ese usuario. No esperes que <code>sudo -u x /bin/bash</code> esté permitido; el camino es escapar desde un programa que sí lo está.</p>
+
+  <h3 id="s-sudo-traversal">Path traversal</h3>
+  <p>Cuando la regla permite un comando sobre un patrón como <code>cat /var/log/*</code>, el <code>*</code> lo expande la shell <b>antes</b> de llamar a <code>sudo</code>, así que podés escribir vos la ruta. Con <b>path traversal</b> (secuencias <code>..</code> o rutas absolutas armadas para salir del directorio pretendido) hacés que el argumento apunte a un archivo fuera de lo que el admin imaginó. Es una de las técnicas más frecuentes en seguridad y el challenge pide que la estudies por nombre. Conviene entender cómo se expanden los globs y cómo <code>..</code> navega el árbol.</p>
+
+  <h3 id="s-sudo-entorno">Variables de entorno y sudo</h3>
+  <p><code>sudo</code> por defecto limpia el entorno, pero reglas con <code>SETENV</code>, o el manejo de <code>env_file</code>, <code>env_check</code> y <code>env_keep</code>, pueden dejar pasar o forzar variables. Programas como <code>less</code> cambian su comportamiento según variables (<code>LESSSECURE=1</code> lo pone en modo seguro sin edición ni ejecución; <code>LESSOPEN</code>, <code>PAGER</code>, <code>VISUAL</code>, <code>EDITOR</code> en otros). Si una defensa depende de una variable, la pregunta es si podés <b>pisarla o vaciarla</b>. Las herramientas son <code>sudo -u &lt;user&gt; env</code> para ver con qué entorno realmente corre el comando, y leer con cuidado la config para ver qué control de entorno tenés habilitado. <code>NOEXEC</code> puede seguir bloqueando el shell aunque desactives la protección de la variable, así que a veces la solución es solo lectura, no shell.</p>
+
+  <h3 id="s-sudo-metodo">Método general</h3>
+  <p>Primero <code>sudo -l</code> para ver qué te dejan. Después, por cada comando permitido, pensar qué primitiva da (lectura, escritura, ejecución) apoyándose en GTFOBins. Luego ver qué restricciones hay (rutas fijas, <code>NOEXEC</code>, variables forzadas) y buscar el hueco: un glob que podés redirigir, un binario con shell escape, una variable pisable. Por último, reflexionar dónde estaba la vuln y cómo se arreglaría, que es material de quiz.</p>
+
+    </section>
+
+    <section class="chapter" id="s-euid" data-title="effective uid setuid real bit como primitiva lectura cuando lee flag directamente metodo general">
+      <div class="chapter-head">
+        <div class="chapter-number">B2</div>
+        <div><h2>Effective UID y setuid</h2></div>
+      </div>
+  <p class="intro">Síntesis de las herramientas de la categoría B2, que explora cómo un proceso decide con qué identidad accede a los archivos y cómo abusar de programas <b>setuid</b> para leer secretos ajenos.</p>
+
+  <h3 id="s-euid-ruid-euid">Real UID vs effective UID</h3>
+  <p>Todo proceso tiene un <b>real UID</b> (quién lo lanzó) y un <b>effective UID</b> (con cuyos permisos decide el kernel si te deja acceder a cada archivo). En condiciones normales los dos son el mismo: si <code>alice</code> corre un programa, el effective UID es <code>alice</code> y el proceso puede lo que puede <code>alice</code>, sin importar quién sea el <b>dueño del binario</b>. Por eso un programa cuyo owner es <code>eve</code> corrido por <code>alice</code> accede como <code>alice</code>, no como <code>eve</code>. Para observar está <code>id</code> dentro de tu sesión, y a nivel concepto, que el chequeo de permisos lo hace el kernel contra el effective UID del proceso.</p>
+
+  <h3 id="s-euid-bit">El bit setuid</h3>
+  <p>El permiso <b>setuid</b> (<code>s</code> en la terna del owner, por ejemplo <code>-rwsr-xr-x</code>) cambia la regla: al ejecutar el binario, el proceso toma como effective UID al <b>owner del programa</b>, no a quien lo corre. Así un binario setuid de <code>bob</code>, corrido por <code>alice</code>, corre con permisos de <code>bob</code> y puede leer los archivos de <code>bob</code>. Existe también <b>setgid</b> (<code>s</code> en la terna de grupo). Para verlos, <code>ls -l</code> muestra la <code>s</code>, y si aparece <code>S</code> mayúscula es setuid sin permiso de ejecución, que no sirve; para buscarlos, <code>find / -perm -4000 -type f 2&gt;/dev/null</code> (setgid es <code>-2000</code>), combinable con <code>-user &lt;owner&gt;</code>; y <code>stat</code> confirma owner y modo. El punto que el challenge marca para el quiz es entender por qué <b>solo</b> el binario con el bit <code>s</code> seteado te da los permisos del owner, y por qué los demás programas del mismo dueño no.</p>
+
+  <h3 id="s-euid-lectura">Setuid como primitiva de lectura</h3>
+  <p>El caso simple es un binario setuid del dueño del secreto que lee el archivo que le pasás: lo corrés y lee con la identidad del owner. Se conecta con B1, porque es la misma idea de primitiva de lectura, pero conseguida por el bit del binario en vez de por una regla de <code>sudo</code>.</p>
+
+  <h3 id="s-euid-indirecto">Cuando el setuid no lee el flag directamente</h3>
+  <p>A veces el programa setuid no es el que revela el flag, pero <b>ejecuta otro programa</b> o lee y escribe algo que podés controlar. Ahí el objetivo es que ese proceso privilegiado corra, por vos, el programa que sí revela el flag, para que este herede el effective UID del owner.</p>
+  <p>La primera técnica es el <b>PATH hijacking</b>: si el binario setuid llama a otro programa <b>por nombre</b> y no por ruta absoluta (por ejemplo invoca <code>ls</code> en vez de <code>/bin/ls</code>), el sistema lo busca en las carpetas de la variable <code>PATH</code>, en orden. Si podés anteponer una carpeta tuya al <code>PATH</code> y poner ahí un ejecutable con ese nombre, el proceso privilegiado corre <b>tu</b> programa con los permisos del owner. Por eso importa leer el <b>código fuente</b> del binario setuid, para ver si invoca comandos por nombre. Las herramientas son <code>echo $PATH</code>, exportar un <code>PATH</code> propio, y crear un script ejecutable con <code>chmod +x</code> que haga lo que quieras.</p>
+  <p>La segunda es la <b>ejecución vía el binario</b>: algunos programas tienen opciones para lanzar subprocesos o comandos, otra vez el enfoque de GTFOBins pero apuntando al SUID del catálogo. Cuidado, porque muchos programas <b>droppean privilegios</b> a propósito antes de ejecutar lo que les pedís, es decir bajan su effective UID al real UID, y entonces corren como vos y no como el owner. Cuando eso pasa hay que buscar <b>otra</b> forma dentro del mismo programa que no haga el drop, u <b>otro</b> binario. Distinguir qué sub-ejecuciones preservan y cuáles dropean privilegios es el núcleo del challenge más difícil.</p>
+
+  <h3 id="s-euid-metodo">Método general</h3>
+  <p>Primero buscar binarios setuid y setgid, filtrando por el owner que te interesa (<code>find ... -perm -4000 -user &lt;x&gt;</code>). Después ver qué hace cada uno con <code>cat</code>, <code>file</code> o leyendo la fuente, buscando si lee archivos, si ejecuta otros programas y <b>cómo</b> (por nombre relativo o ruta absoluta), y si dropea privilegios. Luego elegir la primitiva: lectura directa, PATH hijacking, o sub-ejecución sin drop. Por último, pensar cómo se arreglaría (rutas absolutas, limpiar el entorno, no confiar en <code>PATH</code>), que es típico de quiz.</p>
 
     </section>
 
@@ -2120,10 +1515,10 @@ which stat                          # debe devolver /tmp/stat
     const highlightPin = document.getElementById('highlight-pin');
     const highlightHelp = document.getElementById('highlight-help');
     const highlightColors = [...document.querySelectorAll('.highlight-color')];
-    const highlightStorageKey = 'seg-highlights-v1';
-    const highlightModeStorageKey = 'seg-highlight-fixed-v1';
-    const highlightColorStorageKey = 'seg-highlight-color-v1';
-    const preparedStorageKey = 'seg-prepared-topics-v1';
+    const highlightStorageKey = 'segsin-highlights-v1';
+    const highlightModeStorageKey = 'segsin-highlight-fixed-v1';
+    const highlightColorStorageKey = 'segsin-highlight-color-v1';
+    const preparedStorageKey = 'segsin-prepared-topics-v1';
 
     function loadPreparedTopics() {
       try {
@@ -2173,10 +1568,10 @@ which stat                          # debe devolver /tmp/stat
 
     function setTheme(theme) {
       root.dataset.theme = theme;
-      localStorage.setItem('seg-theme', theme);
+      localStorage.setItem('segsin-theme', theme);
     }
 
-    const savedTheme = localStorage.getItem('seg-theme');
+    const savedTheme = localStorage.getItem('segsin-theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
 
@@ -2191,7 +1586,7 @@ which stat                          # debe devolver /tmp/stat
     const menuClose = document.getElementById('menu-close');
     const navBackdrop = document.getElementById('nav-backdrop');
     const desktopNavToggle = document.getElementById('desktop-nav-toggle');
-    const sidebarStateKey = 'seg-sidebar-collapsed-v1';
+    const sidebarStateKey = 'segsin-sidebar-collapsed-v1';
 
     function setSidebarCollapsed(collapsed) {
       body.classList.toggle('sidebar-collapsed', collapsed);
@@ -2831,8 +2226,8 @@ which stat                          # debe devolver /tmp/stat
     const notesSaved = document.querySelector('.notes-saved');
     const notesPreviewToggle = document.getElementById('notes-preview-toggle');
     const notesCommandButtons = [...document.querySelectorAll('[data-note-command]')];
-    const notesStorageKey = 'seg-study-notes-v1';
-    const notesStateKey = 'seg-study-notes-collapsed-v1';
+    const notesStorageKey = 'segsin-study-notes-v1';
+    const notesStateKey = 'segsin-study-notes-collapsed-v1';
     let notesAnimationTimer;
     let notesSaveTimer;
     let notesPreviewVisible = false;

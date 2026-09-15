@@ -1,0 +1,32 @@
+{
+  "name": "Taller de Seguridad - Síntesis",
+  "short_name": "Seguridad, síntesis",
+  "description": "Síntesis del Taller de Seguridad Informática (TA051, FIUBA): cada clase en pocos párrafos.",
+  "lang": "es",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f5ec",
+  "theme_color": "#b58900",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -13,14 +13,20 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -r requirements.txt
-      - name: lint fragmentos
+      # Una corrida por salida: los ids tienen que ser unicos dentro de cada
+      # apunte, no entre los dos (son paginas separadas).
+      - name: lint fragmentos (completo)
         run: python3 -m motor_apuntes.lint_fragmentos fuentes/completo
+      - name: lint fragmentos (sintesis)
+        run: python3 -m motor_apuntes.lint_fragmentos fuentes/sintesis
       # armar.py valida ids duplicados, anclas rotas, tokens CSS sin definir,
       # recursos externos e imagenes faltantes; falla solo si algo de eso pasa.
       - run: python3 armar.py
       - name: output al dia
         run: |
-          if ! git diff --exit-code -- index.html manifest.webmanifest icon.svg sw.js; then
+          if ! git diff --exit-code -- index.html manifest.webmanifest icon.svg sw.js \
+                                       sintesis/index.html sintesis/manifest.webmanifest \
+                                       sintesis/icon.svg sintesis/sw.js; then
             echo "::error::el output commiteado no coincide con lo que arma armar.py. Correr python3 armar.py y commitear."
             exit 1
           fi

@@ -1,0 +1,20 @@
+<section class="unidad" id="s-threatmodel" data-titulo="Threat model, mecanismos y políticas">
+  <h2>1. Threat model, mecanismos y políticas</h2>
+  <p class="intro">Síntesis de la clase 1: contra quién te defendés, cómo se materializa esa defensa y dónde busca la grieta el atacante. Es el marco que usa el resto de la materia, así que conviene tenerlo fresco antes de cualquier otro tema.</p>
+
+  <h3 id="s-threatmodel-modelo">El threat model</h3>
+  <p>La seguridad <b>cuesta</b> tiempo, dinero y fricción de uso. El <b>threat model</b> es un proceso <b>iterativo</b> que identifica quién te ataca y cómo defenderte. Define el <b>scope</b> (qué está en alcance) y las <b>assumptions</b> (qué se da por supuesto para simplificar), qué <b>assets</b> proteger y qué <b>riesgos</b> asumir según <b>impacto y probabilidad</b>. Los ataques improbables suelen quedar sin cubrir, y ahí es donde el atacante se aprovecha. Al final se reduce a en quién y en qué confiar: hardware, personas, proveedor de internet.</p>
+  <p>Los <b>atacantes</b> son un país, una organización criminal o un script kid. Los <b>motivos</b>, profit, políticos, competencia, o usarte de trampolín hacia otro objetivo. Los <b>vectores</b>, software, hardware y personas (por malicia o por error).</p>
+
+  <h3 id="s-threatmodel-mecanismos">Mecanismos y políticas</h3>
+  <p>El threat model se materializa con <b>mecanismos</b> (las herramientas) y <b>políticas</b> (quién puede hacer qué). Hay sinergia: la policy define qué mecanismos sirven, y el mecanismo le da flexibilidad o simpleza a la policy. Las políticas definen niveles de confianza: <b>discretional</b>, <b>mandatory</b>, <b>role based</b>, <b>attribute based</b>. Además de <b>enforzar</b>, se <b>monitorea</b> para detectar temprano, se <b>previene</b>, se <b>mitiga</b> el daño cuando igual entran, se guardan registros para <b>auditar</b>, y hay un <b>plan B</b>.</p>
+
+  <h3 id="s-threatmodel-friccion">El tradeoff de la fricción</h3>
+  <p>El <b>tradeoff</b> es la fricción. Confiar en todos (root para todos) no tiene fricción, pero un usuario pawneado, desleal o distraído compromete todo. Con mínimo privilegio, cualquier cosa fuera del uso habitual requiere pedirle al admin. Si la fricción es mucha, los usuarios bypassean el control y quedan más expuestos que antes.</p>
+
+  <h3 id="s-threatmodel-grieta">Dónde busca el atacante</h3>
+  <p>El atacante busca en tres lugares: lo que quedó <b>fuera del threat model</b>, un <b>mismatch</b> entre lo que la policy quería y lo que implementa, o <b>romper el mecanismo</b>. Un fallo real suele ser una cadena de ataques, un <b>attack path</b> hacia el objetivo.</p>
+
+  <h3 id="s-threatmodel-zero-trust">Zero trust e interfaces</h3>
+  <p><b>Zero trust</b>: nunca confiar, siempre verificar, ni en el propio código ni en lo que un componente dice ser (un pendrive que se declara teclado y tipea un shellcode, código que toma control de la máquina: <b>bad USB</b>, <b>OMG cable</b>). Acceso con <b>mínimo privilegio</b>. Los puntos de intercambio de datos entre componentes son <b>interfaces</b> o <b>boundaries</b> (transferencia de datos, cambios de rol, transiciones), y se controlan todas, en capas, no solo la más expuesta (<b>seguridad en profundidad</b>).</p>
+</section>

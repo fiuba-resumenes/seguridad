@@ -1,0 +1,22 @@
+<section class="unidad" id="s-defensa" data-titulo="Defensa: prevenir, mitigar, responder y testear">
+  <h2>3. Defensa: prevenir, mitigar, responder y testear</h2>
+  <p class="intro">Síntesis de la clase 3: los cuatro pilares con los que se diseña una defensa y los principios concretos que cuelgan de cada uno. Cierra con los casos que la cátedra usa para mostrar qué pasa cuando falta justo uno.</p>
+
+  <h3 id="s-defensa-pilares">Los cuatro pilares</h3>
+  <p>En el plano defensivo hay 4 pilares: <b>prevención, mitigación, respuesta y testeo</b>. No es una taxonomía completa, es un blueprint para diseñar mecanismos de defensa. La seguridad va más allá del software (hardware y personas) y no es solo contra un hack externo: también contra errores y accidentes.</p>
+
+  <h3 id="s-defensa-prevenir">Prevenir</h3>
+  <p><b>Prevenir</b> es más barato que recuperarse de un hack. <b>Simplicidad</b>: un sistema difícil de configurar deja agujeros, uno tedioso de usar hace que los usuarios bypasseen los controles, y uno complejo tiene demasiadas piezas móviles cuyas interacciones esconden vulns. <b>Open</b>, principio de Kerckhoffs: un sistema criptográfico debe ser seguro aunque el adversario sepa todo salvo la clave, y se extrapola a cualquier sistema. Ocultar la implementación como única protección es frágil, es cuestión de tiempo hasta que alguien lo reversee; ocultar detalles puede potenciar la defensa pero nunca ser la única. <b>Mínimo</b>: sistema lo más chico posible para reducir la superficie de ataque. <b>No home made sec</b>: implementar seguridad es difícil y cripto mucho más, usar implementaciones estándar salvo casos puntuales.</p>
+
+  <h3 id="s-defensa-mitigar">Mitigar</h3>
+  <p><b>Mitigar</b>: si igual entran, que el daño sea menor. <b>Sec in depth</b>: checks a lo largo de toda la cadena, si llegan a prod que no lleguen a la DB. <b>Separación</b> o <b>aislación</b> de espacio, memoria, físico y responsabilidades (quien opera algo no es quien lo controla), para que el adversario no pueda moverse a otras áreas; nunca es total pero cuanto más mejor, y aplica también a nivel humano. <b>Mínimo</b> privilegio, recursos, accesos y confianza, así una cuenta hackeada tiene poco poder. <b>Fail safe</b>: ante error, entrada inválida, falta de algo o lo inesperado, el sistema defaultea a un estado seguro sin acceso ni privilegios.</p>
+
+  <h3 id="s-defensa-responder">Responder</h3>
+  <p><b>Responder</b> se apoya en el <b>monitoreo</b> con alertas para detección temprana y para saber cómo bloquear el ataque en curso; en la <b>auditoría</b>, para el forense de lo que ya pasó y cómo recuperarse; y en el <b>incident response</b>, un plan con próximos pasos, canales de comunicación y a quién involucrar, para responder rápido y minimizar daño.</p>
+
+  <h3 id="s-defensa-testear">Testear</h3>
+  <p><b>Testear</b>: no importa qué tan bien estén las defensas, hay que ponerlas a prueba con un pentest o red team.</p>
+
+  <h3 id="s-defensa-casos">Los casos</h3>
+  <p>Barings Bank quebró en 1995 porque un trader era su propio supervisor (sin separación de roles, sin mínimo privilegio, sin monitoreo). WEP usó cripto cerrada sobre RC4, cuyos sesgos estadísticos conocidos desde 1994 se volvieron ataques completos con miles de dispositivos ya vendidos (no home made, Kerckhoffs). Chrome corre un proceso por tab y otro para el render (el que dibuja en pantalla), así que controlar una tab no da acceso al resto salvo bypasseando al OS (separación; niveles: procesos, containers, VMs, físico, de menor a mayor). La termocupla corta el gas si se apaga el piloto (fail safe, simple). La máquina de votar que imprime y verifica su propio voto es cerrada, compleja y sin separación de roles: nadie puede verificar que funcione bien.</p>
+</section>
