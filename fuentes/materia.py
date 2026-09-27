@@ -77,6 +77,8 @@ _CLASES = [
 _LAB = [
     ("permisos", "A", "Permisos de Unix: identidad, claves y secretos"),
     ("escalada", "B", "Escalada de privilegios: sudo y setuid"),
+    ("links", "C", "Symlinks y condiciones de carrera: TOCTOU"),
+    ("crypto", "D", "Criptografía simétrica: stream ciphers y block ciphers"),
 ]
 
 CFG = {
