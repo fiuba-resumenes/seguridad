@@ -1165,6 +1165,7 @@
       <a href="#s-offense"><span>2</span>Pentesting: red team, pentester y researcher</a>
       <a href="#s-defensa"><span>3</span>Defensa: prevenir, mitigar, responder y testear</a>
       <a href="#s-crypto"><span>4</span>Cryptography I: stream cipher, KDF, PRNG y MAC</a>
+      <a href="#s-asimetrica"><span>5</span>Cryptography II: asimétrica, DH, firmas y certificados</a>
     </nav>
     <div class="nav-title">Challenges</div>
     <nav class="toc" aria-label="Challenges">
@@ -1371,6 +1372,39 @@
 
   <h3 id="s-crypto-completo">El canal seguro completo</h3>
   <p>Se comparte una passphrase fuera de banda una sola vez, la KDF la convierte en clave secreta, por sesión se elige un nonce, el CSPRNG genera el key stream, y cada mensaje se cifra con XOR y se autentica con un MAC. El key stream es <b>unidireccional</b>: para responder, Bob elige su propio nonce y genera otro key stream, si no se desincronizan. En comunicaciones largas se renuevan nonces para que el key stream no pierda sus propiedades. Hay otras formas de dar confidencialidad y autenticación, y el canal seguro no protege contra todos los ataques.</p>
+
+    </section>
+
+    <section class="chapter" id="s-asimetrica" data-title="cryptography asimetrica firmas certificados web trust problema clave compartida encriptacion key exchange diffie hellman forward secrecy man the middle cas takeaways">
+      <div class="chapter-head">
+        <div class="chapter-number">5</div>
+        <div><h2>Cryptography II: asimétrica, DH, firmas, certificados y web of trust</h2></div>
+      </div>
+  <p class="intro">Síntesis de la clase 5: cómo reemplazar la clave compartida fuera de banda del canal seguro con criptografía de clave pública, y por qué al final todo termina en un problema de confianza que la criptografía sola no resuelve.</p>
+
+  <h3 id="s-asimetrica-problema">El problema de la clave compartida</h3>
+  <p>El canal seguro se arma con tres primitivas: <b>encriptación</b> para la confidencialidad, <b>hash</b> para la integridad y <b>MAC</b> para la autenticidad. Las implementaciones más rápidas usan una única clave secreta que Alice y Bob tienen que compartir, y eso funciona si se conocen y se juntan en un café. Pero si no se conocen (nadie intercambió una clave en persona con Google), asumir que pueden compartir una clave <b>no escala</b>.</p>
+
+  <h3 id="s-asimetrica-encriptacion">Encriptación asimétrica</h3>
+  <p>Alice genera una clave <b>privada</b> <i>a</i> al azar y de ella deriva una <b>pública</b> <i>A</i>, de forma que de <i>A</i> no se puede aprender nada de <i>a</i>. Bob encripta con <i>A</i>, pero la pública no sirve para desencriptar: solo la privada, que tiene solo Alice. El <b>esquema de encriptación</b> incluye <i>E</i>, <i>D</i>, cómo se elige la privada y cómo se deriva la pública, y solo es seguro si las claves se usan según el esquema. El precio: es <b>lenta</b>, no se pueden reutilizar claves (Alice necesitaría un par nuevo por mensaje) y no da <b>autenticidad</b>, porque cualquiera con la pública, Eve incluida, puede encriptar. Mandar una clave simétrica <i>k</i> encriptada con la pública del otro es un hack: Alice no sabe si <i>k</i> es aleatoria, si es fresca ni si vino de Bob.</p>
+
+  <h3 id="s-asimetrica-dh">Key exchange, Diffie-Hellman y forward secrecy</h3>
+  <p>En un <b>key exchange</b> cada uno genera un par, intercambian las públicas, y cada uno combina su privada con la pública del otro para llegar al mismo secreto <i>k</i>; Eve, con las dos públicas, no aprende nada. En <b>Diffie-Hellman</b> se toma un <i>g</i> público, Alice elige <i>a</i> y publica g<sup>a</sup>, Bob elige <i>b</i> y publica g<sup>b</sup>, y como (g<sup>a</sup>)<sup>b</sup> = g<sup>ab</sup> = (g<sup>b</sup>)<sup>a</sup> ambos obtienen <i>k</i>. Con números comunes sería trivial sacar <i>a</i> con un logaritmo, pero el truco vale en otros <b>grupos</b> donde exponenciar es fácil y el logaritmo muy difícil: en 1976 los enteros de 1 a un primo <i>p</i> muy grande, hoy <b>curvas elípticas</b>. Los pares del KX son <b>efímeros</b>: si se borran después del intercambio, y <i>k</i> después de la comunicación, nadie puede desencriptar lo que pasó aunque obligue a Alice a hablar. Eso es <b>forward secrecy</b>.</p>
+
+  <h3 id="s-asimetrica-mitm">Man in the middle</h3>
+  <p>DH no da autenticidad: Eve se pone en el medio, hace un KX con Alice haciéndose pasar por Bob y otro con Bob haciéndose pasar por Alice, y cada uno monta un canal seguro con Eve sin darse cuenta. Hace falta una forma de saber quién es quién.</p>
+
+  <h3 id="s-asimetrica-firmas">Firmas</h3>
+  <p>Un par de claves también sirve para autenticar con un <b>esquema de firmado</b>: Alice <b>firma</b> con su privada (<i>S</i>) y Bob <b>verifica</b> con la pública de Alice (<i>V</i>) que el mensaje no fue adulterado ni falsificado. Como es lento, se firma el <b>hash</b> del mensaje y no el mensaje, parecido a un MAC. El esquema fija cómo se generan las claves, cómo se firma y cómo se verifica, pero no qué hash usar mientras sea seguro; cualquier desvío lo rompe, y hay esquemas donde firmar dos veces con la misma privada la revela. Queda el problema de fondo: cómo sabe Alice que <i>B</i> es la pública de Bob y no la de Eve.</p>
+
+  <h3 id="s-asimetrica-certificados">Certificados y CAs</h3>
+  <p>Bob le lleva su pública y la prueba de su identidad (<b>KYC</b>) a un <b>tercero de confianza</b>, que la verifica y le da un <b>certificado</b> con la identidad y la pública de Bob, firmado por el tercero. Alice verifica que el certificado tenga el ID de Bob, que sea válido y que la firma sea del tercero. Pero para eso tiene que confiar en el tercero y en su pública <i>T</i>, que a su vez está certificada por otro de más confianza: son las <b>autoridades certificantes</b> (CA), que forman una <b>cadena de confianza</b> terminada en un certificado <b>self-signed</b>. Las firmas impiden el MiTM, pero la criptografía no garantiza que una CA no venda certificados truchos. Es el esquema que usa todo <code>https://</code>.</p>
+
+  <h3 id="s-asimetrica-wot">Web of trust</h3>
+  <p>Sin autoridad central: Alice registra cada pública con qué tan <b>verificada</b> está (none, marginal, full), cuánto confía en el <b>juicio de su dueño</b> para verificar a otros, y quién la <b>firmó</b>. Alice conoce a Carol, verifica su clave y la firma (full); Carol firmó las de Derek y Eric, y como Alice confía en el juicio de Carol, las toma como marginalmente verificadas; Derek y Eric firmaron la de Bob, y dos firmas marginales alcanzan para que Alice considere a Bob marginalmente verificado. No es una cadena sino una <b>red de confianza</b>, el modelo de <code>gpg</code>, que escala poco y depende del juicio de cada uno.</p>
+
+  <h3 id="s-asimetrica-takeaways">Takeaways</h3>
+  <p>La cripto <b>simétrica</b> es rápida y fácil pero depende de un secreto compartido; la <b>asimétrica</b> es lenta y nada trivial, pero habilita más primitivas (encriptación, key exchange, firmas); <b>certificados</b> y <b>web of trust</b> funcionan con puntos débiles, porque verificar identidades y confiar en que una pública es de quien dice sigue sin resolverse del todo.</p>
 
     </section>
 

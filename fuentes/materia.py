@@ -74,6 +74,11 @@ _CLASES = [
     ("defensa", "3", "Defensa: prevenir, mitigar, responder y testear"),
 ]
 
+_CRIPTO = [
+    ("simetrica", "4", "Criptografía simétrica: canal seguro, stream cipher, KDF y MAC"),
+    ("asimetrica", "5", "Criptografía asimétrica: DH, firmas, certificados y web of trust"),
+]
+
 _LAB = [
     ("permisos", "A", "Permisos de Unix: identidad, claves y secretos"),
     ("escalada", "B", "Escalada de privilegios: sudo y setuid"),
@@ -99,6 +104,7 @@ CFG = {
     "favicon_hex": "b58900",
     "grupos": [
         ("Fundamentos", _CLASES[0:3]),
+        ("Criptografía", _CRIPTO),
         ("Laboratorio", _LAB),
     ],
     "paleta_light": PALETA_LIGHT,
@@ -110,15 +116,16 @@ CFG = {
 # Segunda salida: la sintesis (fuentes/sintesis/ -> sintesis/). Es el mismo
 # material en la otra altura de lectura: parrafos corridos, pegados a lo que
 # dice la diapositiva, para repasar antes de entrar al aula, mientras que el
-# apunte completo desarrolla cada tema con casos y ejemplos. Sale de los
-# apuntes propios de mis-notas/, asi que la sintesis va una clase mas adelante
-# (incluye la 4) y abre los challenges por codigo (A1, A2, B1, B2) en vez de
-# por categoria.
+# apunte completo desarrolla cada tema con casos y ejemplos. Las clases 1 a 4
+# salen de los apuntes propios de mis-notas/; la 5 sale directo del handout,
+# con el mismo formato. Abre los challenges por codigo (A1, A2, B1, B2) en vez
+# de por categoria.
 _CLASES_SIN = [
     ("s-threatmodel", "1", "Threat model, mecanismos y políticas"),
     ("s-offense", "2", "Pentesting: red team, pentester y researcher"),
     ("s-defensa", "3", "Defensa: prevenir, mitigar, responder y testear"),
     ("s-crypto", "4", "Cryptography I: stream cipher, KDF, PRNG y MAC"),
+    ("s-asimetrica", "5", "Cryptography II: asimétrica, DH, firmas y certificados"),
 ]
 
 _LAB_SIN = [

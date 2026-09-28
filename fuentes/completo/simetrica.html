@@ -1,0 +1,223 @@
+<section class="unidad" id="simetrica" data-titulo="Criptografía simétrica: canal seguro, stream cipher, KDF y MAC">
+  <h2>4. Criptografía simétrica: canal seguro, stream cipher, KDF y MAC</h2>
+  <p class="intro">Alice y Bob quieren hablar por un canal que cualquiera puede leer y escribir. Esta clase arma, pieza por pieza, un canal seguro con criptografía de clave compartida: el one time pad y el CSPRNG para la confidencialidad, las fuentes de entropía y la KDF para obtener las claves, el hash para la integridad y el MAC para la autenticidad. Al final se ensamblan todas las piezas en un protocolo completo. Es la base de todo lo que sigue en criptografía y de las categorías C del laboratorio.</p>
+
+  <h3 id="simetrica-canal-seguro">El canal seguro y sus tres propiedades</h3>
+  <p>El escenario es simple: Alice y Bob quieren comunicarse, pero el canal está abierto y un adversario (Eve) puede acceder a él, leer lo que pasa y meter lo que quiera. La premisa es construir, aun sobre ese canal abierto, un <b>canal seguro</b> entre los dos.</p>
+
+  <figure class="diag">
+    <svg viewBox="0 0 520 170" role="img" aria-label="Alice y Bob conectados por un canal seguro que pasa por un medio abierto; Eve accede al medio pero no puede leer, modificar sin ser notada ni falsificar mensajes">
+      <rect x="10" y="40" width="90" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="55" y="65" text-anchor="middle" fill="currentColor" font-size="14">Alice</text>
+      <rect x="420" y="40" width="90" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="465" y="65" text-anchor="middle" fill="currentColor" font-size="14">Bob</text>
+      <line x1="100" y1="60" x2="420" y2="60" stroke="var(--acc)" stroke-width="6" opacity="0.35"/>
+      <line x1="100" y1="60" x2="420" y2="60" stroke="var(--linea)" stroke-width="2"/>
+      <text x="260" y="48" text-anchor="middle" fill="currentColor" font-size="12">secure channel</text>
+      <rect x="140" y="112" width="90" height="36" rx="8" fill="none" stroke="var(--acc4)" stroke-width="2"/>
+      <text x="185" y="135" text-anchor="middle" fill="var(--acc4)" font-size="14">Eve</text>
+      <line x1="185" y1="112" x2="185" y2="66" stroke="var(--acc4)" stroke-width="1.5" stroke-dasharray="4 4"/>
+      <text x="250" y="124" fill="var(--acc2)" font-size="11">no lee (confidencialidad)</text>
+      <text x="250" y="139" fill="var(--acc2)" font-size="11">no modifica sin que se note (integridad)</text>
+      <text x="250" y="154" fill="var(--acc2)" font-size="11">no falsifica (autenticidad)</text>
+    </svg>
+    <figcaption>Eve tiene acceso al medio. El canal seguro no le impide estar ahí, le impide sacar provecho.</figcaption>
+  </figure>
+
+  <div class="def"><b>Canal seguro.</b> Un canal que, aun montado sobre un medio abierto, da tres propiedades:
+    <ul>
+      <li><b>Confidencialidad:</b> Eve no puede saber de qué hablan Alice y Bob. No puede deducir absolutamente nada, ni siquiera si un bit es más probable que sea un 0 que un 1.</li>
+      <li><b>Integridad:</b> Eve puede modificar los mensajes, cambiarlos de orden, duplicarlos o borrarlos, pero si lo hace tiene que ser trivial para Alice y Bob detectarlo (y abortar la comunicación).</li>
+      <li><b>Autenticidad:</b> aunque Eve puede crear mensajes, no puede engañar a Bob diciendo que vienen de Alice (ni viceversa). No puede falsificar ni hablar a nombre de otro sin que se detecte.</li>
+    </ul>
+  </div>
+  <p>Pero un canal seguro no es perfecto: Eve conserva bastante control sobre la comunicación.</p>
+  <table>
+    <thead><tr><th>Eve no puede</th><th>Eve sí puede</th></tr></thead>
+    <tbody>
+      <tr><td>Aprender nada del contenido.</td><td>Saber que Alice y Bob se comunican, que se conocen, a qué hora, por cuánto tiempo y que usan criptografía (la <b>metadata</b>).</td></tr>
+      <tr><td>Alterar ni falsificar mensajes sin ser notada.</td><td>Disrumpir o bloquear la comunicación (con un firewall, por ejemplo).</td></tr>
+      <tr><td>Romper la criptografía.</td><td>Ir a la casa de Alice y forzarla a revelar toda la comunicación o a mandarle mensajes a Bob a nombre de ella.</td></tr>
+    </tbody>
+  </table>
+  <div class="warn"><b>La criptografía protege el contenido, no el hecho de comunicarse.</b> Un canal seguro no oculta la metadata ni garantiza disponibilidad, y no resiste la coacción de una de las partes. Son amenazas que hay que cubrir con otros mecanismos si están en el <a href="#threatmodel">threat model</a>.</div>
+
+  <h3 id="simetrica-otp">One time pad: la confidencialidad</h3>
+  <p>El proceso de tomar un <b>plaintext</b> (el mensaje original) y generar un <b>ciphertext</b> se llama <b>encriptación</b> o cifrado. Tiene que ser reversible, para que el receptor pueda recuperar el plaintext: eso es desencriptar.</p>
+  <div class="def"><b>One time pad (OTP).</b> Se aplica XOR bit a bit entre el plaintext y un <b>key stream</b> del mismo largo y se obtiene el ciphertext. Es reversible porque un segundo XOR con el mismo key stream cancela al primero.</div>
+  <div class="formula">ctext = ptext XOR ks &nbsp;&nbsp;&nbsp; ptext = ctext XOR ks</div>
+  <p>Si el key stream es <b>uniformemente distribuido</b>, <b>impredecible</b> y se usa <b>una única vez</b>, no es posible aprender nada del plaintext a partir del ciphertext: OTP da confidencialidad. Su punto débil es que el atacante puede saber qué tan largo era el plaintext original, porque el ciphertext mide lo mismo.</p>
+  <p>Con un OTP, Alice encripta, manda el ciphertext y Bob desencripta; Eve no puede saber nada sin haber obtenido el key stream. Pero aparece la pregunta que organiza el resto de la clase:</p>
+  <div class="idea"><b>Cómo hacen Alice y Bob para tener exactamente el mismo key stream?</b> Si fuera trivial y seguro compartirlo por algún medio, por qué no usar ese mismo medio para hablar directamente? Hace falta una forma de generar secuencias aleatorias grandes a partir de una entrada chica, que sí se pueda compartir de forma segura.</div>
+  <p class="ref">Lo que pasa cuando el key stream se reusa o es corto y cíclico se ve en la práctica en <a href="#crypto-otp-stream">el capítulo de C1 y C2</a>.</p>
+
+  <h3 id="simetrica-csprng">CSPRNG y stream cipher</h3>
+  <div class="def"><b>CSPRNG</b> (cryptographically secure pseudo random number generator). Una función determinística que a partir de una clave genera una secuencia larga de bytes. Con "función" se quiere decir la definición matemática: un mapeo del espacio de claves al espacio de key streams. Si la clave es uniformemente distribuida, aleatoria y secreta, la salida tiene que cumplir tres propiedades:
+    <ul>
+      <li><b>Uniforme:</b> cada bit es 0 o 1 con 50% de probabilidad; cada secuencia de 2 bits (00, 01, 10, 11) con 25%, y así. Cualquier patrón de bits es tan probable como cualquier otro.</li>
+      <li><b>Impredecible:</b> aun conociendo todos los bytes ya generados, un adversario no puede predecir el valor de ningún bit futuro.</li>
+      <li><b>No reversible:</b> dada la salida, no es posible aprender nada de la clave usada como entrada.</li>
+    </ul>
+  </div>
+  <p>Existen múltiples generadores de números pseudoaleatorios (<b>PRNG</b>), pero solo los que cumplen uniformidad, imprevisibilidad y no reversibilidad son criptográficamente seguros.</p>
+  <div class="riesgo"><b>Un PRNG común en lugar de un CSPRNG rompe todo el sistema.</b> El XOR puede estar perfecto: si el generador es predecible o reversible, un atacante reconstruye el key stream y el cifrado deja de existir. El laboratorio lo muestra con una <a href="#crypto-seed-chica">semilla adivinable</a> y con <a href="#crypto-mt19937">el Mersenne Twister</a>.</div>
+
+  <h4 id="simetrica-nonce">El nonce: extender el key stream</h4>
+  <p>Todo CSPRNG tiene limitaciones: mantiene sus propiedades de uniformidad solo hasta cierta cantidad de bytes generados (unos cientos de megabytes). Después la salida puede empezar a presentar repeticiones o sesgos que la vuelven inusable para criptografía.</p>
+  <div class="def"><b>Nonce.</b> Una entrada adicional del CSPRNG, elegida al azar, que puede ser pública pero no se repite. Con cada nonce nuevo se obtiene una secuencia nueva y perfectamente aleatoria, así que combinando nonces se arma un key stream tan largo como haga falta.</div>
+
+  <h4 id="simetrica-stream-cipher">Stream cipher</h4>
+  <p>Alice genera una clave secreta totalmente aleatoria y se la pasa a Bob de forma segura. Ambos usan un CSPRNG para generar la misma secuencia larga de bytes, que sirve como key stream.</p>
+
+  <figure class="diag">
+    <svg viewBox="0 0 540 200" role="img" aria-label="Stream cipher: Alice y Bob comparten una clave secreta fuera de banda; cada uno la pasa junto con el nonce por el generador G para obtener el mismo key stream; Alice encripta con E y Bob desencripta con D">
+      <defs>
+        <marker id="arsim1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
+        </marker>
+      </defs>
+      <text x="80" y="20" text-anchor="middle" fill="currentColor" font-size="13">Alice</text>
+      <text x="460" y="20" text-anchor="middle" fill="currentColor" font-size="13">Bob</text>
+      <rect x="40" y="32" width="80" height="30" rx="6" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="80" y="52" text-anchor="middle" fill="currentColor" font-size="12">secret</text>
+      <rect x="420" y="32" width="80" height="30" rx="6" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="460" y="52" text-anchor="middle" fill="currentColor" font-size="12">secret</text>
+      <path d="M 120 47 L 420 47" fill="none" stroke="var(--acc2)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <text x="270" y="40" text-anchor="middle" fill="var(--acc2)" font-size="11">se comparte fuera de banda (out of band)</text>
+      <rect x="55" y="90" width="50" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="80" y="110" text-anchor="middle" fill="currentColor" font-size="13">G</text>
+      <rect x="435" y="90" width="50" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="460" y="110" text-anchor="middle" fill="currentColor" font-size="13">G</text>
+      <line x1="80" y1="62" x2="80" y2="88" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim1)"/>
+      <line x1="460" y1="62" x2="460" y2="88" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim1)"/>
+      <text x="270" y="100" text-anchor="middle" fill="currentColor" font-size="12">nonce (público)</text>
+      <line x1="220" y1="105" x2="107" y2="105" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim1)"/>
+      <line x1="320" y1="105" x2="433" y2="105" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim1)"/>
+      <rect x="55" y="150" width="50" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="80" y="170" text-anchor="middle" fill="currentColor" font-size="13">E</text>
+      <rect x="435" y="150" width="50" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="460" y="170" text-anchor="middle" fill="currentColor" font-size="13">D</text>
+      <line x1="80" y1="120" x2="80" y2="148" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim1)"/>
+      <line x1="460" y1="120" x2="460" y2="148" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim1)"/>
+      <text x="92" y="138" fill="var(--acc2)" font-size="10">key stream</text>
+      <text x="400" y="138" fill="var(--acc2)" font-size="10">key stream</text>
+      <line x1="105" y1="165" x2="433" y2="165" stroke="var(--acc)" stroke-width="2" marker-end="url(#arsim1)"/>
+      <text x="270" y="158" text-anchor="middle" fill="currentColor" font-size="12">ctext</text>
+    </svg>
+    <figcaption>Stream cipher: lo único que viaja por un medio seguro es la clave, de 128 o 256 bits. El key stream se genera de los dos lados.</figcaption>
+  </figure>
+
+  <div class="def"><b>Stream cipher.</b> La combinación del OTP (el XOR) y el CSPRNG. A menudo al combo se lo llama directamente "cipher", pero en rigor son dos partes separables.</div>
+  <p>Y cómo se comparte la clave secreta? Por ahora se asume que Alice se la pasa a Bob de manera segura, <b>fuera de banda</b>. Es algo de trampa pero perfectamente real: a diferencia del key stream, que se mide en megabytes o gigabytes, la clave son 128 o 256 bits, y es factible que Alice se la pase a Bob en un papel cuando se juntan en un café.</p>
+  <p class="nota">El problema de compartir la clave sin juntarse es justamente el punto de partida de la <a href="#asimetrica">clase 5</a>.</p>
+
+  <h3 id="simetrica-entropia">De dónde sale la aleatoriedad</h3>
+  <p>Con un CSPRNG en la mano solo falta obtener claves y nonces aleatorios, uniformemente distribuidos. No es trivial, porque las computadoras son determinísticas. Hay dos formas:</p>
+  <ul>
+    <li>Sacar bits aleatorios de <b>procesos físicos</b> fundamentalmente aleatorios, que alimentan un <b>entropy pool</b>.</li>
+    <li>Obtener unos pocos bits aleatorios y usar otro CSPRNG para tener muchos más.</li>
+  </ul>
+  <p>La segunda forma parece medio cíclica, pero tiene sentido: solo hacen falta unos 256 o 512 bits realmente aleatorios para que un CSPRNG genere una cantidad mucho mayor. El sistema operativo hace esto por vos: en Linux se obtienen bytes criptográficamente aleatorios leyendo de <code>/dev/random</code>.</p>
+
+  <h3 id="simetrica-kdf">KDF: de una passphrase a una clave</h3>
+  <p>Generar claves así es razonable para máquinas, pero no para personas: nadie se memoriza 256 bits aleatorios para pasárselos a otro.</p>
+  <div class="def"><b>KDF</b> (key derivation function). Toma una password o passphrase humana, que no es aleatoria pero no debe ser adivinable por un adversario, y deriva de ella una clave uniformemente distribuida. Es determinística y <b>costosa</b> de computar.</div>
+  <p>Las KDF son la parte más sensible del sistema, y tienen dos obligaciones:</p>
+  <ul>
+    <li>Ser lo más difíciles de computar posible, para que el <b>bruteforce</b> (probar passwords candidatas) le cueste caro al adversario.</li>
+    <li>Garantizar que si la clave se leakea, no se puede aprender nada de la password original.</li>
+  </ul>
+  <div class="def"><b>Salt.</b> Parámetro adicional y aleatorio de la KDF. Cumple dos roles: si dos personas usan la misma password, como el salt es al azar, derivan claves distintas (sin él, siendo la KDF determinística, derivarían la misma clave, lo que en ciertos contextos destruye la seguridad); y como la password tiene baja entropía, el salt aumenta la entropía de la entrada y mejora la aleatoriedad de la salida.</div>
+
+  <figure class="diag">
+    <svg viewBox="0 0 540 170" role="img" aria-label="Pipeline de entropia: las fuentes fisicas alimentan el entropy pool, que da una entrada corta a un CSPRNG que produce una salida muy larga y uniforme; en paralelo la passphrase de baja entropia pasa con el salt por la KDF y sale una clave uniforme de alta entropia">
+      <defs>
+        <marker id="arsim2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
+        </marker>
+      </defs>
+      <rect x="10" y="20" width="110" height="40" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="65" y="37" text-anchor="middle" fill="currentColor" font-size="11">fuentes físicas</text>
+      <text x="65" y="51" text-anchor="middle" fill="currentColor" font-size="11">(random)</text>
+      <rect x="160" y="20" width="100" height="40" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="210" y="44" text-anchor="middle" fill="currentColor" font-size="12">entropy pool</text>
+      <rect x="310" y="20" width="90" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="355" y="44" text-anchor="middle" fill="currentColor" font-size="12">CSPRNG</text>
+      <line x1="120" y1="40" x2="158" y2="40" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim2)"/>
+      <line x1="260" y1="40" x2="308" y2="40" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim2)"/>
+      <text x="284" y="33" text-anchor="middle" fill="var(--acc2)" font-size="10">corto</text>
+      <line x1="400" y1="40" x2="470" y2="40" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim2)"/>
+      <text x="505" y="37" text-anchor="middle" fill="var(--acc2)" font-size="10">muy largo</text>
+      <text x="505" y="50" text-anchor="middle" fill="var(--acc2)" font-size="10">uniforme</text>
+
+      <rect x="10" y="105" width="110" height="40" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="65" y="122" text-anchor="middle" fill="currentColor" font-size="11">passphrase</text>
+      <text x="65" y="136" text-anchor="middle" fill="currentColor" font-size="11">/ password</text>
+      <rect x="200" y="105" width="90" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="245" y="129" text-anchor="middle" fill="currentColor" font-size="12">KDF</text>
+      <line x1="120" y1="125" x2="198" y2="125" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim2)"/>
+      <text x="245" y="92" text-anchor="middle" fill="currentColor" font-size="11">salt</text>
+      <line x1="245" y1="96" x2="245" y2="103" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim2)"/>
+      <line x1="290" y1="125" x2="360" y2="125" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim2)"/>
+      <text x="420" y="129" text-anchor="middle" fill="currentColor" font-size="12">clave uniforme</text>
+      <text x="65" y="163" text-anchor="middle" fill="var(--acc4)" font-size="10">baja entropía</text>
+      <text x="420" y="163" text-anchor="middle" fill="var(--acc)" font-size="10">alta entropía</text>
+    </svg>
+    <figcaption>El juego es siempre el mismo: tomar algo de baja entropía (poca aleatoriedad) y llevarlo a algo de alta entropía, apto para usos criptográficos.</figcaption>
+  </figure>
+
+  <p>Con el stream cipher y la generación de clave y nonce aleatorios queda resuelta la confidencialidad: Alice y Bob comparten una passphrase fuera de banda, cada uno deriva la clave con la KDF (y el mismo salt), y de ahí en más generan el key stream con el nonce.</p>
+
+  <h3 id="simetrica-hash">Hash criptográfico: la integridad</h3>
+  <div class="def"><b>Función de hash criptográficamente segura.</b> Una función determinística que toma un mensaje de cualquier largo y devuelve una secuencia fija de bytes, uniformemente distribuida. Tiene dos garantías:
+    <ul>
+      <li><b>Pre-image resistance:</b> dado el hash, es imposible recuperar el mensaje original.</li>
+      <li><b>Collision resistance:</b> es muy difícil encontrar dos mensajes distintos con el mismo hash. En particular, el adversario no puede modificar un mensaje y conservar el hash del original.</li>
+    </ul>
+  </div>
+  <p>La segunda propiedad es la que da integridad. Toda función de hash tiene un dominio (espacio de entrada) mucho más grande que el espacio de salida, así que está garantizado que existen colisiones: la idea es que sean muy difíciles de encontrar, y muchísimo más aún de fabricar a voluntad.</p>
+  <div class="warn"><b>Un hash no es una KDF.</b> Es tentador usarlo como tal, pero las funciones de hash están diseñadas para ser rápidas, y una KDF necesita lo contrario. El compromiso de hashear la passphrase muchísimas veces para enlentecer el proceso es un parche: es cuestión de tiempo hasta que el hardware sea más rápido y la cantidad de iteraciones resulte insuficiente. En lo posible, no usar hashes como KDF.</div>
+  <div class="warn"><b>Pre-image resistance no es confidencialidad.</b> Que no se pueda recuperar el mensaje a partir del hash no garantiza que el hash no leakee bits del mensaje. Un hash criptográficamente seguro no está obligado a ocultar todo sobre su entrada.</div>
+  <table>
+    <thead><tr><th></th><th>Hash criptográfico</th><th>KDF</th></tr></thead>
+    <tbody>
+      <tr><td><b>Velocidad</b></td><td>Rápido por diseño.</td><td>Lenta y costosa a propósito.</td></tr>
+      <tr><td><b>Entrada</b></td><td>Cualquier mensaje.</td><td>Passphrase de baja entropía más salt.</td></tr>
+      <tr><td><b>Para qué</b></td><td>Integridad.</td><td>Obtener una clave uniforme para el cipher.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="simetrica-mac">MAC: la autenticidad</h3>
+  <p>Un hash solo no alcanza para autenticar: cualquiera, Eve incluida, puede calcular el hash de un mensaje que inventó. Si se introduce un secreto en el cálculo, solo quienes lo conocen pueden generar hashes válidos.</p>
+  <div class="def"><b>MAC</b> (message authentication code). Una función de hash con clave (<i>keyed hash</i>): combina un hash criptográfico con un secreto compartido. Es <b>forgery resistant</b>: sin el secreto es realmente difícil encontrar un par (mensaje, MAC) válido. Da integridad y autenticidad.</div>
+  <div class="riesgo"><b>No inventar la combinación.</b> Hay varias formas de combinar un secreto con el mensaje antes de hashear, y en general todas están rotísimas. El estándar hoy es <b>HMAC</b>, una forma específica y segura de combinar secretos y mensajes y hashearlos. Es el principio de <a href="#defensa-no-home-made">no home made sec</a> de la clase 3.</div>
+
+  <h4 id="simetrica-que-autenticar">Qué mensaje se autentica</h4>
+  <p>Resuelto el MAC, queda la pregunta de sobre qué se calcula: el plaintext o el ciphertext? El MAC viaja en plano o cifrado? No es una respuesta trivial, y muchos protocolos viejos están rotos por haber elegido mal.</p>
+  <table>
+    <thead><tr><th>Esquema</th><th>Qué hace</th><th>Seguridad</th></tr></thead>
+    <tbody>
+      <tr><td><b>Encrypt then Auth</b></td><td>Se cifra el plaintext y el MAC se calcula sobre el ciphertext.</td><td>Seguro en general, si el cifrado y el MAC son seguros.</td></tr>
+      <tr><td><b>Auth then Encrypt</b></td><td>Se calcula el MAC sobre el plaintext y se cifra todo junto.</td><td>Seguro, pero puede no serlo para algunas combinaciones de cifrado y MAC aunque cada uno sea seguro por separado.</td></tr>
+      <tr><td><b>Encrypt and Auth</b></td><td>Se cifra el plaintext y, aparte, se calcula el MAC sobre el plaintext.</td><td>No es seguro.</td></tr>
+    </tbody>
+  </table>
+  <div class="idea"><b>El bonus de Encrypt then Auth:</b> el ciphertext resultante no puede ser modificado por un adversario sin que se note. Si toca la parte que corresponde al plaintext cifrado, la verificación del MAC falla; si toca el MAC, también falla. Esto es justo lo que le falta al <a href="#crypto-ecb-maleabilidad">cut and paste sobre ECB</a> del laboratorio.</div>
+
+  <h3 id="simetrica-protocolo">El canal seguro completo</h3>
+  <p>Con todas las piezas se arma el protocolo, en tres escalas de tiempo distintas:</p>
+  <table>
+    <thead><tr><th>Cuándo</th><th>Qué pasa</th></tr></thead>
+    <tbody>
+      <tr><td><b>Una sola vez</b></td><td>Alice y Bob comparten una passphrase fuera de banda. Cada uno deriva con la KDF (y el salt) la misma clave secreta.</td></tr>
+      <tr><td><b>Por sesión</b></td><td>Alice elige un nonce y se lo pasa a Bob. Con la clave y el nonce, ambos generan con el CSPRNG el mismo key stream.</td></tr>
+      <tr><td><b>Por mensaje</b></td><td>Alice cifra con XOR contra el key stream y autentica el ciphertext con un MAC (encrypt then auth). Bob verifica el MAC y, si es válido, desencripta.</td></tr>
+    </tbody>
+  </table>
+  <div class="warn"><b>El key stream es unidireccional.</b> El que sale del nonce de Alice sirve solo para mensajes de Alice hacia Bob. Si Bob lo usara para responder, podrían desincronizarse sin darse cuenta. Para contestar, Bob elige su propio nonce, se lo pasa a Alice, y los dos generan un segundo key stream que se usa solo en la dirección Bob hacia Alice: es el mismo esquema reflejado.</div>
+  <p>Si la comunicación es muy larga, Alice y Bob pueden generar nonces nuevos y key streams frescos, para que estos no pierdan sus propiedades de uniformidad e imprevisibilidad.</p>
+  <p class="nota">Cripto es un universo: esto es solo la punta del iceberg. Hay otras construcciones para dar confidencialidad y autenticidad (los block ciphers y sus modos de operación aparecen en <a href="#crypto-block-ciphers">C2</a>), y un canal seguro no protege contra todos los ataques.</p>
+  <p class="ref">La pieza que queda sin resolver es la passphrase compartida "fuera de banda": la <a href="#asimetrica">criptografía asimétrica de la clase 5</a> ataca exactamente ese supuesto. En el laboratorio, <a href="#crypto">C1 y C2</a> rompen canales donde falta alguna de estas piezas.</p>
+
+  <div class="examen"><b>Preguntas típicas de este tema.</b> Enunciar las tres propiedades de un canal seguro y qué puede seguir haciendo Eve aun así. Por qué el OTP da confidencialidad, bajo qué condiciones, y qué filtra igual (el largo). Las tres propiedades de un CSPRNG y por qué un PRNG común rompe el sistema. Para qué sirve un nonce. Qué es un stream cipher y por qué compartir la clave es factible y compartir el key stream no. Qué hace una KDF, por qué tiene que ser lenta y para qué sirve el salt (los dos roles). Pre-image y collision resistance, y por qué un hash no sirve como KDF. Qué agrega un MAC sobre un hash, y por qué usar HMAC. Comparar encrypt then auth, auth then encrypt y encrypt and auth. Por qué el key stream es unidireccional.</div>
+</section>

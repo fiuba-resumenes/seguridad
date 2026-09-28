@@ -1165,6 +1165,11 @@
       <a href="#offense"><span>2</span>Ofensiva: red team, pentester y researcher</a>
       <a href="#defensa"><span>3</span>Defensa: prevenir, mitigar, responder y testear</a>
     </nav>
+    <div class="nav-title">Criptografía</div>
+    <nav class="toc" aria-label="Criptografía">
+      <a href="#simetrica"><span>4</span>Criptografía simétrica: canal seguro, stream cipher, KDF y MAC</a>
+      <a href="#asimetrica"><span>5</span>Criptografía asimétrica: DH, firmas, certificados y web of trust</a>
+    </nav>
     <div class="nav-title">Laboratorio</div>
     <nav class="toc" aria-label="Laboratorio">
       <a href="#permisos"><span>A</span>Permisos de Unix: identidad, claves y secretos</a>
@@ -1944,6 +1949,447 @@
 
     </section>
 
+    <section class="chapter" id="simetrica" data-title="criptografia simetrica canal seguro stream cipher kdf mac sus tres propiedades one time pad confidencialidad csprng nonce extender key donde sale aleatoriedad una passphrase clave hash criptografico integridad autenticidad que mensaje autentica completo">
+      <div class="chapter-head">
+        <div class="chapter-number">4</div>
+        <div><h2>Criptografía simétrica: canal seguro, stream cipher, KDF y MAC</h2></div>
+      </div>
+  <p class="intro">Alice y Bob quieren hablar por un canal que cualquiera puede leer y escribir. Esta clase arma, pieza por pieza, un canal seguro con criptografía de clave compartida: el one time pad y el CSPRNG para la confidencialidad, las fuentes de entropía y la KDF para obtener las claves, el hash para la integridad y el MAC para la autenticidad. Al final se ensamblan todas las piezas en un protocolo completo. Es la base de todo lo que sigue en criptografía y de las categorías C del laboratorio.</p>
+
+  <h3 id="simetrica-canal-seguro">El canal seguro y sus tres propiedades</h3>
+  <p>El escenario es simple: Alice y Bob quieren comunicarse, pero el canal está abierto y un adversario (Eve) puede acceder a él, leer lo que pasa y meter lo que quiera. La premisa es construir, aun sobre ese canal abierto, un <b>canal seguro</b> entre los dos.</p>
+
+  <figure class="diag">
+    <svg viewBox="0 0 520 170" role="img" aria-label="Alice y Bob conectados por un canal seguro que pasa por un medio abierto; Eve accede al medio pero no puede leer, modificar sin ser notada ni falsificar mensajes">
+      <rect x="10" y="40" width="90" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="55" y="65" text-anchor="middle" fill="currentColor" font-size="14">Alice</text>
+      <rect x="420" y="40" width="90" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="465" y="65" text-anchor="middle" fill="currentColor" font-size="14">Bob</text>
+      <line x1="100" y1="60" x2="420" y2="60" stroke="var(--acc)" stroke-width="6" opacity="0.35"/>
+      <line x1="100" y1="60" x2="420" y2="60" stroke="var(--linea)" stroke-width="2"/>
+      <text x="260" y="48" text-anchor="middle" fill="currentColor" font-size="12">secure channel</text>
+      <rect x="140" y="112" width="90" height="36" rx="8" fill="none" stroke="var(--acc4)" stroke-width="2"/>
+      <text x="185" y="135" text-anchor="middle" fill="var(--acc4)" font-size="14">Eve</text>
+      <line x1="185" y1="112" x2="185" y2="66" stroke="var(--acc4)" stroke-width="1.5" stroke-dasharray="4 4"/>
+      <text x="250" y="124" fill="var(--acc2)" font-size="11">no lee (confidencialidad)</text>
+      <text x="250" y="139" fill="var(--acc2)" font-size="11">no modifica sin que se note (integridad)</text>
+      <text x="250" y="154" fill="var(--acc2)" font-size="11">no falsifica (autenticidad)</text>
+    </svg>
+    <figcaption>Eve tiene acceso al medio. El canal seguro no le impide estar ahí, le impide sacar provecho.</figcaption>
+  </figure>
+
+  <div class="callout"><b>Canal seguro.</b> Un canal que, aun montado sobre un medio abierto, da tres propiedades:
+    <ul>
+      <li><b>Confidencialidad:</b> Eve no puede saber de qué hablan Alice y Bob. No puede deducir absolutamente nada, ni siquiera si un bit es más probable que sea un 0 que un 1.</li>
+      <li><b>Integridad:</b> Eve puede modificar los mensajes, cambiarlos de orden, duplicarlos o borrarlos, pero si lo hace tiene que ser trivial para Alice y Bob detectarlo (y abortar la comunicación).</li>
+      <li><b>Autenticidad:</b> aunque Eve puede crear mensajes, no puede engañar a Bob diciendo que vienen de Alice (ni viceversa). No puede falsificar ni hablar a nombre de otro sin que se detecte.</li>
+    </ul>
+  </div>
+  <p>Pero un canal seguro no es perfecto: Eve conserva bastante control sobre la comunicación.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Eve no puede</th><th>Eve sí puede</th></tr></thead>
+    <tbody>
+      <tr><td>Aprender nada del contenido.</td><td>Saber que Alice y Bob se comunican, que se conocen, a qué hora, por cuánto tiempo y que usan criptografía (la <b>metadata</b>).</td></tr>
+      <tr><td>Alterar ni falsificar mensajes sin ser notada.</td><td>Disrumpir o bloquear la comunicación (con un firewall, por ejemplo).</td></tr>
+      <tr><td>Romper la criptografía.</td><td>Ir a la casa de Alice y forzarla a revelar toda la comunicación o a mandarle mensajes a Bob a nombre de ella.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warning"><b>La criptografía protege el contenido, no el hecho de comunicarse.</b> Un canal seguro no oculta la metadata ni garantiza disponibilidad, y no resiste la coacción de una de las partes. Son amenazas que hay que cubrir con otros mecanismos si están en el <a href="#threatmodel">threat model</a>.</div>
+
+  <h3 id="simetrica-otp">One time pad: la confidencialidad</h3>
+  <p>El proceso de tomar un <b>plaintext</b> (el mensaje original) y generar un <b>ciphertext</b> se llama <b>encriptación</b> o cifrado. Tiene que ser reversible, para que el receptor pueda recuperar el plaintext: eso es desencriptar.</p>
+  <div class="callout"><b>One time pad (OTP).</b> Se aplica XOR bit a bit entre el plaintext y un <b>key stream</b> del mismo largo y se obtiene el ciphertext. Es reversible porque un segundo XOR con el mismo key stream cancela al primero.</div>
+  <div class="formula">ctext = ptext XOR ks &nbsp;&nbsp;&nbsp; ptext = ctext XOR ks</div>
+  <p>Si el key stream es <b>uniformemente distribuido</b>, <b>impredecible</b> y se usa <b>una única vez</b>, no es posible aprender nada del plaintext a partir del ciphertext: OTP da confidencialidad. Su punto débil es que el atacante puede saber qué tan largo era el plaintext original, porque el ciphertext mide lo mismo.</p>
+  <p>Con un OTP, Alice encripta, manda el ciphertext y Bob desencripta; Eve no puede saber nada sin haber obtenido el key stream. Pero aparece la pregunta que organiza el resto de la clase:</p>
+  <div class="callout blue"><b>Cómo hacen Alice y Bob para tener exactamente el mismo key stream?</b> Si fuera trivial y seguro compartirlo por algún medio, por qué no usar ese mismo medio para hablar directamente? Hace falta una forma de generar secuencias aleatorias grandes a partir de una entrada chica, que sí se pueda compartir de forma segura.</div>
+  <p class="ref">Lo que pasa cuando el key stream se reusa o es corto y cíclico se ve en la práctica en <a href="#crypto-otp-stream">el capítulo de C1 y C2</a>.</p>
+
+  <h3 id="simetrica-csprng">CSPRNG y stream cipher</h3>
+  <div class="callout"><b>CSPRNG</b> (cryptographically secure pseudo random number generator). Una función determinística que a partir de una clave genera una secuencia larga de bytes. Con "función" se quiere decir la definición matemática: un mapeo del espacio de claves al espacio de key streams. Si la clave es uniformemente distribuida, aleatoria y secreta, la salida tiene que cumplir tres propiedades:
+    <ul>
+      <li><b>Uniforme:</b> cada bit es 0 o 1 con 50% de probabilidad; cada secuencia de 2 bits (00, 01, 10, 11) con 25%, y así. Cualquier patrón de bits es tan probable como cualquier otro.</li>
+      <li><b>Impredecible:</b> aun conociendo todos los bytes ya generados, un adversario no puede predecir el valor de ningún bit futuro.</li>
+      <li><b>No reversible:</b> dada la salida, no es posible aprender nada de la clave usada como entrada.</li>
+    </ul>
+  </div>
+  <p>Existen múltiples generadores de números pseudoaleatorios (<b>PRNG</b>), pero solo los que cumplen uniformidad, imprevisibilidad y no reversibilidad son criptográficamente seguros.</p>
+  <div class="callout danger"><b>Un PRNG común en lugar de un CSPRNG rompe todo el sistema.</b> El XOR puede estar perfecto: si el generador es predecible o reversible, un atacante reconstruye el key stream y el cifrado deja de existir. El laboratorio lo muestra con una <a href="#crypto-seed-chica">semilla adivinable</a> y con <a href="#crypto-mt19937">el Mersenne Twister</a>.</div>
+
+  <h4 id="simetrica-nonce">El nonce: extender el key stream</h4>
+  <p>Todo CSPRNG tiene limitaciones: mantiene sus propiedades de uniformidad solo hasta cierta cantidad de bytes generados (unos cientos de megabytes). Después la salida puede empezar a presentar repeticiones o sesgos que la vuelven inusable para criptografía.</p>
+  <div class="callout"><b>Nonce.</b> Una entrada adicional del CSPRNG, elegida al azar, que puede ser pública pero no se repite. Con cada nonce nuevo se obtiene una secuencia nueva y perfectamente aleatoria, así que combinando nonces se arma un key stream tan largo como haga falta.</div>
+
+  <h4 id="simetrica-stream-cipher">Stream cipher</h4>
+  <p>Alice genera una clave secreta totalmente aleatoria y se la pasa a Bob de forma segura. Ambos usan un CSPRNG para generar la misma secuencia larga de bytes, que sirve como key stream.</p>
+
+  <figure class="diag">
+    <svg viewBox="0 0 540 200" role="img" aria-label="Stream cipher: Alice y Bob comparten una clave secreta fuera de banda; cada uno la pasa junto con el nonce por el generador G para obtener el mismo key stream; Alice encripta con E y Bob desencripta con D">
+      <defs>
+        <marker id="arsim1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
+        </marker>
+      </defs>
+      <text x="80" y="20" text-anchor="middle" fill="currentColor" font-size="13">Alice</text>
+      <text x="460" y="20" text-anchor="middle" fill="currentColor" font-size="13">Bob</text>
+      <rect x="40" y="32" width="80" height="30" rx="6" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="80" y="52" text-anchor="middle" fill="currentColor" font-size="12">secret</text>
+      <rect x="420" y="32" width="80" height="30" rx="6" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="460" y="52" text-anchor="middle" fill="currentColor" font-size="12">secret</text>
+      <path d="M 120 47 L 420 47" fill="none" stroke="var(--acc2)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <text x="270" y="40" text-anchor="middle" fill="var(--acc2)" font-size="11">se comparte fuera de banda (out of band)</text>
+      <rect x="55" y="90" width="50" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="80" y="110" text-anchor="middle" fill="currentColor" font-size="13">G</text>
+      <rect x="435" y="90" width="50" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="460" y="110" text-anchor="middle" fill="currentColor" font-size="13">G</text>
+      <line x1="80" y1="62" x2="80" y2="88" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim1)"/>
+      <line x1="460" y1="62" x2="460" y2="88" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim1)"/>
+      <text x="270" y="100" text-anchor="middle" fill="currentColor" font-size="12">nonce (público)</text>
+      <line x1="220" y1="105" x2="107" y2="105" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim1)"/>
+      <line x1="320" y1="105" x2="433" y2="105" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim1)"/>
+      <rect x="55" y="150" width="50" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="80" y="170" text-anchor="middle" fill="currentColor" font-size="13">E</text>
+      <rect x="435" y="150" width="50" height="30" rx="6" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="460" y="170" text-anchor="middle" fill="currentColor" font-size="13">D</text>
+      <line x1="80" y1="120" x2="80" y2="148" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim1)"/>
+      <line x1="460" y1="120" x2="460" y2="148" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim1)"/>
+      <text x="92" y="138" fill="var(--acc2)" font-size="10">key stream</text>
+      <text x="400" y="138" fill="var(--acc2)" font-size="10">key stream</text>
+      <line x1="105" y1="165" x2="433" y2="165" stroke="var(--acc)" stroke-width="2" marker-end="url(#arsim1)"/>
+      <text x="270" y="158" text-anchor="middle" fill="currentColor" font-size="12">ctext</text>
+    </svg>
+    <figcaption>Stream cipher: lo único que viaja por un medio seguro es la clave, de 128 o 256 bits. El key stream se genera de los dos lados.</figcaption>
+  </figure>
+
+  <div class="callout"><b>Stream cipher.</b> La combinación del OTP (el XOR) y el CSPRNG. A menudo al combo se lo llama directamente "cipher", pero en rigor son dos partes separables.</div>
+  <p>Y cómo se comparte la clave secreta? Por ahora se asume que Alice se la pasa a Bob de manera segura, <b>fuera de banda</b>. Es algo de trampa pero perfectamente real: a diferencia del key stream, que se mide en megabytes o gigabytes, la clave son 128 o 256 bits, y es factible que Alice se la pase a Bob en un papel cuando se juntan en un café.</p>
+  <p class="nota">El problema de compartir la clave sin juntarse es justamente el punto de partida de la <a href="#asimetrica">clase 5</a>.</p>
+
+  <h3 id="simetrica-entropia">De dónde sale la aleatoriedad</h3>
+  <p>Con un CSPRNG en la mano solo falta obtener claves y nonces aleatorios, uniformemente distribuidos. No es trivial, porque las computadoras son determinísticas. Hay dos formas:</p>
+  <ul>
+    <li>Sacar bits aleatorios de <b>procesos físicos</b> fundamentalmente aleatorios, que alimentan un <b>entropy pool</b>.</li>
+    <li>Obtener unos pocos bits aleatorios y usar otro CSPRNG para tener muchos más.</li>
+  </ul>
+  <p>La segunda forma parece medio cíclica, pero tiene sentido: solo hacen falta unos 256 o 512 bits realmente aleatorios para que un CSPRNG genere una cantidad mucho mayor. El sistema operativo hace esto por vos: en Linux se obtienen bytes criptográficamente aleatorios leyendo de <code>/dev/random</code>.</p>
+
+  <h3 id="simetrica-kdf">KDF: de una passphrase a una clave</h3>
+  <p>Generar claves así es razonable para máquinas, pero no para personas: nadie se memoriza 256 bits aleatorios para pasárselos a otro.</p>
+  <div class="callout"><b>KDF</b> (key derivation function). Toma una password o passphrase humana, que no es aleatoria pero no debe ser adivinable por un adversario, y deriva de ella una clave uniformemente distribuida. Es determinística y <b>costosa</b> de computar.</div>
+  <p>Las KDF son la parte más sensible del sistema, y tienen dos obligaciones:</p>
+  <ul>
+    <li>Ser lo más difíciles de computar posible, para que el <b>bruteforce</b> (probar passwords candidatas) le cueste caro al adversario.</li>
+    <li>Garantizar que si la clave se leakea, no se puede aprender nada de la password original.</li>
+  </ul>
+  <div class="callout"><b>Salt.</b> Parámetro adicional y aleatorio de la KDF. Cumple dos roles: si dos personas usan la misma password, como el salt es al azar, derivan claves distintas (sin él, siendo la KDF determinística, derivarían la misma clave, lo que en ciertos contextos destruye la seguridad); y como la password tiene baja entropía, el salt aumenta la entropía de la entrada y mejora la aleatoriedad de la salida.</div>
+
+  <figure class="diag">
+    <svg viewBox="0 0 540 170" role="img" aria-label="Pipeline de entropia: las fuentes fisicas alimentan el entropy pool, que da una entrada corta a un CSPRNG que produce una salida muy larga y uniforme; en paralelo la passphrase de baja entropia pasa con el salt por la KDF y sale una clave uniforme de alta entropia">
+      <defs>
+        <marker id="arsim2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
+        </marker>
+      </defs>
+      <rect x="10" y="20" width="110" height="40" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="65" y="37" text-anchor="middle" fill="currentColor" font-size="11">fuentes físicas</text>
+      <text x="65" y="51" text-anchor="middle" fill="currentColor" font-size="11">(random)</text>
+      <rect x="160" y="20" width="100" height="40" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="210" y="44" text-anchor="middle" fill="currentColor" font-size="12">entropy pool</text>
+      <rect x="310" y="20" width="90" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="355" y="44" text-anchor="middle" fill="currentColor" font-size="12">CSPRNG</text>
+      <line x1="120" y1="40" x2="158" y2="40" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim2)"/>
+      <line x1="260" y1="40" x2="308" y2="40" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim2)"/>
+      <text x="284" y="33" text-anchor="middle" fill="var(--acc2)" font-size="10">corto</text>
+      <line x1="400" y1="40" x2="470" y2="40" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim2)"/>
+      <text x="505" y="37" text-anchor="middle" fill="var(--acc2)" font-size="10">muy largo</text>
+      <text x="505" y="50" text-anchor="middle" fill="var(--acc2)" font-size="10">uniforme</text>
+
+      <rect x="10" y="105" width="110" height="40" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="65" y="122" text-anchor="middle" fill="currentColor" font-size="11">passphrase</text>
+      <text x="65" y="136" text-anchor="middle" fill="currentColor" font-size="11">/ password</text>
+      <rect x="200" y="105" width="90" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="245" y="129" text-anchor="middle" fill="currentColor" font-size="12">KDF</text>
+      <line x1="120" y1="125" x2="198" y2="125" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim2)"/>
+      <text x="245" y="92" text-anchor="middle" fill="currentColor" font-size="11">salt</text>
+      <line x1="245" y1="96" x2="245" y2="103" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim2)"/>
+      <line x1="290" y1="125" x2="360" y2="125" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arsim2)"/>
+      <text x="420" y="129" text-anchor="middle" fill="currentColor" font-size="12">clave uniforme</text>
+      <text x="65" y="163" text-anchor="middle" fill="var(--acc4)" font-size="10">baja entropía</text>
+      <text x="420" y="163" text-anchor="middle" fill="var(--acc)" font-size="10">alta entropía</text>
+    </svg>
+    <figcaption>El juego es siempre el mismo: tomar algo de baja entropía (poca aleatoriedad) y llevarlo a algo de alta entropía, apto para usos criptográficos.</figcaption>
+  </figure>
+
+  <p>Con el stream cipher y la generación de clave y nonce aleatorios queda resuelta la confidencialidad: Alice y Bob comparten una passphrase fuera de banda, cada uno deriva la clave con la KDF (y el mismo salt), y de ahí en más generan el key stream con el nonce.</p>
+
+  <h3 id="simetrica-hash">Hash criptográfico: la integridad</h3>
+  <div class="callout"><b>Función de hash criptográficamente segura.</b> Una función determinística que toma un mensaje de cualquier largo y devuelve una secuencia fija de bytes, uniformemente distribuida. Tiene dos garantías:
+    <ul>
+      <li><b>Pre-image resistance:</b> dado el hash, es imposible recuperar el mensaje original.</li>
+      <li><b>Collision resistance:</b> es muy difícil encontrar dos mensajes distintos con el mismo hash. En particular, el adversario no puede modificar un mensaje y conservar el hash del original.</li>
+    </ul>
+  </div>
+  <p>La segunda propiedad es la que da integridad. Toda función de hash tiene un dominio (espacio de entrada) mucho más grande que el espacio de salida, así que está garantizado que existen colisiones: la idea es que sean muy difíciles de encontrar, y muchísimo más aún de fabricar a voluntad.</p>
+  <div class="callout warning"><b>Un hash no es una KDF.</b> Es tentador usarlo como tal, pero las funciones de hash están diseñadas para ser rápidas, y una KDF necesita lo contrario. El compromiso de hashear la passphrase muchísimas veces para enlentecer el proceso es un parche: es cuestión de tiempo hasta que el hardware sea más rápido y la cantidad de iteraciones resulte insuficiente. En lo posible, no usar hashes como KDF.</div>
+  <div class="callout warning"><b>Pre-image resistance no es confidencialidad.</b> Que no se pueda recuperar el mensaje a partir del hash no garantiza que el hash no leakee bits del mensaje. Un hash criptográficamente seguro no está obligado a ocultar todo sobre su entrada.</div>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Hash criptográfico</th><th>KDF</th></tr></thead>
+    <tbody>
+      <tr><td><b>Velocidad</b></td><td>Rápido por diseño.</td><td>Lenta y costosa a propósito.</td></tr>
+      <tr><td><b>Entrada</b></td><td>Cualquier mensaje.</td><td>Passphrase de baja entropía más salt.</td></tr>
+      <tr><td><b>Para qué</b></td><td>Integridad.</td><td>Obtener una clave uniforme para el cipher.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="simetrica-mac">MAC: la autenticidad</h3>
+  <p>Un hash solo no alcanza para autenticar: cualquiera, Eve incluida, puede calcular el hash de un mensaje que inventó. Si se introduce un secreto en el cálculo, solo quienes lo conocen pueden generar hashes válidos.</p>
+  <div class="callout"><b>MAC</b> (message authentication code). Una función de hash con clave (<i>keyed hash</i>): combina un hash criptográfico con un secreto compartido. Es <b>forgery resistant</b>: sin el secreto es realmente difícil encontrar un par (mensaje, MAC) válido. Da integridad y autenticidad.</div>
+  <div class="callout danger"><b>No inventar la combinación.</b> Hay varias formas de combinar un secreto con el mensaje antes de hashear, y en general todas están rotísimas. El estándar hoy es <b>HMAC</b>, una forma específica y segura de combinar secretos y mensajes y hashearlos. Es el principio de <a href="#defensa-no-home-made">no home made sec</a> de la clase 3.</div>
+
+  <h4 id="simetrica-que-autenticar">Qué mensaje se autentica</h4>
+  <p>Resuelto el MAC, queda la pregunta de sobre qué se calcula: el plaintext o el ciphertext? El MAC viaja en plano o cifrado? No es una respuesta trivial, y muchos protocolos viejos están rotos por haber elegido mal.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Esquema</th><th>Qué hace</th><th>Seguridad</th></tr></thead>
+    <tbody>
+      <tr><td><b>Encrypt then Auth</b></td><td>Se cifra el plaintext y el MAC se calcula sobre el ciphertext.</td><td>Seguro en general, si el cifrado y el MAC son seguros.</td></tr>
+      <tr><td><b>Auth then Encrypt</b></td><td>Se calcula el MAC sobre el plaintext y se cifra todo junto.</td><td>Seguro, pero puede no serlo para algunas combinaciones de cifrado y MAC aunque cada uno sea seguro por separado.</td></tr>
+      <tr><td><b>Encrypt and Auth</b></td><td>Se cifra el plaintext y, aparte, se calcula el MAC sobre el plaintext.</td><td>No es seguro.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout blue"><b>El bonus de Encrypt then Auth:</b> el ciphertext resultante no puede ser modificado por un adversario sin que se note. Si toca la parte que corresponde al plaintext cifrado, la verificación del MAC falla; si toca el MAC, también falla. Esto es justo lo que le falta al <a href="#crypto-ecb-maleabilidad">cut and paste sobre ECB</a> del laboratorio.</div>
+
+  <h3 id="simetrica-protocolo">El canal seguro completo</h3>
+  <p>Con todas las piezas se arma el protocolo, en tres escalas de tiempo distintas:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Cuándo</th><th>Qué pasa</th></tr></thead>
+    <tbody>
+      <tr><td><b>Una sola vez</b></td><td>Alice y Bob comparten una passphrase fuera de banda. Cada uno deriva con la KDF (y el salt) la misma clave secreta.</td></tr>
+      <tr><td><b>Por sesión</b></td><td>Alice elige un nonce y se lo pasa a Bob. Con la clave y el nonce, ambos generan con el CSPRNG el mismo key stream.</td></tr>
+      <tr><td><b>Por mensaje</b></td><td>Alice cifra con XOR contra el key stream y autentica el ciphertext con un MAC (encrypt then auth). Bob verifica el MAC y, si es válido, desencripta.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warning"><b>El key stream es unidireccional.</b> El que sale del nonce de Alice sirve solo para mensajes de Alice hacia Bob. Si Bob lo usara para responder, podrían desincronizarse sin darse cuenta. Para contestar, Bob elige su propio nonce, se lo pasa a Alice, y los dos generan un segundo key stream que se usa solo en la dirección Bob hacia Alice: es el mismo esquema reflejado.</div>
+  <p>Si la comunicación es muy larga, Alice y Bob pueden generar nonces nuevos y key streams frescos, para que estos no pierdan sus propiedades de uniformidad e imprevisibilidad.</p>
+  <p class="nota">Cripto es un universo: esto es solo la punta del iceberg. Hay otras construcciones para dar confidencialidad y autenticidad (los block ciphers y sus modos de operación aparecen en <a href="#crypto-block-ciphers">C2</a>), y un canal seguro no protege contra todos los ataques.</p>
+  <p class="ref">La pieza que queda sin resolver es la passphrase compartida "fuera de banda": la <a href="#asimetrica">criptografía asimétrica de la clase 5</a> ataca exactamente ese supuesto. En el laboratorio, <a href="#crypto">C1 y C2</a> rompen canales donde falta alguna de estas piezas.</p>
+
+  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Enunciar las tres propiedades de un canal seguro y qué puede seguir haciendo Eve aun así. Por qué el OTP da confidencialidad, bajo qué condiciones, y qué filtra igual (el largo). Las tres propiedades de un CSPRNG y por qué un PRNG común rompe el sistema. Para qué sirve un nonce. Qué es un stream cipher y por qué compartir la clave es factible y compartir el key stream no. Qué hace una KDF, por qué tiene que ser lenta y para qué sirve el salt (los dos roles). Pre-image y collision resistance, y por qué un hash no sirve como KDF. Qué agrega un MAC sobre un hash, y por qué usar HMAC. Comparar encrypt then auth, auth then encrypt y encrypt and auth. Por qué el key stream es unidireccional.</div>
+
+    </section>
+
+    <section class="chapter" id="asimetrica" data-title="criptografia asimetrica firmas certificados web trust problema clave compartida escala publica privada encriptacion primer intento encriptar una simetrica key exchange forward secrecy diffie hellman man the middle digitales cadena confianza hasta self signed takeaways">
+      <div class="chapter-head">
+        <div class="chapter-number">5</div>
+        <div><h2>Criptografía asimétrica: DH, firmas, certificados y web of trust</h2></div>
+      </div>
+  <p class="intro">El canal seguro de la clase 4 descansa en un supuesto: que Alice y Bob pudieron compartir una clave secreta fuera de banda. Esta clase ataca ese supuesto con criptografía asimétrica (pares de claves pública y privada): encriptación asimétrica, key exchange con Diffie-Hellman y forward secrecy, y firmas digitales. Cada pieza resuelve un problema y deja otro abierto, hasta llegar al que la criptografía sola no resuelve: saber de quién es una clave pública. Para eso hay dos modelos de confianza, los certificados con autoridades certificantes y el web of trust de gpg.</p>
+
+  <h3 id="asimetrica-problema">El problema: la clave compartida no escala</h3>
+  <p>El escenario es el de siempre: Alice y Bob se comunican por un canal inseguro donde Eve puede espiar y adulterar mensajes, y la solución es un <a href="#simetrica-canal-seguro">canal seguro</a> con sus tres propiedades. Para construirlo hay tres primitivas:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Propiedad</th><th>Primitiva</th></tr></thead>
+    <tbody>
+      <tr><td>Confidencialidad</td><td>Encriptación (bien usada).</td></tr>
+      <tr><td>Integridad</td><td>Hash.</td></tr>
+      <tr><td>Autenticidad</td><td>MAC (HMAC), que junto con el hash da integridad y autenticidad.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Hay muchas implementaciones de estas primitivas, pero la mayoría (y las más rápidas y eficientes) usan una única clave secreta que Alice y Bob tienen que compartir. Si se conocen en persona pueden intercambiarla físicamente, en un café o en una plaza. Pero y si no pueden intercambiarla de forma segura? Y si no se conocen? Nadie se juntó con Mr Google a intercambiar una clave antes de entrar a su sitio.</p>
+  <div class="callout blue"><b>Asumir que Alice y Bob pueden intercambiar y compartir una clave secreta no escala.</b> Toda la clase es la búsqueda de un reemplazo para ese supuesto.</div>
+
+  <h3 id="asimetrica-par-claves">Clave pública y clave privada</h3>
+  <div class="callout"><b>Par de claves.</b> Alice genera una clave <b>privada</b> <i>a</i> completamente al azar, y de ella deriva otra, la <b>pública</b> <i>A</i>. La derivación es tal que, si un adversario obtiene <i>A</i>, no puede aprender nada de <i>a</i>: por eso una puede ser pública y la otra tiene que quedar privada. Es la base de toda una rama de la criptografía, la <b>criptografía asimétrica</b>.</div>
+  <p>Hay muchos esquemas de claves públicas y privadas y de derivaciones, con más o menos limitaciones y más o menos utilidad. La clase no entra en el detalle de cada uno, pero deja una advertencia: la criptografía asimétrica requiere un cuidado especial y saber bien qué se está haciendo y para qué.</p>
+
+  <h3 id="asimetrica-encriptacion">Encriptación asimétrica</h3>
+  <p>Alice le manda a Bob su pública <i>A</i>. Eve la ve pasar, pero no le sirve: no puede reconstruir la privada a partir de la pública. Bob usa <i>A</i> para encriptar un mensaje y se lo manda a Alice. Y acá está la magia: la pública sirve para encriptar pero <b>no para desencriptar</b>. Eso solo se puede hacer con la privada <i>a</i>, y como la tiene solo Alice, solo ella puede leer el mensaje. De ahí el nombre: encriptación asimétrica, porque encriptar y desencriptar usan claves distintas.</p>
+  <div class="callout"><b>Esquema de encriptación.</b> En criptografía asimétrica el esquema no es solo la función de encriptación <i>E</i> y la de desencriptación <i>D</i>: incluye también cómo se eligen las claves privadas y cómo se derivan las públicas. La encriptación es segura solo si las claves se derivan y usan según el esquema. Usar claves de otro esquema no funciona.</div>
+  <p>La magia tiene un precio:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Simétrica</th><th>Asimétrica</th></tr></thead>
+    <tbody>
+      <tr><td><b>Velocidad</b></td><td>Rápida.</td><td>Lenta: la derivación de claves, la encriptación, la desencriptación y el resto de las operaciones.</td></tr>
+      <tr><td><b>Reuso de claves</b></td><td>La clave se reusa (con nonces frescos).</td><td>No se pueden reutilizar claves para encriptar: Alice debería generar un par nuevo por cada mensaje. Escala mal.</td></tr>
+      <tr><td><b>Autenticidad</b></td><td>Solo Alice y Bob conocen el secreto <i>k</i>, así que un mensaje válido vino de uno de los dos.</td><td>Para encriptar alcanza con la pública, que Eve también tiene. Alice no puede saber si el mensaje vino de Bob o lo armó Eve.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warning"><b>Encriptación asimétrica no da autenticidad.</b> Da confidencialidad hacia el dueño de la privada, pero cualquiera con la pública puede generar un ciphertext válido. Es una confusión frecuente: que solo Alice pueda leer no implica que solo Bob pueda escribir.</div>
+
+  <h4 id="asimetrica-hibrido">Primer intento: encriptar una clave simétrica</h4>
+  <p>La primera solución es simple: Alice le manda <i>A</i> a Bob, pero Bob no la usa para encriptar un mensaje cualquiera. Genera una clave simétrica <i>k</i> y se la pasa a Alice encriptada con <i>A</i>. A partir de ahí los dos comparten <i>k</i> y pueden montar un canal seguro con criptografía simétrica, que es rápida.</p>
+  <p>Es un hack, y no está libre de desventajas. Alice no tiene forma de saber:</p>
+  <ul>
+    <li>si <i>k</i> fue elegida realmente al azar por Bob,</li>
+    <li>si es fresca, o sea que no se usó antes,</li>
+    <li>si vino de Bob y no de Eve.</li>
+  </ul>
+  <p>Y si Alice y Bob quieren tener otra comunicación otro día, Alice igual tiene que generar un par nuevo para no repetir claves.</p>
+
+  <h3 id="asimetrica-kx">Key exchange y forward secrecy</h3>
+  <p>Una solución más segura es un <b>key exchange</b> (KX). Alice y Bob generan un par público y privado cada uno e intercambian sus públicas. Cada uno toma su privada y la pública del otro, y de ellas deriva un secreto <i>k</i>. Lo sorprendente es que los dos llegan al <b>mismo</b> <i>k</i>, y Eve, aun con acceso a las dos públicas, no puede aprender nada de las privadas ni del secreto compartido.</p>
+  <div class="callout"><b>Forward secrecy.</b> Los pares usados en el KX son <b>efímeros</b>: se generan y usan solo para el intercambio. Si Alice y Bob los borran después del KX, nadie puede reconstruir <i>k</i>; si al terminar de hablar también borran <i>k</i>, nadie puede desencriptar los mensajes. No importa si Eve va después a la casa de Alice y la amenaza: ya no queda nada con qué reconstruir un secreto ni desencriptar nada.</div>
+  <p class="nota">Es la respuesta parcial a una de las cosas que Eve <a href="#simetrica-canal-seguro">sí podía hacer</a> contra el canal simétrico: forzar a una parte a revelar la comunicación. Con forward secrecy, lo que ya pasó queda protegido aunque después se comprometa a una de las partes.</p>
+
+  <h4 id="asimetrica-dh">Diffie-Hellman</h4>
+  <p>La primitiva de KX más conocida es <b>Diffie-Hellman</b> (DH), en honor a sus dos autores, padres (junto con Merkle) no solo de este esquema sino de la criptografía asimétrica.</p>
+  <p>Se toma un número <i>g</i> conocido por todos. Alice y Bob generan cada uno un número aleatorio secreto (<i>a</i> y <i>b</i>) y derivan un número público (g<sup>a</sup> y g<sup>b</sup>). Los intercambian, y cada uno eleva el público del otro a su propio número privado:</p>
+  <div class="formula">(g<sup>b</sup>)<sup>a</sup> = g<sup>ab</sup> = (g<sup>a</sup>)<sup>b</sup> = k</div>
+
+  <figure class="diag">
+    <svg viewBox="0 0 540 190" role="img" aria-label="Diffie-Hellman: g es publico; Alice elige a secreto y publica g a la a, Bob elige b secreto y publica g a la b; se intercambian las publicas y cada uno eleva la del otro a su privada, llegando los dos al mismo k igual a g a la ab; Eve ve g, g a la a y g a la b">
+      <defs>
+        <marker id="ardh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
+        </marker>
+      </defs>
+      <text x="270" y="18" text-anchor="middle" fill="var(--acc2)" font-size="12">g es público</text>
+      <text x="80" y="18" text-anchor="middle" fill="currentColor" font-size="13">Alice</text>
+      <text x="460" y="18" text-anchor="middle" fill="currentColor" font-size="13">Bob</text>
+      <rect x="30" y="30" width="100" height="30" rx="6" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="80" y="50" text-anchor="middle" fill="currentColor" font-size="12">a (secreto)</text>
+      <rect x="410" y="30" width="100" height="30" rx="6" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="460" y="50" text-anchor="middle" fill="currentColor" font-size="12">b (secreto)</text>
+      <text x="80" y="88" text-anchor="middle" fill="currentColor" font-size="12">publica g^a</text>
+      <text x="460" y="88" text-anchor="middle" fill="currentColor" font-size="12">publica g^b</text>
+      <line x1="130" y1="84" x2="408" y2="112" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#ardh)"/>
+      <line x1="410" y1="84" x2="132" y2="112" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#ardh)"/>
+      <text x="80" y="128" text-anchor="middle" fill="currentColor" font-size="12">(g^b)^a</text>
+      <text x="460" y="128" text-anchor="middle" fill="currentColor" font-size="12">(g^a)^b</text>
+      <rect x="30" y="140" width="100" height="30" rx="6" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="80" y="160" text-anchor="middle" fill="currentColor" font-size="12">k = g^ab</text>
+      <rect x="410" y="140" width="100" height="30" rx="6" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="460" y="160" text-anchor="middle" fill="currentColor" font-size="12">k = g^ab</text>
+      <text x="270" y="160" text-anchor="middle" fill="var(--acc4)" font-size="11">Eve ve g, g^a y g^b</text>
+      <text x="270" y="175" text-anchor="middle" fill="var(--acc4)" font-size="11">y no puede obtener a, b ni k</text>
+    </svg>
+    <figcaption>Los dos llegan al mismo k sin haberlo transmitido nunca. Lo único que viaja son las públicas.</figcaption>
+  </figure>
+
+  <div class="callout warning"><b>La falla aparente.</b> Con números comunes, esto tiene una falla fatal: dado g<sup>a</sup>, encontrar <i>a</i> es trivial, basta con calcular el logaritmo en base <i>g</i>. Y se suponía que de lo público no se podía obtener nada de lo privado.</div>
+  <p>La salida es que el truco matemático (g<sup>a</sup>)<sup>b</sup> = g<sup>ab</sup> = (g<sup>b</sup>)<sup>a</sup> no vale solo para los números naturales: vale para otros <b>grupos</b> <i>G</i>. Y para ciertos grupos la exponenciación es muy fácil pero el logaritmo es muy difícil de computar. Para Alice y Bob es fácil calcular (g<sup>b</sup>)<sup>a</sup> y (g<sup>a</sup>)<sup>b</sup>; para Eve es muy difícil obtener <i>a</i>, <i>b</i> o <i>k</i> teniendo solo g<sup>a</sup> y g<sup>b</sup>.</p>
+  <p>Qué tan difícil es un problema abierto: para ciertos grupos, por ahora, es lo suficientemente difícil. En su paper de 1976, Diffie y Hellman usaron como <i>G</i> los números de 1 a <i>p</i>, con <i>p</i> un primo muy grande. Hoy se usan <b>curvas elípticas</b>, porque en ellas el logaritmo es más difícil de computar (al menos por ahora).</p>
+  <div class="callout blue"><b>Resumen de DH:</b> con el KX, Alice y Bob generan un secreto compartido <i>k</i> sin conocerse ni juntarse, y con <i>k</i> establecen el canal seguro simétrico de la clase 4. La clave fuera de banda desaparece.</div>
+
+  <h3 id="asimetrica-mitm">Man in the middle</h3>
+  <p>Pero nada impide que Eve se ponga en el medio. Hacia Alice, Eve se hace pasar por Bob; hacia Bob, se hace pasar por Alice. Alice y Bob hacen su KX y montan su canal seguro, solo que cada uno lo hace con Eve sin darse cuenta, y Eve tiene acceso completo a los mensajes.</p>
+
+  <figure class="diag">
+    <svg viewBox="0 0 540 130" role="img" aria-label="Man in the middle: Alice hace key exchange y canal seguro con Eve creyendo que es Bob, y Eve hace otro key exchange y canal seguro con Bob creyendo que es Alice">
+      <rect x="10" y="45" width="90" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="55" y="70" text-anchor="middle" fill="currentColor" font-size="14">Alice</text>
+      <rect x="225" y="45" width="90" height="40" rx="8" fill="none" stroke="var(--acc4)" stroke-width="2"/>
+      <text x="270" y="70" text-anchor="middle" fill="var(--acc4)" font-size="14">Eve</text>
+      <rect x="440" y="45" width="90" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="485" y="70" text-anchor="middle" fill="currentColor" font-size="14">Bob</text>
+      <line x1="100" y1="65" x2="225" y2="65" stroke="var(--linea)" stroke-width="2"/>
+      <line x1="315" y1="65" x2="440" y2="65" stroke="var(--linea)" stroke-width="2"/>
+      <text x="162" y="40" text-anchor="middle" fill="currentColor" font-size="11">KX + canal seguro</text>
+      <text x="377" y="40" text-anchor="middle" fill="currentColor" font-size="11">KX + canal seguro</text>
+      <text x="162" y="105" text-anchor="middle" fill="var(--acc2)" font-size="11">Alice cree que es Bob</text>
+      <text x="377" y="105" text-anchor="middle" fill="var(--acc2)" font-size="11">Bob cree que es Alice</text>
+    </svg>
+    <figcaption>Dos canales perfectamente seguros, con el adversario en la punta de cada uno.</figcaption>
+  </figure>
+
+  <div class="callout danger"><b>DH no da autenticidad.</b> El key exchange garantiza que nadie más que los dos extremos conoce <i>k</i>, pero no dice quién es el otro extremo. Sin una forma de comprobar quién es quién, el canal seguro puede terminar montado con el adversario.</div>
+
+  <h3 id="asimetrica-firmas">Firmas digitales</h3>
+  <p>Un par público y privado también sirve para autenticar, con un <b>esquema de firmado</b> de dos operaciones:</p>
+  <ul class="study-list">
+    <li><b>Firmar</b> (<i>S</i>, signer): Alice usa su clave privada para firmar un mensaje.</li>
+    <li><b>Verificar</b> (<i>V</i>, verifier): Bob usa la pública de Alice para comprobar que el mensaje no fue adulterado ni falsificado por Eve. El resultado es ok o no ok.</li>
+  </ul>
+  <p>Como firmar y verificar son operaciones lentas, en la práctica no se firman los mensajes sino sus <b>hashes</b>, que son más cortos (y por eso más rápidos). Funciona de forma parecida a los <a href="#simetrica-mac">MAC</a> del caso con clave compartida.</p>
+  <div class="callout"><b>Esquema de firmado.</b> Igual que en la encriptación asimétrica, el esquema dice cómo se generan los pares de claves, cómo se firma (<i>S</i>) y cómo se verifica (<i>V</i>). Cualquier desvío y el sistema se vuelve inseguro. El esquema no fija la función de hash: ahí hay flexibilidad, mientras el hash sea criptográficamente seguro en sí mismo.</div>
+  <div class="callout danger"><b>Las reglas del esquema no son sugerencias.</b> Algunos esquemas de firmado requieren que la misma clave privada no se reutilice para firmar: firmar dos veces le revela la privada al atacante. Otros esquemas sí permiten firmar múltiples veces. Usar un esquema fuera de sus reglas rompe la seguridad aunque cada operación "funcione".</div>
+  <p>Con firmas, Alice puede firmar su parte del KX y Bob verificarla, y viceversa. Pero eso solo corre el problema de lugar: para verificar la firma de Bob, Alice necesita la pública de Bob. Y cómo sabe Alice que <i>B</i> es realmente la pública de Bob y no una de Eve?</p>
+
+  <h3 id="asimetrica-certificados">Certificados y cadena de confianza</h3>
+  <p>El primer modelo para responder esa pregunta es un <b>tercero de confianza</b> (trusted 3rd party):</p>
+  <ol>
+    <li>Bob le pasa al tercero su pública <i>B</i> y el material que acredite que Bob es realmente Bob (<b>KYC</b>, know your client). Es el <i>certificate request</i>.</li>
+    <li>El tercero verifica los datos y, si está todo ok, le entrega a Bob un <b>certificado digital</b>: un documento que contiene, entre otras cosas, la identidad de Bob y su pública <i>B</i>, firmado por el tercero con su privada.</li>
+    <li>Cuando Alice quiere hablar con Bob, Bob le pasa su certificado.</li>
+  </ol>
+  <p>Alice lo verifica con tres preguntas: tiene el ID de Bob? el certificado es válido? la firma coincide, o sea, fue firmado por el tercero de confianza y no fue falsificado? Con eso Alice sabe que habla con Bob y no con Eve, y que tiene en la mano la pública de Bob y no otra cosa.</p>
+  <div class="callout warning"><b>Todo se basa en un supuesto.</b> Alice confía en que el tercero es de confianza de verdad? Y cómo sabe que la pública <i>T</i> con la que verifica la firma viene realmente de él?</div>
+
+  <h4 id="asimetrica-cadena">La cadena hasta un self-signed</h4>
+  <p>Alice puede pedirle al tercero su propio certificado, verificar su identidad, obtener <i>T</i> y con ella verificar el de Bob. Pero quién certificó y firmó el certificado del tercero? Obvio: otro tercero de más confianza, <i>Q</i>. Alice confía en <i>B</i> porque confía en <i>T</i>, y en <i>T</i> porque confía en <i>Q</i>. Y en <i>Q</i>?</p>
+  <div class="callout"><b>Autoridades certificantes (CA) y cadena de confianza.</b> Los terceros de confianza que firman certificados son las CA, y forman una cadena de confianza (chain of trust). Al final de la cadena hay una CA que se firma a sí misma: un certificado <b>self-signed</b>. En última instancia, toda la seguridad reside en si se puede confiar en esa raíz y en toda la cadena.</div>
+
+  <figure class="diag">
+    <svg viewBox="0 0 540 110" role="img" aria-label="Cadena de confianza: el certificado de Bob esta firmado por el tercero T, el de T por una CA de mas confianza Q, y el de Q por Q mismo (self-signed)">
+      <defs>
+        <marker id="arcert" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--linea)"/>
+        </marker>
+      </defs>
+      <rect x="10" y="35" width="110" height="40" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="65" y="60" text-anchor="middle" fill="currentColor" font-size="12">Cert(B)</text>
+      <rect x="190" y="35" width="110" height="40" rx="8" fill="none" stroke="var(--linea)" stroke-width="2"/>
+      <text x="245" y="60" text-anchor="middle" fill="currentColor" font-size="12">Cert(T)</text>
+      <rect x="370" y="35" width="110" height="40" rx="8" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="425" y="60" text-anchor="middle" fill="currentColor" font-size="12">Cert(Q)</text>
+      <line x1="120" y1="55" x2="188" y2="55" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arcert)"/>
+      <line x1="300" y1="55" x2="368" y2="55" stroke="var(--linea)" stroke-width="1.5" marker-end="url(#arcert)"/>
+      <text x="154" y="48" text-anchor="middle" fill="var(--acc2)" font-size="10">firmado por</text>
+      <text x="334" y="48" text-anchor="middle" fill="var(--acc2)" font-size="10">firmado por</text>
+      <path d="M 480 45 C 525 30, 525 80, 480 65" fill="none" stroke="var(--acc2)" stroke-width="1.5" marker-end="url(#arcert)"/>
+      <text x="425" y="95" text-anchor="middle" fill="var(--acc2)" font-size="11">self-signed: confiás en Q?</text>
+    </svg>
+    <figcaption>Cada eslabón se verifica con la pública del siguiente. El último se firma a sí mismo, así que ahí la criptografía se termina y empieza la confianza.</figcaption>
+  </figure>
+
+  <p>A nivel criptográfico, las firmas garantizan integridad y autenticidad: Eve no puede hacer un MiTM. Pero la criptografía no garantiza que ninguna CA sea shady y venda al mejor postor certificados truchos, como un certificado "a nombre de Bob" con la pública de Eve.</p>
+  <div class="callout blue"><b>Vos confiás?</b> En la práctica sí, porque toda Internet usa este esquema: cada vez que se entra a un sitio <code>https://</code>, el browser verifica certificados contra una lista de CA raíz. La pregunta de la clase es si, sabiendo lo que hay detrás, la confianza sigue siendo la misma.</div>
+
+  <h3 id="asimetrica-wot">Web of trust</h3>
+  <p>El segundo modelo encara el problema de confianza desde otro ángulo: sin autoridad central. Alice mantiene un registro de todas las públicas que se encuentra y, para cada una, se pregunta dos cosas: si pudo verificar que la pública pertenece a su dueño, y qué tan confiable es el juicio de esa persona para hacer sus propias verificaciones.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Columna</th><th>Qué registra Alice</th></tr></thead>
+    <tbody>
+      <tr><td><b>Verified</b></td><td>Qué tan segura está de que la clave pertenece a quien dice (none, marginal, full).</td></tr>
+      <tr><td><b>Owner's judgement</b></td><td>Cuánto confía en el criterio del dueño para verificar las claves de otros (none, marginal, full).</td></tr>
+      <tr><td><b>Signed by</b></td><td>Quiénes firmaron esa clave, o sea, quiénes dicen haberla verificado.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Así se construye la confianza en el ejemplo de la clase:</p>
+  <ol class="study-list">
+    <li><b>El punto de partida.</b> Alice solo tiene su propia pública <i>A</i> y confía en ella completamente (sabe que la generó ella). Consiguió la pública <i>B</i> de Bob, pero no pudo verificar que viniera realmente de él. Sabe que <i>B</i> está firmada por Bob, por Derek y por Eric: hay gente que dice haber verificado a Bob. Pero Alice no sabe quiénes son Derek y Eric, así que no tiene por qué confiar en ellos.</li>
+    <li><b>Carol.</b> A Carol, Alice sí la conoce, de toda la vida. Intercambian sus públicas; Alice verifica que <i>C</i> vino de Carol y que Carol es Carol, y como está 100% segura, firma <i>C</i> con su privada como señal de "yo conozco a Carol y verifiqué que <i>C</i> es de ella". Vuelven a intercambiar las públicas, ahora con la firma de la otra.</li>
+    <li><b>Derek y Eric.</b> Carol tiene las públicas de Derek y Eric, firmadas por ella, y se las pasa a Alice junto con las firmas. Si Carol las firmó, es porque de alguna manera los conoce y verificó sus identidades. La pregunta para Alice es qué tan confiable es el juicio de Carol: es meticulosa y firma solo lo que verificó, o firma cuanta pública se le cruza? Alice sabe que Carol es responsable y confía completamente en su juicio, pero igual considera <i>D</i> y <i>E</i> verificadas solo <b>marginalmente</b>: deja un poco de duda.</li>
+    <li><b>Bob.</b> Ahora Alice puede verificar las firmas de Derek y Eric sobre <i>B</i>. Puede confiar en su juicio? Carol le cuenta que son responsables, así que Alice confía en ellos marginalmente. Si <i>B</i> estuviera firmada por uno solo, no le alcanzaría; como son dos verificaciones independientes, Alice considera <i>B</i> marginalmente verificada.</li>
+  </ol>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Clave</th><th>Verified</th><th>Owner's judgement</th><th>Signed by</th></tr></thead>
+    <tbody>
+      <tr><td><i>A</i> (Alice)</td><td>full</td><td>full</td><td>Alice</td></tr>
+      <tr><td><i>C</i> (Carol)</td><td>full</td><td>full</td><td>Carol, Alice</td></tr>
+      <tr><td><i>D</i> (Derek)</td><td>marginal</td><td>marginal</td><td>Derek, Carol</td></tr>
+      <tr><td><i>E</i> (Eric)</td><td>marginal</td><td>marginal</td><td>Eric, Carol</td></tr>
+      <tr><td><i>B</i> (Bob)</td><td>marginal</td><td>none</td><td>Bob, Derek, Eric</td></tr>
+    </tbody>
+  </table></div>
+  <p>Alice, sin conocer a Bob, obtuvo su pública y puede confiar en ella, medianamente segura de que no es de Eve. No hubo una autoridad central: solo personas que confían unas en otras, formando no una cadena sino una <b>red de confianza</b>.</p>
+  <div class="callout"><b>Web of trust.</b> Modelo descentralizado de confianza en claves públicas: cada participante firma las claves que verificó personalmente y lleva la cuenta de cuánto confía en el juicio de los demás. Una clave se considera verificada si la firman suficientes personas en cuyo juicio se confía. Es el modelo que usa <code>gpg</code>.</div>
+  <div class="callout warning"><b>Sus límites.</b> Es un esquema que escala poco y que depende mucho del juicio de cada involucrado: una sola persona que firma sin verificar contamina a todos los que confían en ella.</div>
+
+  <h3 id="asimetrica-takeaways">Takeaways</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>A favor</th><th>En contra</th></tr></thead>
+    <tbody>
+      <tr><td><b>Cripto simétrica</b></td><td>Rápida y fácil.</td><td>Depende de un secreto compartido <i>k</i>.</td></tr>
+      <tr><td><b>Cripto asimétrica</b></td><td>Habilita más primitivas: encriptación, key exchange, firmas y mucho más.</td><td>Lenta, y nada trivial de usar bien.</td></tr>
+      <tr><td><b>Certificados y web of trust</b></td><td>Funcionan.</td><td>Tienen puntos débiles: la verificación de identidad y la confianza en que una pública es de quien dice siguen sin resolverse del todo.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="ref">El canal que se asegura con todo esto es el de la <a href="#simetrica">clase 4</a>, y la confianza en una CA es un caso más de las <a href="#threatmodel">assumptions como superficie de ataque</a> de la clase 1. La categoría D1 del laboratorio (checksums, firmas y gpg) pone en práctica la verificación de firmas y de claves públicas.</p>
+
+  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Por qué compartir una clave simétrica no escala. Qué relación hay entre clave pública y privada y qué no se puede obtener de la pública. Qué incluye un esquema de encriptación. Tres desventajas de la encriptación asimétrica (lenta, no reusable, sin autenticidad). Qué problemas tiene encriptar una clave simétrica con la pública del otro. Cómo funciona Diffie-Hellman, por qué no sirve con números comunes y qué propiedad tienen los grupos que se usan. Qué es forward secrecy y qué la hace posible. Por qué DH sin autenticación es vulnerable a un MiTM. Cómo funciona un esquema de firmado y por qué se firma el hash. Qué contiene un certificado, qué verifica Alice y dónde termina la cadena. Qué no garantiza la criptografía sobre una CA. Cómo funciona el web of trust (verified, owner's judgement, full y marginal) y por qué escala poco.</div>
+
+    </section>
+
     <section class="chapter" id="permisos" data-title="permisos unix identidad claves secretos modelo leer stat las ssh higiene privada publica authorized keys linea comandos movimiento lateral secuestro del agente">
       <div class="chapter-head">
         <div class="chapter-number">A</div>
@@ -2206,7 +2652,7 @@ chmod o-rwx "$WORKING_DIR"                            # solo protege si el proce
       <tr><td>Maleabilidad de ECB</td><td>Agregar un MAC (encrypt-then-authenticate) para detectar cualquier manipulación del ciphertext; preferir modos autenticados (por ejemplo GCM) a ECB.</td></tr>
     </tbody>
   </table></div>
-  <p class="ref">El hilo común es el de un canal seguro: <a href="#threatmodel">confidencialidad, integridad y autenticidad</a> son tres propiedades separadas, y ninguna técnica de este capítulo rompe la matemática del cifrado en sí. Todas explotan que alguna de esas tres propiedades nunca estuvo garantizada: una clave reusada, un generador predecible o un ciphertext sin autenticar.</p>
+  <p class="ref">El hilo común es el de un canal seguro: <a href="#simetrica-canal-seguro">confidencialidad, integridad y autenticidad</a> son tres propiedades separadas, y ninguna técnica de este capítulo rompe la matemática del cifrado en sí. Todas explotan que alguna de esas tres propiedades nunca estuvo garantizada: una clave reusada, un generador predecible o un ciphertext sin autenticar.</p>
 
   <div class="callout exam"><b>Preguntas típicas de esta sección (C1 y C2, criptografía simétrica).</b> Por qué un encoding (base64) no da confidencialidad. Por qué el one-time pad es irrompible solo si el keystream es aleatorio, tan largo como el mensaje y nunca se reusa. Cómo un known plaintext attack despeja bytes de la clave sin fuerza bruta (<code>ki = ci XOR pi</code>) y por qué el tamaño nominal del espacio de claves no importa si se puede despejar. Diferencia entre PRNG y CSPRNG, y por qué una semilla chica (como <code>time.time()</code>) se puede fuerza-brutear. Por qué 624 salidas de un MT19937 alcanzan para clonar su estado completo sin la semilla, y qué hace posible eso (el tempering invertible y la relación del twist). Qué es PKCS#7 y por qué siempre hay padding, nunca cero bytes. Por qué ECB es maleable (independencia de bloques) y cómo se explota un cut and paste. Por qué cifrar no es autenticar y qué agrega un MAC.</div>
 
