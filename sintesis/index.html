@@ -1166,6 +1166,7 @@
       <a href="#s-defensa"><span>3</span>Defensa: prevenir, mitigar, responder y testear</a>
       <a href="#s-crypto"><span>4</span>Cryptography I: stream cipher, KDF, PRNG y MAC</a>
       <a href="#s-asimetrica"><span>5</span>Cryptography II: asimétrica, DH, firmas y certificados</a>
+      <a href="#s-redes"><span>6</span>Seguridad en redes: ataques y defensas capa por capa</a>
     </nav>
     <div class="nav-title">Challenges</div>
     <nav class="toc" aria-label="Challenges">
@@ -1408,6 +1409,30 @@
 
   <h3 id="s-asimetrica-takeaways">Takeaways</h3>
   <p>La cripto <b>simétrica</b> es rápida y fácil pero depende de un secreto compartido; la <b>asimétrica</b> es lenta y nada trivial, pero habilita más primitivas (encriptación, key exchange, firmas); <b>certificados</b> y <b>web of trust</b> funcionan con puntos débiles, porque verificar identidades y confiar en que una pública es de quien dice sigue sin resolverse del todo.</p>
+
+    </section>
+
+    <section class="chapter" id="s-redes" data-title="seguridad redes fisica enlace internet transporte aplicacion defensas arquitectura">
+      <div class="chapter-head">
+        <div class="chapter-number">6</div>
+        <div><h2>Seguridad en redes</h2></div>
+      </div>
+  <p class="intro">Síntesis de la clase 6: el ataque más representativo de cada capa de la red y su defensa. Ninguna capa es más segura que otra, de ahí el Zero Trust: no confiar por defecto en ninguna parte, y para defender hay que entender primero cómo se ataca. Muchos protocolos se diseñaron para redes privadas y casi no tienen seguridad propia; hoy lo común es un equipo interno ya infectado.</p>
+
+  <h3 id="s-redes-fisica-enlace">Física y enlace</h3>
+  <p><b>Física</b> (puertos, cobre, fibra): conexión indeseada a un puerto libre, escucha pinchando un cable y corte del medio; los tres dependen del acceso físico, así que la defensa es seguridad física. <b>Enlace</b> (WiFi, Ethernet, MAC): en <b>MAC flooding</b> el atacante llena la tabla del switch con MACs falsas hasta saturarlo, el switch manda todo a todos los puertos y se puede espiar (defensa: port security); en <b>Evil Twin</b> levanta un AP falso con el mismo SSID y echa a la víctima de la real con un deauth trucho para que se reconecte a la falsa (defensa: NAC/WPA3, que no deja falsificar el deauth).</p>
+
+  <h3 id="s-redes-internet">Internet</h3>
+  <p>El patrón es que nadie verifica el origen. <b>IP spoofing</b>: el emisor escribe la dirección de origen y nadie la valida (defensa: firewall anti-spoofing en el borde, y nunca usar la IP como identidad). <b>ARP spoofing</b>: respuestas ARP falsas diciendo ser el router dejan al atacante en el medio (defensa: DAI). <b>DNS spoofing</b>: respuestas DNS falsas hacen que un nombre apunte al atacante (defensa: DNSSEC, DoH/DoT, IDS). <b>BGP hijacking</b>: anunciar un rango ajeno desvía el tráfico, ataque de operadores grandes (defensa: validar quién anuncia cada rango).</p>
+
+  <h3 id="s-redes-transporte">Transporte</h3>
+  <p>(TCP, UDP, QUIC.) <b>SYN flood</b>: miles de saludos a medio abrir llenan al servidor y lo dejan sin atender (defensa: SYN cookies, rate limit, firewall con estado). <b>Port scanning</b>: recon de puertos y servicios abiertos, paso previo a la intrusión (defensa: cerrar los puertos que no se usan, firewall que ni responde). <b>Amplificación</b>: un pedido chico con remitente falsificado a la víctima hace que el servidor le devuelva una respuesta gigante y la sature (defensa: rate-limiting, no dejar amplificadores abiertos).</p>
+
+  <h3 id="s-redes-aplicacion">Aplicación</h3>
+  <p>(HTTP/HTTPS, SSH, SMTP.) Conexiones sin cifrar (HTTP) dejan leer todo lo que viaja (defensa: HTTPS siempre). Inyecciones (SQLi, XSS) meten código malicioso en el pedido web (defensa: WAF que filtra el contenido).</p>
+
+  <h3 id="s-redes-arquitectura">Defensas de arquitectura</h3>
+  <p>Transversales, se arman antes y cubren varios ataques. <b>DMZ</b>: red intermedia tras un firewall para los servidores expuestos, que si se hackean quedan encerrados sin llegar a la red interna (el ataque no se frena, se encierra). <b>Proxy</b>: forward protege a la red interna filtrando lo que sale, reverse protege al servidor escondiéndolo y filtrando lo que entra. <b>IDS vs IPS</b>: el IDS avisa, el IPS avisa y frena (Snort, Suricata). <b>SIEM</b>: junta y cruza los logs de todos los equipos, detecta el patrón que un evento suelto no muestra y ayuda a responder; es el cierre del Zero Trust, no se confía en nada y todo queda registrado.</p>
 
     </section>
 

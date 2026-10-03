@@ -1,0 +1,92 @@
+<section class="unidad" id="redes" data-titulo="Seguridad en redes: ataques y defensas capa por capa">
+  <h2>6. Seguridad en redes: ataques y defensas capa por capa</h2>
+  <p class="intro">Esta clase recorre la red de abajo hacia arriba (física, enlace, internet, transporte y aplicación) mostrando el ataque más representativo de cada capa y cómo se defiende. Arranca de una pregunta: de todas las capas, cuál es la más segura? La respuesta es que ninguna lo es más que otra, todas tienen debilidades, y de ahí sale la idea que guía la clase.</p>
+  <div class="idea"><b>Zero Trust.</b> No confiar por defecto en ninguna parte de la red. Para poder defender cada capa primero hay que entender cómo se la ataca, así que el recorrido es "ataque, y recién después defensa".</div>
+  <p class="nota">Varios protocolos de red se diseñaron para redes privadas, en una época en que se asumía que al atacante se lo podía dejar afuera. Por eso casi no tienen seguridad propia: confían en que el que está adentro es de confianza. Hoy ese supuesto se cae, porque lo más común es que un equipo interno ya esté infectado y ataque al resto desde adentro. Para los ataques de las capas bajas hay que estar conectado a la red.</p>
+
+  <h3 id="redes-fisica">Capa física</h3>
+  <p>Es el acceso a la red por el medio físico: puertos, cables de cobre y fibra óptica. Su problema es, sobre todo, de acceso físico al lugar, y los tres ataques comparten esa raíz y por lo tanto la misma defensa.</p>
+  <table>
+    <thead><tr><th>Ataque</th><th>Qué hace</th></tr></thead>
+    <tbody>
+      <tr><td><b>Conexión indeseada</b></td><td>Alguien enchufa un equipo en un puerto libre.</td></tr>
+      <tr><td><b>Escucha (tapping)</b></td><td>Alguien pincha un cable y escucha la comunicación.</td></tr>
+      <tr><td><b>Corte del medio</b></td><td>Alguien rompe el medio físico y deja la red sin servicio.</td></tr>
+    </tbody>
+  </table>
+  <div class="def"><b>Defensa.</b> Mejorar la seguridad física: control de acceso al edificio, a las salas y a los cables. Los tres dependen de entrar al lugar, así que la misma barrera frena a los tres.</div>
+
+  <h3 id="redes-enlace">Capa de enlace</h3>
+  <p>La comunicación dentro de una misma red local: WiFi, Ethernet y las direcciones MAC (el número único de cada placa de red).</p>
+
+  <h4 id="redes-mac-flooding">MAC flooding: saturar la tabla del switch</h4>
+  <p>El switch guarda una tabla que dice qué equipo está en cada puerto. El atacante la llena con miles de direcciones falsas hasta saturarla; cuando se llena, el switch empieza a mandar todo a todos los puertos, como un hub viejo, y ahí el atacante ve el tráfico de los demás.</p>
+  <div class="def"><b>Defensa: port security.</b> Limitar cuántas direcciones aprende cada puerto, para que la tabla nunca se llene.</div>
+
+  <h4 id="redes-evil-twin">Evil Twin: punto de acceso WiFi falso</h4>
+  <p>Toda red WiFi tiene un nombre (SSID) y un aparato que la emite (el AP). El dispositivo elige la red por nombre y señal, nunca chequea si el aparato es el verdadero. El atacante crea una red falsa con el mismo nombre y, con un mensaje de desconexión trucho (deauth), echa a la víctima de la red real; la víctima se reconecta sola y cae en la falsa, desde donde el atacante ve todo.</p>
+  <div class="def"><b>Defensa: NAC (control de acceso a la red), como WPA3.</b> No deja falsificar el mensaje de desconexión y obliga a verificar que la red sea la verdadera.</div>
+
+  <h3 id="redes-internet">Capa de internet</h3>
+  <p>La que lleva los paquetes desde el origen hasta el destino cruzando redes distintas: direcciones IP, ARP, ICMP y BGP. El patrón común de sus ataques es la falta de verificación del origen.</p>
+
+  <h4 id="redes-ip-spoofing">IP spoofing</h4>
+  <p>Cada paquete dice de dónde viene, pero esa dirección de origen la escribe el que lo manda y nadie la verifica. Spoofing es mentir sobre quién sos poniendo un origen falso: sirve para esconderse, para pasar filtros que confían en ciertas direcciones, o para que las respuestas caigan sobre una víctima.</p>
+  <div class="def"><b>Defensa.</b> Un firewall con reglas anti-spoofing que filtre en el borde las direcciones de origen imposibles. Y nunca usar la dirección como si fuera una identidad.</div>
+  <div class="riesgo"><b>La dirección no es identidad.</b> Confiar en la IP de origen para autorizar algo es el error de fondo del que cuelgan el spoofing y varios ataques de las otras capas.</div>
+
+  <h4 id="redes-arp-spoofing">ARP spoofing</h4>
+  <p>ARP une una dirección IP con la placa de red (MAC) dentro de la red local. El atacante manda respuestas ARP falsas diciendo que él es el router; los demás equipos le creen y su tráfico empieza a pasar por el atacante, que queda en el medio (man in the middle).</p>
+  <div class="def"><b>Defensa: DAI (Dynamic ARP Inspection).</b> Que el switch valide las respuestas ARP y descarte las falsas.</div>
+
+  <h4 id="redes-dns-spoofing">DNS spoofing</h4>
+  <p>DNS es la agenda que traduce un nombre (por ejemplo una página web) a una dirección IP. El atacante mete respuestas DNS falsas, así un nombre termina apuntando a su servidor: la víctima cree que entra al sitio real, pero entra al del atacante.</p>
+  <div class="def"><b>Defensa.</b> DNS seguro que valide las respuestas (DNSSEC) y cifrado (DoH/DoT), con un IDS vigilando.</div>
+
+  <h4 id="redes-bgp-hijacking">BGP hijacking</h4>
+  <p>BGP es el sistema que decide por qué camino viaja el tráfico entre las grandes redes de internet. En este ataque alguien anuncia que un rango de direcciones es suyo cuando no lo es; los routers le creen y le mandan ese tráfico, que termina desviado. Es un ataque de operadores grandes, no de la red local.</p>
+  <div class="def"><b>Defensa.</b> Filtrar y validar quién puede anunciar cada rango de direcciones.</div>
+
+  <h3 id="redes-transporte">Capa de transporte</h3>
+  <p>La que conecta los programas entre sí usando puertos: TCP, UDP y QUIC.</p>
+
+  <h4 id="redes-syn-flood">SYN flood</h4>
+  <p>Para abrir una conexión, cliente y servidor hacen un saludo de tres pasos (three-way handshake). El atacante manda miles de pedidos de conexión pero nunca completa el saludo; el servidor guarda todas esas conexiones a medio abrir hasta llenarse y deja de atender a los usuarios reales. Es una denegación de servicio.</p>
+  <div class="def"><b>Defensa.</b> SYN cookies (no reservar lugar hasta terminar el saludo), limitar la cantidad de pedidos y un firewall que siga el estado de las conexiones.</div>
+
+  <h4 id="redes-port-scanning">Port scanning</h4>
+  <p>Antes de atacar, el atacante hace un reconocimiento: escanea qué puertos están abiertos y qué programas corren, para buscar una debilidad conocida. Es el paso previo a casi cualquier intrusión, el mismo recon del <a href="#offense">engagement ofensivo de la clase 2</a>.</p>
+  <div class="def"><b>Defensa.</b> Reducir la superficie visible, o sea cerrar todos los puertos que no se usan. Un buen firewall además ni responde, así el escaneo se vuelve lento y confuso.</div>
+
+  <h4 id="redes-amplification">Amplificación y reflexión</h4>
+  <p>El atacante manda un pedido chico a un servidor pero pone como remitente la dirección de la víctima (spoofing de origen). El servidor responde con algo mucho más grande, y esa respuesta gigante cae sobre la víctima; repitiéndolo, la satura y la deja sin servicio.</p>
+  <div class="def"><b>Defensa.</b> Limitar la cantidad de respuestas (rate-limiting) y no dejar servidores abiertos que sirvan para amplificar.</div>
+
+  <h3 id="redes-aplicacion">Capa de aplicación</h3>
+  <p>La capa más alta, donde viven los servicios que usa la persona: HTTP/HTTPS, SSH y el correo (SMTP).</p>
+  <table>
+    <thead><tr><th>Ataque</th><th>Qué hace</th><th>Defensa</th></tr></thead>
+    <tbody>
+      <tr><td><b>Conexión sin cifrar</b></td><td>HTTP en vez de HTTPS: todo lo que viaja (usuarios, contraseñas, mensajes) se puede leer si alguien escucha en el medio.</td><td>Usar siempre HTTPS y conexiones cifradas.</td></tr>
+      <tr><td><b>Inyecciones</b></td><td>Un pedido web con código malicioso adentro (SQLi, XSS) que engaña al servidor.</td><td>Un WAF que revisa el contenido de cada pedido y bloquea los peligrosos antes de que lleguen al servidor.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="redes-defensas-generales">Defensas generales de arquitectura</h3>
+  <p>No cuelgan de una sola capa: son herramientas de arquitectura que se arman antes y cubren varios ataques a la vez.</p>
+  <div class="def"><b>DMZ.</b> Una red intermedia entre internet y la red interna, separada por un firewall, donde se ponen los servidores que tienen que ser accesibles desde afuera (web, correo, DNS). Si alguien hackea uno, queda atrapado en la DMZ y no llega a la red interna: el ataque no se frena, pero se encierra. Es <a href="#defensa-separation">separación</a> aplicada a la topología.</div>
+  <div class="def"><b>Proxy.</b> Un intermediario, con dos tipos opuestos. El <b>forward proxy</b> representa al usuario que sale a internet: controla y filtra lo que sale (bloquea sitios peligrosos, revisa descargas) y protege a la red interna. El <b>reverse proxy</b> representa al servidor: lo esconde, maneja el cifrado y filtra los pedidos que llegan, protegiéndolo.</div>
+  <div class="def"><b>IDS vs IPS.</b> Un IDS vigila el tráfico buscando cosas sospechosas y avisa, pero no frena: es como una alarma. Un IPS hace lo mismo y además bloquea el ataque antes de que pase. El IDS avisa, el IPS avisa y frena. Herramientas conocidas: Snort, Suricata.</div>
+  <div class="def"><b>SIEM.</b> Cada equipo guarda un registro (log) de lo que pasa, pero sueltos sirven de poco. El SIEM junta todos los logs en un solo lugar y los cruza: un evento solo es ruido, pero un escaneo más un login fallido más una conexión rara, juntos, son un ataque. No previene ni repara, detecta y ayuda a responder.</div>
+  <div class="idea"><b>El SIEM cierra la idea de Zero Trust:</b> no se confía en nada, y todo queda registrado, para poder detectar el patrón que un solo evento nunca mostraría.</div>
+
+  <h3 id="redes-takeaways">Takeaways</h3>
+  <ul>
+    <li><b>Ninguna capa es segura por sí sola:</b> cada una suma su propio ataque, y la defensa de la red es la suma de defensas por capa más las de arquitectura que las cruzan.</li>
+    <li><b>El pecado original de muchos protocolos es confiar en el origen</b> (la MAC, la IP, la respuesta ARP o DNS, el anuncio BGP): casi todos los ataques explotan que nadie verifica quién dice ser quién.</li>
+    <li><b>Las defensas de arquitectura (DMZ, proxies, IDS/IPS, SIEM) son transversales:</b> encierran, filtran, detectan y correlacionan, en lugar de tapar un ataque puntual.</li>
+  </ul>
+  <p class="ref">La idea de encerrar en vez de frenar (DMZ) es la <a href="#defensa-separation">separación</a> y la <a href="#defensa-sec-in-depth">seguridad en profundidad</a> de la clase 3; el recon por escaneo de puertos es el <a href="#offense">engagement ofensivo de la clase 2</a>; y el "no confiar en el origen" conecta con no usar una dirección como identidad, tal como un sistema no debe confiar en datos que vienen del atacante.</p>
+
+  <div class="examen"><b>Preguntas típicas de este tema.</b> Por qué ninguna capa es más segura que otra y qué es Zero Trust. Los tres ataques de la capa física y por qué comparten defensa. MAC flooding y port security. Evil Twin con deauth y por qué WPA3 lo corta. Qué tienen en común IP spoofing, ARP spoofing, DNS spoofing y BGP hijacking (nadie verifica el origen) y la defensa de cada uno. El three-way handshake y cómo lo abusa un SYN flood, con SYN cookies como defensa. En qué se diferencian amplificación y SYN flood como denegación de servicio. Diferencia entre forward y reverse proxy, entre IDS e IPS, y qué agrega un SIEM que un log suelto no da. Qué es una DMZ y con qué principio de la clase de defensa se conecta.</div>
+</section>

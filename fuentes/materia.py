@@ -79,6 +79,10 @@ _CRIPTO = [
     ("asimetrica", "5", "Criptografía asimétrica: DH, firmas, certificados y web of trust"),
 ]
 
+_REDES = [
+    ("redes", "6", "Seguridad en redes: ataques y defensas capa por capa"),
+]
+
 _LAB = [
     ("permisos", "A", "Permisos de Unix: identidad, claves y secretos"),
     ("escalada", "B", "Escalada de privilegios: sudo y setuid"),
@@ -106,6 +110,7 @@ CFG = {
     "grupos": [
         ("Fundamentos", _CLASES[0:3]),
         ("Criptografía", _CRIPTO),
+        ("Redes", _REDES),
         ("Laboratorio", _LAB),
     ],
     "paleta_light": PALETA_LIGHT,
@@ -127,6 +132,7 @@ _CLASES_SIN = [
     ("s-defensa", "3", "Defensa: prevenir, mitigar, responder y testear"),
     ("s-crypto", "4", "Cryptography I: stream cipher, KDF, PRNG y MAC"),
     ("s-asimetrica", "5", "Cryptography II: asimétrica, DH, firmas y certificados"),
+    ("s-redes", "6", "Seguridad en redes: ataques y defensas capa por capa"),
 ]
 
 _LAB_SIN = [
