@@ -1173,6 +1173,9 @@
       <a href="#s-links"><span>A2</span>Links y race conditions</a>
       <a href="#s-sudo"><span>B1</span>Sudo</a>
       <a href="#s-euid"><span>B2</span>Effective UID y setuid</a>
+      <a href="#s-cripto-sym"><span>C1</span>Stream ciphers</a>
+      <a href="#s-cripto-block"><span>C2</span>Block ciphers</a>
+      <a href="#s-integridad"><span>D1</span>Integridad de software</a>
     </nav>
 
     <div class="side-actions">
@@ -1335,13 +1338,13 @@
   <p><b>Mitigar</b>: si igual entran, que el daño sea menor. <b>Sec in depth</b>: checks a lo largo de toda la cadena, si llegan a prod que no lleguen a la DB. <b>Separación</b> o <b>aislación</b> de espacio, memoria, físico y responsabilidades (quien opera algo no es quien lo controla), para que el adversario no pueda moverse a otras áreas; nunca es total pero cuanto más mejor, y aplica también a nivel humano. <b>Mínimo</b> privilegio, recursos, accesos y confianza, así una cuenta hackeada tiene poco poder. <b>Fail safe</b>: ante error, entrada inválida, falta de algo o lo inesperado, el sistema defaultea a un estado seguro sin acceso ni privilegios.</p>
 
   <h3 id="s-defensa-responder">Responder</h3>
-  <p><b>Responder</b> se apoya en el <b>monitoreo</b> con alertas para detección temprana y para saber cómo bloquear el ataque en curso; en la <b>auditoría</b>, para el forense de lo que ya pasó y cómo recuperarse; y en el <b>incident response</b>, un plan con próximos pasos, canales de comunicación y a quién involucrar, para responder rápido y minimizar daño.</p>
+  <p><b>Responder</b> se apoya en el <b>monitoreo</b> con alertas para detección temprana y para saber cómo bloquear el ataque en curso; en la <b>auditoría</b>, para el forense de lo que ya pasó y cómo recuperarse; y en el <b>incident response</b>, un plan con próximos pasos, canales de comunicación y a quién involucrar, para responder rápido y minimizar daño. Un mismo mecanismo puede servir a varios pilares: en un servidor compartido, <b>sudo</b> no evita que hackeen la cuenta de un sudoer ni que un empleado se vuelva desleal, pero mitiga el impacto; sí previene accidentes como un <code>rm -Rf /</code>, y si loguea quién corrió qué, habilita monitoreo y auditoría para responder.</p>
 
   <h3 id="s-defensa-testear">Testear</h3>
   <p><b>Testear</b>: no importa qué tan bien estén las defensas, hay que ponerlas a prueba con un pentest o red team.</p>
 
   <h3 id="s-defensa-casos">Los casos</h3>
-  <p>Barings Bank quebró en 1995 porque un trader era su propio supervisor (sin separación de roles, sin mínimo privilegio, sin monitoreo). WEP usó cripto cerrada sobre RC4, cuyos sesgos estadísticos conocidos desde 1994 se volvieron ataques completos con miles de dispositivos ya vendidos (no home made, Kerckhoffs). Chrome corre un proceso por tab y otro para el render (el que dibuja en pantalla), así que controlar una tab no da acceso al resto salvo bypasseando al OS (separación; niveles: procesos, containers, VMs, físico, de menor a mayor). La termocupla corta el gas si se apaga el piloto (fail safe, simple). La máquina de votar que imprime y verifica su propio voto es cerrada, compleja y sin separación de roles: nadie puede verificar que funcione bien.</p>
+  <p>Barings Bank quebró en 1995 porque un trader era su propio supervisor (sin separación de roles, sin mínimo privilegio, sin monitoreo). WEP usó cripto cerrada sobre RC4, cuyos sesgos estadísticos conocidos desde 1994 se volvieron ataques completos con miles de dispositivos ya vendidos (no home made, Kerckhoffs). Chrome corre un proceso por tab y otro para el render (el que dibuja en pantalla), así que controlar una tab no da acceso al resto salvo bypasseando al OS (separación; niveles: procesos, containers, VMs, físico, de menor a mayor). La termocupla corta el gas si se apaga el piloto (fail safe, simple). La máquina de votar que imprime y verifica su propio voto es cerrada, compleja y sin separación de roles: nadie puede verificar que funcione bien. Pensando como atacante (curioso, que entiende a fondo cómo funciona para ver dónde es débil), el threat model no es solo <b>fraude</b> de un atacante interno: también <b>disrupción</b> del proceso o un hack menor que genere <b>desconfianza</b>, de un atacante externo como un gobierno extranjero, y contra la máquina o contra el centro de cómputos.</p>
 
     </section>
 
@@ -1509,6 +1512,60 @@
 
   <h3 id="s-euid-metodo">Método general</h3>
   <p>Primero buscar binarios setuid y setgid, filtrando por el owner que te interesa (<code>find ... -perm -4000 -user &lt;x&gt;</code>). Después ver qué hace cada uno con <code>cat</code>, <code>file</code> o leyendo la fuente, buscando si lee archivos, si ejecuta otros programas y <b>cómo</b> (por nombre relativo o ruta absoluta), y si dropea privilegios. Luego elegir la primitiva: lectura directa, PATH hijacking, o sub-ejecución sin drop. Por último, pensar cómo se arreglaría (rutas absolutas, limpiar el entorno, no confiar en <code>PATH</code>), que es típico de quiz.</p>
+
+    </section>
+
+    <section class="chapter" id="s-cripto-sym" data-title="stream ciphers encoding cifrado one time pad xor con clave repetida known plaintext attack prng contra csprng">
+      <div class="chapter-head">
+        <div class="chapter-number">C1</div>
+        <div><h2>Stream ciphers</h2></div>
+      </div>
+  <p class="intro">Síntesis de la categoría C1: romper un cifrado de flujo atacando la clave o el generador, nunca la operación XOR en sí.</p>
+
+  <h3 id="s-cripto-sym-encoding">Encoding no es cifrado</h3>
+  <p>Un <b>encoding</b> (base64) es reversible sin clave: no da confidencialidad, "está en base64" no significa "está protegido". Confundirlo con cifrado es el error de entrada.</p>
+
+  <h3 id="s-cripto-sym-otp">One-time pad y XOR con clave repetida</h3>
+  <p>El <b>one-time pad</b> cifra con <code>ci = pi XOR ki</code> y es irrompible solo si el keystream es aleatorio, tan largo como el mensaje y nunca se reusa. Un stream cipher real reemplaza esa clave por un generador alimentado con una semilla corta, trasladando toda la seguridad al generador. La versión de juguete repite una clave corta cíclicamente, que es exactamente el reuso que el OTP prohíbe.</p>
+
+  <h3 id="s-cripto-sym-kpt">Known plaintext attack</h3>
+  <p>Conocer parte del plaintext y su posición despeja la clave sin fuerza bruta: de <code>ci = pi XOR ki</code> sale <code>ki = ci XOR pi</code>. Si el prefijo conocido cubre un período completo de una clave cíclica, esos bytes <b>son</b> la clave entera, y el tamaño nominal del espacio de claves deja de importar. Reusar una clave o un keystream es lo que habilita este ataque.</p>
+
+  <h3 id="s-cripto-sym-prng">PRNG contra CSPRNG</h3>
+  <p>Un <b>CSPRNG</b> tiene salida indistinguible de aleatoria: dado lo ya visto, no se predice lo siguiente ni se reconstruye el estado. Un PRNG común (de simulación) no cumple ninguna de las dos. Dos formas de romperlo: una <b>semilla chica</b> (por ejemplo los segundos de <code>time.time()</code>) se fuerza-brutea probando cada candidata y reconociendo el prefijo esperado; y un <b>MT19937</b> (el <code>random</code> de muchos lenguajes) se clona entero invirtiendo el tempering de 624 salidas consecutivas, sin conocer la semilla, para predecir todo lo que sigue. Para claves y semillas se usa un CSPRNG real (<code>os.urandom</code>, <code>secrets</code>, <code>/dev/urandom</code>), nunca el reloj ni el generador de propósito general.</p>
+
+    </section>
+
+    <section class="chapter" id="s-cripto-block" data-title="block ciphers padding pkcs ecb debilidad maleabilidad cifrar autenticar">
+      <div class="chapter-head">
+        <div class="chapter-number">C2</div>
+        <div><h2>Block ciphers</h2></div>
+      </div>
+  <p class="intro">Síntesis de la categoría C2: padding, modos de operación y por qué cifrar no es autenticar.</p>
+
+  <h3 id="s-cripto-block-padding">Padding PKCS#7</h3>
+  <p>Un block cipher cifra en bloques de tamaño fijo (AES, 16 bytes, sin importar si la clave es de 16, 24 o 32 que selecciona AES-128/192/256). <b>PKCS#7</b> completa el último bloque agregando <code>N</code> bytes de valor <code>N</code>; si el mensaje ya es múltiplo exacto, se agrega un bloque entero igual, nunca cero bytes, para que el despadeo no sea ambiguo.</p>
+
+  <h3 id="s-cripto-block-ecb">ECB y su debilidad</h3>
+  <p><b>ECB</b> cifra cada bloque de forma independiente con la misma clave y los concatena. Partir un mensaje en bloques de 16 y cifrar cada uno por separado es, literalmente, ECB. Como los bloques son independientes, dos bloques de plaintext iguales dan ciphertext iguales y se filtran patrones.</p>
+
+  <h3 id="s-cripto-block-maleabilidad">Maleabilidad: cifrar no es autenticar</h3>
+  <p>La independencia de bloques permite <b>reordenar, duplicar, quitar o agregar</b> bloques de ciphertext sin la clave: el plaintext descifrado sufre el mismo cambio, bloque por bloque. Sobre un JSON se puede hacer un cut and paste que mueva bloques cifrados para que el mensaje descifrado diga otra cosa y siga siendo válido, sin cifrar nada nuevo. Confidencialidad sin integridad es protección a medias: la defensa es <b>encrypt-then-authenticate</b>, agregar un MAC (HMAC, nunca una construcción propia) que detecte cualquier manipulación, y preferir modos autenticados (GCM) a ECB.</p>
+
+    </section>
+
+    <section class="chapter" id="s-integridad" data-title="integridad software los cinco niveles leccion">
+      <div class="chapter-head">
+        <div class="chapter-number">D1</div>
+        <div><h2>Integridad de software</h2></div>
+      </div>
+  <p class="intro">Síntesis de la categoría D1: un proceso descarga y ejecuta un instalador, y cada nivel sube la calidad de la verificación mostrando por qué la anterior no alcanzaba. El eje es integridad (no se corrompió) contra autenticidad (lo produjo quien creo).</p>
+
+  <h3 id="s-integridad-escalera">Los cinco niveles</h3>
+  <p><b>Blind trust</b>: ejecuta sin verificar nada; los archivos de firma alrededor son decorado. El nombre "Checksum" no garantiza que haya cripto, hay que leer el proceso que corre. <b>Hash solo</b>: valida un <code>SHA256SUMS</code> de la misma fuente que el atacante controla, así que recalcula el hash de su archivo malicioso y publica los dos juntos; un checksum prueba integridad respecto de sí mismo, no autenticidad. <b>Firma mal leída</b>: verifica una firma GPG pero grepea la salida para humanos buscando el fingerprint, que aparece en el User ID (texto libre elegido por quien crea la clave): el atacante fabrica una clave con ese string en el User ID y pasa el grep; nunca decidir seguridad grepeando texto human-readable, usar <code>--status-fd</code> y la línea <code>VALIDSIG</code>. <b>Key ID corto</b>: compara solo 32 bits del identificador, forzables en minutos (ataque evil32) variando el timestamp de creación para fabricar una clave propia con el mismo ID corto; comparar siempre el fingerprint completo de 160 bits. <b>Fingerprint completo</b>: el chequeo está bien hecho, pero acepta además una clave vieja, filtrada y nunca revocada (rotar sin revocar no cierra nada), recuperable del historial de un repo git público aunque esté borrada del working tree.</p>
+
+  <h3 id="s-integridad-leccion">La lección</h3>
+  <p>Todo es una variación de confused deputy sobre HTTP: el proceso víctima ejecuta con sus permisos contenido que controla el atacante. Una cadena de confianza se rompe por su eslabón más débil, y ese eslabón casi nunca es la primitiva criptográfica, sino cómo se la usa: qué fuente, qué campo se compara, qué interfaz se parsea y qué claves se siguen aceptando.</p>
 
     </section>
 

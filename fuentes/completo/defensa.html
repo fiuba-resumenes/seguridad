@@ -120,6 +120,19 @@
   </ul>
   <div class="warn"><b>Un plan improvisado durante el incidente no es un plan.</b> En medio del ataque no es momento de averiguar quién tiene la contraseña del firewall ni si los backups restauran.</div>
 
+  <h3 id="defensa-sudo">Un mecanismo, varios pilares: sudo</h3>
+  <p>Los pilares clasifican lo que aporta un mecanismo frente a una amenaza, no al mecanismo en sí. El ejemplo de la clase es un servidor compartido donde el admin impone <code>sudo</code> como mecanismo (y su <code>sudoers</code> como policy) frente a tres amenazas distintas, cada una encarnada en un usuario sudoer:</p>
+  <table>
+    <thead><tr><th>Amenaza</th><th>Qué hace sudo</th><th>Pilar</th></tr></thead>
+    <tbody>
+      <tr><td><b>Alice:</b> su cuenta es hackeada.</td><td>No evita el hackeo, pero acota lo que el adversario puede correr como root.</td><td>Mitigate</td></tr>
+      <tr><td><b>Bob:</b> un empleado que se vuelve desleal (rogue).</td><td>Tampoco evita la deslealtad, pero reduce el impacto a los comandos que su policy le habilita.</td><td>Mitigate</td></tr>
+      <tr><td><b>Carol:</b> un accidente, como un <code>rm -Rf /</code>.</td><td>Sí lo puede evitar: el comando destructivo no corre con privilegios por error.</td><td>Prevent</td></tr>
+    </tbody>
+  </table>
+  <p>Además, el admin puede instruir a <code>sudo</code> que loguee cada invocación, quién la hizo y qué comando quiso correr. Esos logs habilitan el <a href="#defensa-monitoring-auditing">monitoreo y la auditoría</a> de los usos de <code>sudo</code>, para que el admin o el equipo de seguridad puedan responder ante una amenaza.</p>
+  <div class="idea"><b>Un mismo mecanismo cubre varios pilares.</b> Aunque algunos mecanismos tienen usos específicos, <code>sudo</code>, como muchos otros, sirve a la vez para prevenir, mitigar y responder. Lo que cambia de un caso a otro es la amenaza.</div>
+
   <h3 id="defensa-test">Test: poner las defensas a prueba</h3>
   <p>No importa qué tan bien hayas puesto las defensas: hay que ponerlas a prueba. Ese testeo es exactamente el <a href="#offense">pentest y el red team de la clase 2</a>, mirado desde el lado del que se defiende. El pilar de testeo es el que convierte a los otros tres de intención en hecho verificado.</p>
 
@@ -210,6 +223,20 @@
   <p>Y encima no es simple. La máquina es mucho más que una impresora de boletas: tiene sistema operativo, drivers de impresora, interfaz de red con sus drivers, puertos USB y código cerrado. Es demasiado compleja, puede fallar de múltiples formas, expone una superficie grande para ser hackeada desde varios ángulos y no es transparente. Cómo puede alguien verificar que la máquina funciona como debería?</p>
   <p class="nota">Charla citada en clase sobre el tema: <code>youtube.com/watch?v=HwyN6P83HcY</code>.</p>
 
+  <h4 id="defensa-pensar-atacante">Pensar como un atacante</h4>
+  <p>La clase cierra planteando el pentest de una máquina de votación: qué haría un atacante? No es como en las películas, con el hacker en un sótano lleno de monitores que hackea al FBI con un par de teclas. El hacker es curioso: quiere saber cómo funcionan las cosas, no se contenta con el manual de usuario y va bien a fondo. Entender algo en profundidad es lo que le deja ver sus puntos débiles, y las preguntas son siempre las mismas: es complejo? implementa seguridad o criptografía custom? tiene muchos puntos de entrada? Del "how does it work?" se pasa al "how can we hack it?".</p>
+  <p>El threat model más obvio es el fraude: una organización política interna que quiere ganar la elección falsificando votos. Pero hay que tener imaginación (y algo de malicia) y pensar más de un threat model, variando tanto el por qué como el quién:</p>
+  <table>
+    <thead><tr><th>Por qué (why)</th><th>Qué busca</th></tr></thead>
+    <tbody>
+      <tr><td><b>Fraud</b></td><td>Cambiar el resultado falsificando votos.</td></tr>
+      <tr><td><b>Disruption</b></td><td>Interrumpir el proceso de votación, sin importar quién gane.</td></tr>
+      <tr><td><b>Distrust</b></td><td>Un hack menor que no alcanza para un fraude, pero que genera desconfianza en el sistema.</td></tr>
+    </tbody>
+  </table>
+  <p>Y en el quién, el atacante no tiene por qué ser interno (<b>internal attacker</b>): gobiernos de otros países pueden estar interesados en alterar la votación (<b>external attacker</b>). Tampoco el blanco tiene por qué ser la máquina: puede ser el centro de cómputos que recibe los resultados.</p>
+  <div class="idea">Un pentest no termina en encontrar un ataque: termina en una recomendación. Para cada threat model la pregunta es si se puede prevenir, si se puede mitigar y qué sugerencia se le da a quien contrató el pentest.</div>
+
   <h3 id="defensa-takeaways">Takeaways</h3>
   <ul>
     <li><b>La seguridad va más allá del software.</b> Los casos de la clase son software (Chrome), hardware (la termocupla) y personas (Barings). Un mecanismo perfecto en una capa no salva a las otras dos.</li>
@@ -217,5 +244,5 @@
   </ul>
   <p class="ref">Los mecanismos y políticas y la idea de seguridad en profundidad vienen del <a href="#threatmodel">threat model de la clase 1</a>; el pilar de testeo es el <a href="#offense">engagement ofensivo de la clase 2</a>. El mínimo privilegio se ve en la práctica en <a href="#permisos">permisos de Unix</a> y <a href="#escalada">escalada de privilegios</a>.</p>
 
-  <div class="examen"><b>Preguntas típicas de este tema.</b> Enumerar los cuatro pilares y ubicar un mecanismo dado en el que corresponde. Los cuatro principios de prevención y qué ataca cada uno. Enunciar el principio de Kerckhoff y explicar por qué la obscuridad no puede ser la única defensa (con el asterisco). Por qué no implementar crypto propia. Diferenciar monitoring de auditing. Qué es fail safe y cuáles son sus cuatro disparadores. Separación en espacio vs en responsabilidades, y por qué la aislación total no es alcanzable. Analizar un caso (Barings, WEP, la máquina de votación) diciendo qué principios se violaron y qué habría cambiado el resultado.</div>
+  <div class="examen"><b>Preguntas típicas de este tema.</b> Enumerar los cuatro pilares y ubicar un mecanismo dado en el que corresponde. Los cuatro principios de prevención y qué ataca cada uno. Enunciar el principio de Kerckhoff y explicar por qué la obscuridad no puede ser la única defensa (con el asterisco). Por qué no implementar crypto propia. Diferenciar monitoring de auditing. Qué es fail safe y cuáles son sus cuatro disparadores. Separación en espacio vs en responsabilidades, y por qué la aislación total no es alcanzable. Analizar un caso (Barings, WEP, la máquina de votación) diciendo qué principios se violaron y qué habría cambiado el resultado. Dado un mecanismo como sudo y una amenaza, decir si previene, mitiga o permite responder. Armar varios threat models para un sistema variando el por qué (fraud, disruption, distrust) y el quién (interno, externo).</div>
 </section>

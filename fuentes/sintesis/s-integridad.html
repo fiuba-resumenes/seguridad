@@ -1,0 +1,10 @@
+<section class="unidad" id="s-integridad" data-titulo="Integridad de software (D1)">
+  <h2>D1. Integridad de software</h2>
+  <p class="intro">Síntesis de la categoría D1: un proceso descarga y ejecuta un instalador, y cada nivel sube la calidad de la verificación mostrando por qué la anterior no alcanzaba. El eje es integridad (no se corrompió) contra autenticidad (lo produjo quien creo).</p>
+
+  <h3 id="s-integridad-escalera">Los cinco niveles</h3>
+  <p><b>Blind trust</b>: ejecuta sin verificar nada; los archivos de firma alrededor son decorado. El nombre "Checksum" no garantiza que haya cripto, hay que leer el proceso que corre. <b>Hash solo</b>: valida un <code>SHA256SUMS</code> de la misma fuente que el atacante controla, así que recalcula el hash de su archivo malicioso y publica los dos juntos; un checksum prueba integridad respecto de sí mismo, no autenticidad. <b>Firma mal leída</b>: verifica una firma GPG pero grepea la salida para humanos buscando el fingerprint, que aparece en el User ID (texto libre elegido por quien crea la clave): el atacante fabrica una clave con ese string en el User ID y pasa el grep; nunca decidir seguridad grepeando texto human-readable, usar <code>--status-fd</code> y la línea <code>VALIDSIG</code>. <b>Key ID corto</b>: compara solo 32 bits del identificador, forzables en minutos (ataque evil32) variando el timestamp de creación para fabricar una clave propia con el mismo ID corto; comparar siempre el fingerprint completo de 160 bits. <b>Fingerprint completo</b>: el chequeo está bien hecho, pero acepta además una clave vieja, filtrada y nunca revocada (rotar sin revocar no cierra nada), recuperable del historial de un repo git público aunque esté borrada del working tree.</p>
+
+  <h3 id="s-integridad-leccion">La lección</h3>
+  <p>Todo es una variación de confused deputy sobre HTTP: el proceso víctima ejecuta con sus permisos contenido que controla el atacante. Una cadena de confianza se rompe por su eslabón más débil, y ese eslabón casi nunca es la primitiva criptográfica, sino cómo se la usa: qué fuente, qué campo se compara, qué interfaz se parsea y qué claves se siguen aceptando.</p>
+</section>

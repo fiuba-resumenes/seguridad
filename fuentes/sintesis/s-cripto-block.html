@@ -1,0 +1,13 @@
+<section class="unidad" id="s-cripto-block" data-titulo="Block ciphers (C2)">
+  <h2>C2. Block ciphers</h2>
+  <p class="intro">Síntesis de la categoría C2: padding, modos de operación y por qué cifrar no es autenticar.</p>
+
+  <h3 id="s-cripto-block-padding">Padding PKCS#7</h3>
+  <p>Un block cipher cifra en bloques de tamaño fijo (AES, 16 bytes, sin importar si la clave es de 16, 24 o 32 que selecciona AES-128/192/256). <b>PKCS#7</b> completa el último bloque agregando <code>N</code> bytes de valor <code>N</code>; si el mensaje ya es múltiplo exacto, se agrega un bloque entero igual, nunca cero bytes, para que el despadeo no sea ambiguo.</p>
+
+  <h3 id="s-cripto-block-ecb">ECB y su debilidad</h3>
+  <p><b>ECB</b> cifra cada bloque de forma independiente con la misma clave y los concatena. Partir un mensaje en bloques de 16 y cifrar cada uno por separado es, literalmente, ECB. Como los bloques son independientes, dos bloques de plaintext iguales dan ciphertext iguales y se filtran patrones.</p>
+
+  <h3 id="s-cripto-block-maleabilidad">Maleabilidad: cifrar no es autenticar</h3>
+  <p>La independencia de bloques permite <b>reordenar, duplicar, quitar o agregar</b> bloques de ciphertext sin la clave: el plaintext descifrado sufre el mismo cambio, bloque por bloque. Sobre un JSON se puede hacer un cut and paste que mueva bloques cifrados para que el mensaje descifrado diga otra cosa y siga siendo válido, sin cifrar nada nuevo. Confidencialidad sin integridad es protección a medias: la defensa es <b>encrypt-then-authenticate</b>, agregar un MAC (HMAC, nunca una construcción propia) que detecte cualquier manipulación, y preferir modos autenticados (GCM) a ECB.</p>
+</section>

@@ -84,6 +84,7 @@ _LAB = [
     ("escalada", "B", "Escalada de privilegios: sudo y setuid"),
     ("links", "C", "Symlinks y condiciones de carrera: TOCTOU"),
     ("crypto", "D", "Criptografía simétrica: stream ciphers y block ciphers"),
+    ("integridad", "E", "Integridad de software: checksums, firmas y cadena de confianza"),
 ]
 
 CFG = {
@@ -133,6 +134,9 @@ _LAB_SIN = [
     ("s-links", "A2", "Links y race conditions"),
     ("s-sudo", "B1", "Sudo"),
     ("s-euid", "B2", "Effective UID y setuid"),
+    ("s-cripto-sym", "C1", "Stream ciphers"),
+    ("s-cripto-block", "C2", "Block ciphers"),
+    ("s-integridad", "D1", "Integridad de software"),
 ]
 
 # Comparte paleta, icono y theme_color con el apunte completo: es la misma

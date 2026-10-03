@@ -1,0 +1,16 @@
+<section class="unidad" id="s-cripto-sym" data-titulo="Stream ciphers (C1)">
+  <h2>C1. Stream ciphers</h2>
+  <p class="intro">Síntesis de la categoría C1: romper un cifrado de flujo atacando la clave o el generador, nunca la operación XOR en sí.</p>
+
+  <h3 id="s-cripto-sym-encoding">Encoding no es cifrado</h3>
+  <p>Un <b>encoding</b> (base64) es reversible sin clave: no da confidencialidad, "está en base64" no significa "está protegido". Confundirlo con cifrado es el error de entrada.</p>
+
+  <h3 id="s-cripto-sym-otp">One-time pad y XOR con clave repetida</h3>
+  <p>El <b>one-time pad</b> cifra con <code>ci = pi XOR ki</code> y es irrompible solo si el keystream es aleatorio, tan largo como el mensaje y nunca se reusa. Un stream cipher real reemplaza esa clave por un generador alimentado con una semilla corta, trasladando toda la seguridad al generador. La versión de juguete repite una clave corta cíclicamente, que es exactamente el reuso que el OTP prohíbe.</p>
+
+  <h3 id="s-cripto-sym-kpt">Known plaintext attack</h3>
+  <p>Conocer parte del plaintext y su posición despeja la clave sin fuerza bruta: de <code>ci = pi XOR ki</code> sale <code>ki = ci XOR pi</code>. Si el prefijo conocido cubre un período completo de una clave cíclica, esos bytes <b>son</b> la clave entera, y el tamaño nominal del espacio de claves deja de importar. Reusar una clave o un keystream es lo que habilita este ataque.</p>
+
+  <h3 id="s-cripto-sym-prng">PRNG contra CSPRNG</h3>
+  <p>Un <b>CSPRNG</b> tiene salida indistinguible de aleatoria: dado lo ya visto, no se predice lo siguiente ni se reconstruye el estado. Un PRNG común (de simulación) no cumple ninguna de las dos. Dos formas de romperlo: una <b>semilla chica</b> (por ejemplo los segundos de <code>time.time()</code>) se fuerza-brutea probando cada candidata y reconociendo el prefijo esperado; y un <b>MT19937</b> (el <code>random</code> de muchos lenguajes) se clona entero invirtiendo el tempering de 624 salidas consecutivas, sin conocer la semilla, para predecir todo lo que sigue. Para claves y semillas se usa un CSPRNG real (<code>os.urandom</code>, <code>secrets</code>, <code>/dev/urandom</code>), nunca el reloj ni el generador de propósito general.</p>
+</section>
