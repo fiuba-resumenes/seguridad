@@ -1174,6 +1174,10 @@
     <nav class="toc" aria-label="Redes">
       <a href="#redes"><span>6</span>Seguridad en redes: ataques y defensas capa por capa</a>
     </nav>
+    <div class="nav-title">Explotación de binarios</div>
+    <nav class="toc" aria-label="Explotación de binarios">
+      <a href="#binarios"><span>7</span>Buffer overflow y mitigaciones</a>
+    </nav>
     <div class="nav-title">Laboratorio</div>
     <nav class="toc" aria-label="Laboratorio">
       <a href="#permisos"><span>A</span>Permisos de Unix: identidad, claves y secretos</a>
@@ -2516,6 +2520,103 @@
   <p class="ref">La idea de encerrar en vez de frenar (DMZ) es la <a href="#defensa-separation">separación</a> y la <a href="#defensa-sec-in-depth">seguridad en profundidad</a> de la clase 3; el recon por escaneo de puertos es el <a href="#offense">engagement ofensivo de la clase 2</a>; y el "no confiar en el origen" conecta con no usar una dirección como identidad, tal como un sistema no debe confiar en datos que vienen del atacante.</p>
 
   <div class="callout exam"><b>Preguntas típicas de este tema.</b> Por qué ninguna capa es más segura que otra y qué es Zero Trust. Los tres ataques de la capa física y por qué comparten defensa. MAC flooding y port security. Evil Twin con deauth y por qué WPA3 lo corta. Qué tienen en común IP spoofing, ARP spoofing, DNS spoofing y BGP hijacking (nadie verifica el origen) y la defensa de cada uno. El three-way handshake y cómo lo abusa un SYN flood, con SYN cookies como defensa. En qué se diferencian amplificación y SYN flood como denegación de servicio. Diferencia entre forward y reverse proxy, entre IDS e IPS, y qué agrega un SIEM que un log suelto no da. Qué es una DMZ y con qué principio de la clase de defensa se conecta.</div>
+
+    </section>
+
+    <section class="chapter" id="binarios" data-title="buffer overflow mitigaciones modelo memoria abstraccion miente clasico stack llamada funcion pisar direccion retorno calling conventions como pasarle los argumentos primera mitigacion rop programar con pedazos ajenos defensas contra raiz tener bug">
+      <div class="chapter-head">
+        <div class="chapter-number">7</div>
+        <div><h2>Buffer overflow y mitigaciones</h2></div>
+      </div>
+  <p class="intro">Esta clase muestra cómo un error tan chico como leer una entrada sin controlar su largo se convierte en que el atacante tome el control del programa, y después recorre la escalera de mitigaciones que la industria fue agregando. El hilo es que cada defensa cierra una técnica concreta y empuja al atacante al siguiente escalón, sin que ninguna elimine la vulnerabilidad de raíz: eso solo lo hace no tener el bug.</p>
+
+  <h3 id="binarios-modelo-memoria">El modelo de memoria: la abstracción miente</h3>
+  <p>A nivel de la máquina abstracta de C (lo que dice el estándar) una función tiene sus argumentos y sus variables locales, y uno piensa cada una como una cajita separada. Pero esa máquina abstracta no existe: el compilador y el runtime definen todos los detalles, y detrás de escena hay un <b>único espacio continuo de memoria</b> donde argumentos y variables locales quedan uno al lado del otro.</p>
+  <div class="callout blue"><b>Lo contiguo es lo explotable.</b> Que dos variables sean "cajas distintas" en el código fuente no significa nada en memoria: están pegadas, y escribir de más en una pisa la siguiente.</div>
+
+  <h3 id="binarios-overflow-clasico">El overflow clásico</h3>
+  <p>El caso mínimo: un <code>buf</code> local y, contigua, una variable <code>cookie</code>. Si el programa llena <code>buf</code> con <code>gets</code>, que escribe sin chequear ningún límite, basta mandar más bytes de los que <code>buf</code> puede almacenar para que el sobrante pise <code>cookie</code> con el valor que uno elija. Un chequeo <code>if (cookie == 0x41424344)</code> que debería ser inalcanzable pasa a cumplirse, y el programa imprime "You win". Ese es el buffer overflow clásico.</p>
+  <div class="callout danger"><b><code>gets</code> es el ejemplo canónico de API insegura:</b> no recibe el tamaño del buffer, así que es imposible usarla de forma segura. La familia de funciones que escriben sin un límite explícito (<code>gets</code>, <code>strcpy</code>, <code>sprintf</code>) es la fuente histórica de esta clase de bug.</div>
+
+  <h3 id="binarios-stack-llamada">El stack y la llamada a función</h3>
+  <p>Para entender hasta dónde llega un overflow hay que ver qué pasa en el stack cuando una función llama a otra. Cada función trabaja con dos registros: <b>bp</b> (base pointer), que marca el inicio de su porción del stack, y <b>sp</b> (stack pointer), que marca el tope. Qué registros exactamente depende del compilador y la arquitectura.</p>
+  <figure class="diag">
+    <svg viewBox="0 0 520 330" role="img" aria-label="Stack de una llamada a funcion: de abajo hacia arriba, frame de start con la direccion de retorno de main y el bp guardado, y encima el frame de main con buf, cookie, el bp guardado y la direccion de retorno; una flecha indica que el overflow de buf crece hacia las direcciones mas altas pisando cookie, el bp y la direccion de retorno">
+      <text x="260" y="20" text-anchor="middle" fill="currentColor" font-size="13">Stack (una entrada por fila)</text>
+      <text x="40" y="44" fill="currentColor" opacity="0.6" font-size="11">frame de start</text>
+      <rect x="150" y="34" width="220" height="26" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+      <text x="260" y="51" text-anchor="middle" fill="currentColor" font-size="12">ret address de main</text>
+      <rect x="150" y="60" width="220" height="26" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+      <text x="260" y="77" text-anchor="middle" fill="currentColor" font-size="12">bp guardado</text>
+
+      <text x="40" y="112" fill="currentColor" opacity="0.6" font-size="11">frame de main</text>
+      <rect x="150" y="102" width="220" height="26" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="260" y="119" text-anchor="middle" fill="currentColor" font-size="12">buf (el buffer vulnerable)</text>
+      <rect x="150" y="128" width="220" height="26" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="260" y="145" text-anchor="middle" fill="currentColor" font-size="12">cookie</text>
+      <rect x="150" y="154" width="220" height="26" fill="none" stroke="var(--acc4)" stroke-width="2"/>
+      <text x="260" y="171" text-anchor="middle" fill="currentColor" font-size="12">bp guardado</text>
+      <rect x="150" y="180" width="220" height="26" fill="none" stroke="var(--acc4)" stroke-width="2"/>
+      <text x="260" y="197" text-anchor="middle" fill="currentColor" font-size="12">ret address (vuelve a start)</text>
+
+      <path d="M 120 115 L 120 200" fill="none" stroke="var(--acc2)" stroke-width="2" marker-end="url(#arbin)"/>
+      <text x="108" y="160" text-anchor="middle" fill="var(--acc2)" font-size="11" transform="rotate(-90 108 160)">gets escribe hacia aca y pisa todo</text>
+      <defs>
+        <marker id="arbin" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc2)"/>
+        </marker>
+      </defs>
+      <text x="260" y="240" text-anchor="middle" fill="currentColor" font-size="12">Al llamar: se apilan argumentos, luego la ret address (call),</text>
+      <text x="260" y="258" text-anchor="middle" fill="currentColor" font-size="12">luego el bp viejo y se fija una base nueva (prologo).</text>
+      <text x="260" y="282" text-anchor="middle" fill="currentColor" font-size="12">Al terminar: se restaura el bp del padre y ret salta a la</text>
+      <text x="260" y="300" text-anchor="middle" fill="currentColor" font-size="12">ret address guardada (epilogo).</text>
+    </svg>
+    <figcaption>El overflow de <code>buf</code> no se detiene en <code>cookie</code>: sigue pisando el bp guardado y la dirección de retorno, que es la pieza que da el control.</figcaption>
+  </figure>
+  <p>Cuando se hace la llamada, primero se apilan los argumentos; el <code>call</code> guarda en el stack la <b>dirección de retorno</b> (a dónde volver cuando la función termine); después se guarda el bp del llamante y se fija una base nueva (eso es el <b>prólogo</b>), y se reserva espacio para las variables locales. Al terminar, el <b>epílogo</b> restaura el bp del padre y el <code>ret</code> toma la dirección de retorno del stack y salta ahí: así <code>puts</code> vuelve a <code>main</code>.</p>
+
+  <h3 id="binarios-pisar-ret">Pisar la dirección de retorno</h3>
+  <p><code>main</code> tampoco es la primera función: a <code>main</code> la llama <code>start</code>, así que en el stack ya están la ret address de <code>main</code>, su bp guardado y demás. Un overflow lo bastante largo pisa todo eso con contenido elegido. En general eso termina en un crash, pero eligiendo bien los valores se obtiene un efecto definido y mucho más útil: basta poner <b>otra dirección de retorno</b> para que <code>main</code>, al terminar, no salte de vuelta a <code>start</code> sino a la función que el atacante quiera, por ejemplo <code>system</code>.</p>
+
+  <h3 id="binarios-calling-convention">Calling conventions: cómo pasarle los argumentos</h3>
+  <p>Para que <code>system("cat ~/flag.txt")</code> sirva hay que pasarle el argumento, y cómo se pasa depende de la <b>calling convention</b> (arquitectura, compilador, OS).</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Convención</th><th>Dónde van los argumentos</th><th>Cómo se explota</th></tr></thead>
+    <tbody>
+      <tr><td>Intel/AMD 32 bits, Windows, sin optimizar</td><td>Por el <b>stack</b>.</td><td>Trivial: el overflow ya controla el stack, se pone la dirección del argumento y el string.</td></tr>
+      <tr><td>64 bits, y Linux en 32 o 64 bits</td><td>Por <b>registros</b>.</td><td>Hay que lograr que el programa cargue el registro por uno: código que haga esa carga.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Cuando los argumentos van por registro, la idea histórica era escribir en el stack <b>código ejecutable</b> (shellcode) que cargue el registro (por ejemplo <code>ecx</code>) y salte a <code>system</code>, usando como datos los valores del mismo stack.</p>
+  <div class="callout blue"><b>Von Neumann: datos y código comparten memoria.</b> Que el stack pueda guardar a la vez datos y código ejecutable es posible porque la arquitectura nunca separó ambas cosas. Esa falta de separación es justo lo que el shellcode en el stack aprovecha.</div>
+
+  <h3 id="binarios-nx">Primera mitigación: NX / W^X</h3>
+  <div class="callout"><b>NX (no exec), también W^X (write xor exec).</b> Con soporte de hardware y OS, una página de memoria puede tener permiso de ejecución (y ser de solo lectura) o permiso de escritura, pero no ambos a la vez. El stack es escribible, así que deja de ser ejecutable: el shellcode escrito ahí ya no corre.</div>
+
+  <h3 id="binarios-rop">ROP: programar con pedazos ajenos</h3>
+  <p>NX cierra el shellcode, no el control del flujo. Llamar a <code>system</code> con su argumento tiene cuatro componentes: tener los valores de los argumentos en memoria (fácil con el overflow), cargar la dirección del argumento en un registro, cargar la dirección de <code>system</code> en otro y hacer un <code>call</code> indirecto. No hace falta inyectar código: en el programa ya cargado hay <b>fragmentos</b> que terminan en un <code>ret</code> y que de paso tienen el efecto que uno necesita (sacar algo del stack y ponerlo en un registro).</p>
+  <div class="callout"><b>Gadget.</b> Un fragmento de código existente que termina en <code>ret</code>. Encadenando gadgets, cada uno con el efecto que se busca, se arma el cómputo deseado sin escribir una sola instrucción nueva.</div>
+  <p>Con el overflow se ponen en el stack las direcciones de retorno (en plural) de cada gadget junto con sus argumentos. Cuando <code>main</code> hace <code>ret</code>, en vez de volver a <code>start</code> salta al primer gadget; ese toma del stack lo que necesita, lo deja en el registro y ejecuta su propio <code>ret</code>, que lee del stack la dirección del siguiente gadget y salta a él. Por eso cada gadget tiene que terminar en <code>ret</code>: es lo que encadena la secuencia.</p>
+  <div class="callout danger"><b>ROP (Return Oriented Programming)</b> ejecuta código del atacante sin que el atacante inyecte nada, reutilizando gadgets que ya están. La analogía: dado un libro, "leer" una frase que no existe en él saltando de página en página y tomando una palabra de cada una. Al final la frase está "leída" aunque nunca se escribió. NX no lo frena, porque no hay código nuevo que ejecutar.</div>
+
+  <h3 id="binarios-defensas">Defensas contra ROP</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Defensa</th><th>Qué hace</th><th>Costo</th></tr></thead>
+    <tbody>
+      <tr><td><b>ASLR</b> (Address Space Layout Randomization)</td><td>El loader del OS carga el programa en direcciones distintas en cada ejecución, así el atacante no sabe dónde están los gadgets ni las funciones.</td><td>Costo 0, es el default en casi todos los setups.</td></tr>
+      <tr><td><b>CFI</b> (Control Flow Integrity)</td><td>Antes de cada <code>call</code> registra a dónde debería volver el <code>ret</code>; si el <code>ret</code> salta a otro lado, aborta. Mata ROP de raíz.</td><td>Alto (en cada call), por eso está solo en pocas aplicaciones.</td></tr>
+      <tr><td><b>Canary</b> (cookie)</td><td>En el prólogo guarda un valor aleatorio secreto en el stack y una copia en un registro; en el epílogo los compara, y si difieren asume que hubo overflow y aborta.</td><td>Bajo, muy común.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout blue"><b>ASLR obliga a un leak.</b> Para hacer ROP con ASLR activo el atacante necesita combinar el overflow con otro bug que filtre alguna dirección del programa (y que no lo crashee, porque al recargar todo cambia de lugar). La defensa no vuelve imposible el ataque, le sube el precio y le pide un segundo bug.</div>
+
+  <h3 id="binarios-raiz">La raíz: no tener el bug</h3>
+  <p>Todas estas defensas mitigan o dificultan la explotación, pero lo ideal es que la vulnerabilidad no exista. Usar lenguajes <b>memory-safe</b> como Java, Python o Rust saca de raíz la posibilidad de un buffer overflow.</p>
+  <div class="callout warning"><b>Memory-safe no es bug-free.</b> Los buffer overflows (y la corrupción de memoria en general) son solo un subconjunto de un universo mucho más grande de bugs: race conditions, corrupción de datos o simples errores de lógica también pueden terminar en ejecución remota por parte del atacante. Cerrar la memoria no cierra todo.</div>
+
+  <p class="ref">La idea de que cada mitigación le sube el costo al ataque sin eliminarlo es la <a href="#defensa-mitigate">mitigación de la clase 3</a>, y preferir un lenguaje memory-safe antes que blindar C a mano es el <a href="#defensa-no-home-made">no home made sec</a> llevado a la elección de herramienta. Las técnicas de esta clase se practican en los challenges de la categoría F (buffer overflow).</p>
+
+  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Por qué pisar una variable contigua es posible (memoria continua, no la máquina abstracta de C) y por qué <code>gets</code> es inseguro. Qué guarda el stack en una llamada: argumentos, dirección de retorno, bp guardado, locales, y qué hacen el prólogo y el epílogo. Cómo un overflow que pisa la dirección de retorno redirige la ejecución a <code>system</code>. Diferencia entre pasar argumentos por stack y por registro, y cómo cambia la explotación. Qué es NX/W^X y qué ataque corta (shellcode en el stack). Qué es un gadget, por qué termina en <code>ret</code> y cómo se encadenan en ROP. Las tres defensas contra ROP (ASLR, CFI, canary) con su costo, y por qué ASLR obliga a un bug de leak. Por qué un lenguaje memory-safe elimina el buffer overflow pero no todos los bugs.</div>
 
     </section>
 

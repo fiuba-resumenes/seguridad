@@ -83,6 +83,10 @@ _REDES = [
     ("redes", "6", "Seguridad en redes: ataques y defensas capa por capa"),
 ]
 
+_BINARIOS = [
+    ("binarios", "7", "Buffer overflow y mitigaciones"),
+]
+
 _LAB = [
     ("permisos", "A", "Permisos de Unix: identidad, claves y secretos"),
     ("escalada", "B", "Escalada de privilegios: sudo y setuid"),
@@ -111,6 +115,7 @@ CFG = {
         ("Fundamentos", _CLASES[0:3]),
         ("Criptografía", _CRIPTO),
         ("Redes", _REDES),
+        ("Explotación de binarios", _BINARIOS),
         ("Laboratorio", _LAB),
     ],
     "paleta_light": PALETA_LIGHT,
@@ -133,6 +138,7 @@ _CLASES_SIN = [
     ("s-crypto", "4", "Cryptography I: stream cipher, KDF, PRNG y MAC"),
     ("s-asimetrica", "5", "Cryptography II: asimétrica, DH, firmas y certificados"),
     ("s-redes", "6", "Seguridad en redes: ataques y defensas capa por capa"),
+    ("s-binarios", "7", "Buffer overflow y mitigaciones"),
 ]
 
 _LAB_SIN = [

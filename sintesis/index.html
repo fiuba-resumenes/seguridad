@@ -1167,6 +1167,7 @@
       <a href="#s-crypto"><span>4</span>Cryptography I: stream cipher, KDF, PRNG y MAC</a>
       <a href="#s-asimetrica"><span>5</span>Cryptography II: asimétrica, DH, firmas y certificados</a>
       <a href="#s-redes"><span>6</span>Seguridad en redes: ataques y defensas capa por capa</a>
+      <a href="#s-binarios"><span>7</span>Buffer overflow y mitigaciones</a>
     </nav>
     <div class="nav-title">Challenges</div>
     <nav class="toc" aria-label="Challenges">
@@ -1433,6 +1434,27 @@
 
   <h3 id="s-redes-arquitectura">Defensas de arquitectura</h3>
   <p>Transversales, se arman antes y cubren varios ataques. <b>DMZ</b>: red intermedia tras un firewall para los servidores expuestos, que si se hackean quedan encerrados sin llegar a la red interna (el ataque no se frena, se encierra). <b>Proxy</b>: forward protege a la red interna filtrando lo que sale, reverse protege al servidor escondiéndolo y filtrando lo que entra. <b>IDS vs IPS</b>: el IDS avisa, el IPS avisa y frena (Snort, Suricata). <b>SIEM</b>: junta y cruza los logs de todos los equipos, detecta el patrón que un evento suelto no muestra y ayuda a responder; es el cierre del Zero Trust, no se confía en nada y todo queda registrado.</p>
+
+    </section>
+
+    <section class="chapter" id="s-binarios" data-title="buffer overflow mitigaciones stack argumentos shellcode rop defensas raiz">
+      <div class="chapter-head">
+        <div class="chapter-number">7</div>
+        <div><h2>Buffer overflow y mitigaciones</h2></div>
+      </div>
+  <p class="intro">Síntesis de la clase 7: cómo un overflow pasa de pisar una variable a tomar el control del programa, y la escalera de mitigaciones. Cada defensa cierra una técnica y empuja al atacante a la siguiente; ninguna elimina la vulnerabilidad de raíz, eso solo lo hace no tener el bug.</p>
+
+  <h3 id="s-binarios-overflow">El overflow y el stack</h3>
+  <p>La máquina abstracta de C ve variables separadas, pero en realidad hay un único espacio continuo de memoria: las variables locales quedan pegadas. Si <code>gets</code> (o cualquier función que escribe sin chequear el largo) llena un <code>buf</code> con más bytes de los que entran, el sobrante pisa lo contiguo. Primero una variable vecina (hacer pasar un chequeo imposible), pero el stack también guarda, en cada llamada, la <b>dirección de retorno</b> y el bp del llamante (prólogo y epílogo los administran). Un overflow largo pisa esa dirección de retorno y, en vez de crashear, redirige la ejecución a la función que el atacante quiera, por ejemplo <code>system("cat ~/flag.txt")</code>.</p>
+
+  <h3 id="s-binarios-conventions">Argumentos y shellcode</h3>
+  <p>Cómo pasarle el argumento a <code>system</code> depende de la calling convention: si van por <b>stack</b> (Intel 32 bits, Windows, sin optimizar) es trivial porque el overflow ya controla el stack; si van por <b>registro</b> (64 bits, y Linux en 32 o 64) hay que escribir en el stack código ejecutable (shellcode) que cargue el registro y salte, posible porque en la arquitectura de Von Neumann datos y código comparten memoria.</p>
+
+  <h3 id="s-binarios-nx-rop">NX y ROP</h3>
+  <p><b>NX / W^X</b> (write xor exec): una página puede ser escribible o ejecutable, no ambas, así el shellcode escrito en el stack no corre. Pero no frena el control del flujo: con <b>ROP</b> (Return Oriented Programming) se reutilizan <b>gadgets</b>, fragmentos del propio programa que terminan en <code>ret</code>, encadenándolos por sus direcciones de retorno en el stack (cada <code>ret</code> salta al siguiente). Se ejecuta lo que el atacante quiere sin inyectar código nuevo, como leer una frase inexistente saltando de página en página de un libro.</p>
+
+  <h3 id="s-binarios-defensas">Defensas y raíz</h3>
+  <p><b>ASLR</b>: el loader carga el programa en direcciones distintas cada vez, así el atacante no sabe dónde están los gadgets y necesita combinar el overflow con otro bug que filtre una dirección (costo 0, default). <b>CFI</b>: registra a dónde debe volver cada <code>ret</code> y aborta si salta a otro lado, mata ROP de raíz pero con costo alto, solo en pocas apps. <b>Canary</b>: valor aleatorio secreto en el stack en el prólogo, comparado en el epílogo, aborta si cambió. Lo ideal es que el bug no exista: lenguajes memory-safe (Java, Python, Rust) sacan de raíz el buffer overflow, aunque la corrupción de memoria es solo un subconjunto de los bugs (race conditions, lógica) que pueden llevar a ejecución remota.</p>
 
     </section>
 
