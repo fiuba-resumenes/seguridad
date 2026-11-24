@@ -1,0 +1,102 @@
+<section class="unidad" id="heap" data-titulo="Corrupción de memoria: heap, use after free y heap spray">
+  <h2>8. Corrupción de memoria: heap, use after free y heap spray</h2>
+  <p class="intro">La clase 7 pisaba el stack. Esta clase muestra que el heap también se puede explotar, y que ahí el atacante ni siquiera necesita llegar a una dirección de retorno: le alcanza con lograr que el propio código del programa haga la escritura por él. El hilo es mirar código común (borrar un nodo de una lista, liberar un objeto) con ojos de atacante y ver una primitiva de escritura arbitraria o un puntero a una tabla de funciones que se puede falsificar.</p>
+
+  <div class="warn"><b>Alcance de este capítulo.</b> El material de la cátedra publicado con el nombre "Advanced exploit and kernel exploit" trata en realidad corrupción de memoria en el heap, y es lo único que cubre este capítulo. El handout no desarrolla explotación del kernel, así que acá no hay nada sobre eso.</div>
+
+  <h3 id="heap-escritura-arbitraria">Una lista enlazada que escribe para el atacante</h3>
+  <p>Sea el código que saca un nodo de una lista doblemente enlazada:</p>
+  <pre><code>void remove_node(node_t* cur) {
+  cur-&gt;prev-&gt;next = cur-&gt;next;
+  cur-&gt;next-&gt;prev = cur-&gt;prev;
+}</code></pre>
+  <p>Un programador ve una operación de un TDA. Un atacante ve otra cosa. Si controla el nodo, no solo el dato sino también los punteros <code>next</code> y <code>prev</code>, puede hacer que <code>next</code> no apunte a un nodo sino a cualquier parte de la memoria. Entonces la segunda línea escribe en la dirección <code>cur-&gt;next</code> (la que eligió) más un desplazamiento fijo, el del campo <code>prev</code>. Y el valor que escribe es <code>cur-&gt;prev</code>, que también eligió: es un puntero, pero en el fondo son 8 bytes de datos que el atacante llena con lo que quiera.</p>
+  <div class="def"><b>Primitiva de escritura arbitraria.</b> Capacidad de escribir un valor elegido en una dirección elegida. Es el bloque básico de la explotación de memoria: con ella se pisa una dirección de retorno, un puntero a función o un permiso.</div>
+  <div class="warn"><b>Todo tiene un catch.</b> Manipular los punteros de un nodo para lograr un efecto concreto casi seguro tiene efectos secundarios no deseados, y lo normal es un crash. El arte está en tomar el control del sistema antes de que crashee.</div>
+
+  <h3 id="heap-malloc">Cómo funciona malloc por dentro</h3>
+  <p>A alto nivel parece que el programa le pide memoria al kernel, pero entre la aplicación y el kernel está el <b>memory manager</b>: una librería del mismo programa que implementa <code>malloc</code>, <code>realloc</code> y <code>free</code>. Hay varios allocators. En Linux con la GNU libc se usa un derivado del allocator de Doug Lea, de fines de los 80, viejo pero muy eficiente. La clase usa un modelo simplificado de él.</p>
+  <ul>
+    <li>Ante un pedido, el allocator busca memoria libre y, si no tiene, se la pide al kernel. El kernel no entrega "un par de bytes" sino bloques grandes: en Linux, <b>páginas</b>.</li>
+    <li>El allocator parte la página en unidades más chicas, los <b>chunks</b>. Cada chunk lleva <b>metadata</b>: el tamaño del chunk anterior, el tamaño del actual y dos punteros (<code>*prev</code> y <code>*next</code>). En la implementación de GNU, y en otras, esa metadata se escribe <b>dentro del propio chunk</b>.</li>
+    <li>Los punteros enlazan los chunks libres en una <b>lista doblemente enlazada</b>. Para atender un pedido, el allocator busca ahí un chunk del tamaño más adecuado, para no desperdiciar. Para no recorrer todo, los chunks libres vienen pre-clasificados en cajas o <b>bins</b> por tamaño.</li>
+    <li>Al elegir un chunk, lo saca de la lista de libres y le devuelve al usuario un puntero a él. De la metadata, los punteros no se preservan mientras el chunk está en uso, pero los tamaños sí.</li>
+  </ul>
+  <figure class="diag">
+    <svg viewBox="0 0 520 250" role="img" aria-label="Tres chunks consecutivos de una pagina del heap. Cada uno tiene prev sz, cur sz, puntero prev y puntero next. Los chunks libres estan unidos por flechas que forman una lista doblemente enlazada. Una flecha de overflow sale del chunk del medio, que esta en uso, y pisa la metadata del chunk siguiente">
+      <text x="260" y="18" text-anchor="middle" fill="currentColor" font-size="13">Una página del heap partida en chunks</text>
+
+      <rect x="30" y="34" width="140" height="96" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+      <text x="100" y="52" text-anchor="middle" fill="currentColor" font-size="11">prev sz</text>
+      <text x="100" y="70" text-anchor="middle" fill="currentColor" font-size="11">cur sz</text>
+      <text x="100" y="88" text-anchor="middle" fill="var(--acc)" font-size="11">*prev</text>
+      <text x="100" y="106" text-anchor="middle" fill="var(--acc)" font-size="11">*next</text>
+      <text x="100" y="124" text-anchor="middle" fill="currentColor" opacity="0.6" font-size="10">chunk libre</text>
+
+      <rect x="190" y="34" width="140" height="96" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="260" y="52" text-anchor="middle" fill="currentColor" font-size="11">prev sz</text>
+      <text x="260" y="70" text-anchor="middle" fill="currentColor" font-size="11">cur sz</text>
+      <text x="260" y="94" text-anchor="middle" fill="currentColor" font-size="11">datos del usuario</text>
+      <text x="260" y="124" text-anchor="middle" fill="currentColor" opacity="0.6" font-size="10">chunk en uso (malloc)</text>
+
+      <rect x="350" y="34" width="140" height="96" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+      <text x="420" y="52" text-anchor="middle" fill="currentColor" font-size="11">prev sz</text>
+      <text x="420" y="70" text-anchor="middle" fill="currentColor" font-size="11">cur sz</text>
+      <text x="420" y="88" text-anchor="middle" fill="var(--acc4)" font-size="11">*prev</text>
+      <text x="420" y="106" text-anchor="middle" fill="var(--acc4)" font-size="11">*next</text>
+      <text x="420" y="124" text-anchor="middle" fill="currentColor" opacity="0.6" font-size="10">chunk libre</text>
+
+      <path d="M 170 146 Q 260 176 350 146" fill="none" stroke="var(--acc2)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#heapflecha)"/>
+      <path d="M 350 156 Q 260 186 170 156" fill="none" stroke="var(--acc2)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#heapflecha)"/>
+      <text x="260" y="204" text-anchor="middle" fill="var(--acc2)" font-size="11">lista doblemente enlazada de chunks libres</text>
+
+      <path d="M 300 80 L 396 80" fill="none" stroke="var(--acc4)" stroke-width="2" marker-end="url(#heapoverflow)"/>
+      <text x="260" y="232" text-anchor="middle" fill="var(--acc4)" font-size="11">un overflow en el chunk en uso llega a la metadata del vecino</text>
+
+      <defs>
+        <marker id="heapflecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc2)"/>
+        </marker>
+        <marker id="heapoverflow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc4)"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption>La metadata del allocator vive pegada a los datos del usuario. Un overflow en un chunk en uso puede pisar los punteros del chunk vecino.</figcaption>
+  </figure>
+
+  <h3 id="heap-overflow">Overflow en el heap: pisar la metadata</h3>
+  <p>Conectando las dos ideas: un atacante que consigue un buffer overflow <b>en el heap</b> (no en el stack) puede sobrescribir la metadata del chunk siguiente, en particular sus punteros <code>*prev</code> y <code>*next</code>. Cuando el allocator después saque ese chunk de la lista de libres, ejecuta justamente el código de <code>remove_node</code>, ahora con punteros elegidos por el atacante. Es el allocator mismo quien hace la escritura arbitraria.</p>
+  <div class="idea"><b>La metadata en línea es la debilidad de diseño.</b> Guardar los punteros de la lista dentro del chunk, pegados a los datos del usuario, hace que un desborde común toque estructuras internas del allocator.</div>
+
+  <h3 id="heap-vtable">C++: objetos, herencia y vtable</h3>
+  <p>El otro vector es el de los objetos con métodos virtuales. Sea un objeto de tipo <code>Child</code> que hereda de <code>Parent</code>. En memoria, un puntero a un <code>Child</code> (aun visto como <code>Parent*</code>) apunta a los atributos de <code>Parent</code> seguidos de los de <code>Child</code>.</p>
+  <p>Si la clase es <b>polimórfica</b>, hay un puntero extra a la <b>virtual table (vtable)</b>. El puntero que ve el usuario no apunta a la vtable sino al principio de los atributos: la vtable queda 8 bytes atrás. La vtable es una tabla de punteros a funciones (los métodos, con el destructor incluido). Hay una vtable por clase polimórfica, no por objeto: cada objeto tiene su propio puntero, y todos los de la misma clase apuntan a la misma tabla.</p>
+  <p>Por eso, al hacer <code>delete obj</code> con <code>obj</code> de tipo <code>Parent*</code>, el código no salta al destructor de <code>Parent</code>: sigue la vtable y llama al destructor correcto, el de <code>Child</code>. Así implementa C++ el polimorfismo.</p>
+
+  <h3 id="heap-uaf">Use after free</h3>
+  <p>Después de un <code>delete</code>, el puntero queda <b>colgado</b> (<i>dangling</i>): apunta a la misma región de memoria, pero ya no está reservada. Como está libre, el allocator puede reusarla, parcial o totalmente, para otro objeto. Si ese objeto nuevo lo controla el atacante, puede pisar justo donde estaba el puntero a la vtable del objeto borrado y apuntarlo a una <b>vtable falsa</b>, con punteros a las funciones que él quiera. Si el programa después vuelve a usar el puntero colgado y llama a un método virtual, ejecuta código elegido por el atacante.</p>
+  <div class="def"><b>Use after free (UAF).</b> Vulnerabilidad en la que el programa usa un puntero a memoria que ya liberó. Es una vulnerabilidad de corrupción de memoria que no necesita desbordar nada.</div>
+  <div class="warn"><b>Dónde está el bug.</b> No está en que el atacante pueda escribir en esa memoria: está libre y escribir ahí es perfectamente legal. El error es que el programa <b>siga usando</b> un puntero a memoria liberada. En la jerga, "usar memoria frita".</div>
+  <p><b>Double delete (double free).</b> Si la aplicación borra dos veces el mismo objeto, es un caso particular del grupo más grande de use after free. Normalmente termina en crash, pero si el atacante dejó en el lugar una vtable falsa válida, el segundo <code>delete</code> puede llamar a un destructor falso: código que el atacante desea.</p>
+
+  <h3 id="heap-spray">Heap spray: acertar sin saber dónde</h3>
+  <p>Queda una pregunta práctica: ¿cómo logra el atacante que su allocación caiga justo en la dirección del objeto borrado, y que pise justo la vtable? No lo sabe. El truco es <b>allocar muchísimos objetos</b> con la esperanza de que uno de ellos, "el afortunado", caiga sobre el liberado. Eso es <b>heap spray</b>.</p>
+  <p>Tampoco sabe en qué parte exacta de su objeto va el puntero a la vtable falsa, porque no sabe cómo cae el puntero colgado dentro de lo que sprayeó. Entonces rellena sus objetos con un <b>array de punteros, todos a la misma tabla falsa</b>: con algo de suerte, el puntero colgado queda apuntando justo después de una de esas vtables y el código termina llamando a lo que el atacante dejó.</p>
+  <div class="idea"><b>Es una apuesta probabilística.</b> Se compensa la falta de información con volumen: muchos objetos para acertar la dirección y un array de punteros iguales para acertar el desplazamiento.</div>
+
+  <h3 id="heap-resumen">Cómo se encadena todo</h3>
+  <table>
+    <thead><tr><th>Técnica</th><th>Qué se corrompe</th><th>Qué se logra</th></tr></thead>
+    <tbody>
+      <tr><td>Nodo de lista con punteros propios</td><td>Los punteros <code>next</code> y <code>prev</code> de un nodo.</td><td>Escritura arbitraria cuando el código saca el nodo de la lista.</td></tr>
+      <tr><td>Overflow en el heap</td><td>La metadata en línea del chunk vecino (<code>*prev</code>, <code>*next</code>).</td><td>El allocator hace la escritura arbitraria al reservar el chunk.</td></tr>
+      <tr><td>Use after free con vtable falsa</td><td>El puntero a la vtable de un objeto liberado.</td><td>Llamada a una función elegida por el atacante.</td></tr>
+      <tr><td>Heap spray</td><td>Muchos objetos propios en el heap.</td><td>Mayor probabilidad de ocupar el lugar del objeto liberado.</td></tr>
+    </tbody>
+  </table>
+
+  <p class="ref">La idea de que un desborde escribe en lo contiguo es la de la <a href="#binarios-overflow-clasico">clase 7</a>, ahora en el heap en vez del stack. Que el atacante necesite además información que no tiene (dónde cae cada cosa) es lo mismo que <a href="#binarios-defensas">ASLR</a> le complica al ROP.</p>
+
+  <div class="examen"><b>Preguntas típicas de este tema.</b> Por qué <code>remove_node</code> es una primitiva de escritura arbitraria y qué debe controlar el atacante. Cómo funciona malloc a alto nivel: páginas, chunks, metadata en línea, lista de libres y bins. Cómo un overflow en el heap fuerza al allocator a hacer escrituras arbitrarias. Qué es la vtable, por qué hay una por clase y cómo se usa en un <code>delete</code> polimórfico. Qué es un use after free y por qué la vulnerabilidad no es que el atacante pueda escribir en memoria libre. Qué es el double delete. Qué es heap spray y por qué el atacante llena sus objetos con punteros a la misma vtable falsa.</div>
+</section>

@@ -1,0 +1,68 @@
+<section class="unidad" id="sandbox-vm" data-titulo="Sandbox a nivel de máquina virtual">
+  <h2>11. Sandbox a nivel de máquina virtual</h2>
+  <p class="intro">El sandbox del OS depende de que el kernel sea perfecto. La alternativa es darle a cada app su propio OS: lo único que se comparte pasa a ser el hypervisor y el hardware. Esta clase recorre las formas de virtualizar (emular, paravirtualizar, apoyarse en el hardware), cuánto código queda expuesto en cada una, y termina con un ataque que rompe el aislamiento desde el hardware mismo: row hammering.</p>
+
+  <h3 id="sandbox-vm-familias">VMs y unikernels</h3>
+  <p>Cada máquina virtual tiene su propio sistema operativo, y ese OS no habla directo con el hardware sino con el <b>hypervisor</b>. Hay dos familias.</p>
+  <table>
+    <thead><tr><th></th><th>Virtual machine</th><th>Unikernel</th></tr></thead>
+    <tbody>
+      <tr><td>Qué es</td><td>OS completo, multiusuario y multiapp, como cualquier OS moderno.</td><td>OS modificado, muchas veces a medida de la app, con un solo usuario y una sola app. Es como una librería más de la app: las syscalls son llamadas directas y no hay separación real entre user y kernel space.</td></tr>
+      <tr><td>Ventajas</td><td>Setup mínimo, buena UX (las apps dentro se comunican sin problema).</td><td>Mejor performance, sobre todo menos memoria.</td></tr>
+      <tr><td>Costos</td><td>Mayor consumo de memoria.</td><td>Requieren compiladores especiales, son una tecnología experimental y, con todas las apps separadas, peor UX.</td></tr>
+      <tr><td>Caso de uso</td><td>General.</td><td>Servidores con una sola app (un nginx), donde la UX importa poco y se prioriza seguridad y memoria.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="sandbox-vm-dominios">Qué apps van juntas: dominios de seguridad</h3>
+  <p>Si se ponen todas las apps en una VM, basta que una quede pawneada para perder toda la VM. La estrategia es separar en <b>dominios de seguridad</b> según el daño o impacto, la <b>intención</b> del atacante y la probabilidad de pawneo.</p>
+  <p>Si te da igual que te pawneen una red social o varias, y todas son igual de probables (se acceden con el browser y suponés que el atacante irá por un bug del browser), pueden ir en la misma VM. En cambio, las apps de un lab de tu trabajo (server web, bases de datos) conectadas a la VPN del trabajo pueden ser seguras hasta que un atacante quiera pawnearte para entrar a esa red (vos no sos el objetivo real). La intención lo diferencia del atacante que va por tu homebanking.</p>
+
+  <h3 id="sandbox-vm-hypervisor">Qué es un hypervisor: hosted y bare-metal</h3>
+  <div class="def"><b>Hosted.</b> El hypervisor es una app con los mismos privilegios que una app de usuario, sobre un OS. Acá caen los emuladores, que tienen una performance pésima. <b>Bare-metal.</b> Se saca el OS del host: el hypervisor tiene el acceso directo al hardware y los drivers (el OS del host) corren en una VM privilegiada. Xen fue pionero y hoy es el corazón del cloud computing. Microsoft, una década tarde, sigue el mismo camino.</div>
+  <p>Para entender qué hay que virtualizar, el hardware es CPU, memoria y periféricos, conectados por la placa madre. Al prender, el booteo inicializa lo mínimo y ejecuta el OS, que termina de inicializar y tomar control de todo. Después, kernel y apps usan CPU y memoria directamente (el kernel impone los controles). El resto del hardware (disco, red) se accede indirectamente por abstracciones del OS (file system, stack de red) vía syscalls, y esas abstracciones delegan el detalle en los drivers. En una VM todo eso, incluido el hardware, es virtual: detrás está el verdadero OS con el verdadero hardware. Es tomar la pastilla roja de Matrix.</p>
+
+  <h3 id="sandbox-vm-emulacion">Full virtualization: emular todo</h3>
+  <p>El primer enfoque es una app que emule todo el hardware: CPU, motherboard, discos, monitores, teclado. Es el <b>Full Virtualization Mode</b>. Como cualquier app sin privilegios, el emulador usa CPU y memoria del host directo y el resto del hardware por syscalls. Como la CPU también es emulada, se puede correr código de una arquitectura en un host con otra (ARM sobre AMD), útil para probar una app de celular en la notebook. Pero es muy lento.</p>
+  <ul>
+    <li><b>Binary translation:</b> como Java o Python compilan a nativo en tiempo real (JIT), el emulador traduce el código de la arquitectura de la VM a la del host. La primera vez es más lento, pero después ejecuta código nativo sin emular instrucción por instrucción.</li>
+    <li><b>Seguridad:</b> sigue siendo lento y un emulador está lejos de ser simple. Si la app dentro de la VM dispara un bug del emulador, corre fuera del sandbox. Con esa complejidad no es una cuestión de si tienen bugs sino de si fueron descubiertos.</li>
+  </ul>
+
+  <h3 id="sandbox-vm-paravirtualizacion">Paravirtualización</h3>
+  <p>Si en vez de emular el hardware el hypervisor ofrece una API al OS de la VM para usar el real, ese OS tiene mucho menos código: sus drivers son <b>hypercalls</b> al hypervisor y nada más. Sin emulación hay menos código y más velocidad, y la seguridad no se compromete porque el OS de la VM no toca el hardware, lo hace el hypervisor a través del OS del host. Además no hay que modificar el OS de la VM, solo cambiar los drivers.</p>
+  <div class="def"><b>Paravirtualización de drivers.</b> Los drivers del OS invitado son llamadas al hypervisor. <b>Paravirtualización del kernel.</b> Además se modifica el OS para que sepa que corre en una VM: no intenta usar hardware que no existe (y habría que emular) y delega en el hypervisor mediante hypercalls, en especial el control de CPU y memoria. Sabe que no tiene privilegios reales y debe pedir permiso al OS del host.</div>
+
+  <h3 id="sandbox-vm-hvm">Virtualización asistida por hardware (HVM)</h3>
+  <p>Así como el kernel puede saber que está en una VM, el hardware puede saber que va a correr VMs y ofrecer aislación y optimizaciones: Intel VT-x, AMD-V. Sin necesidad de emular la CPU, el OS de la VM puede ejecutar ciertas operaciones privilegiadas (no todas) con menos intervención del hypervisor, y la VM corre muchísimo más rápido.</p>
+
+  <h3 id="sandbox-vm-rowhammer">Row hammering: el hardware también tiene bugs</h3>
+  <h4>Cómo funciona la RAM</h4>
+  <p>Los chips de RAM guardan cada bit en un capacitor (cargado o no), con un transistor conectado a la <i>wordline</i> que habilita o no su descarga. Capacitor más transistor se organizan en filas (palabras de memoria) controladas por la misma wordline, y las filas forman matrices, los bancos de memoria. Un capacitor cargado pierde carga lentamente por interacción con el circuito.</p>
+  <ul>
+    <li><b>Leer:</b> se activa la wordline de la palabra, el transistor se habilita y el capacitor se descarga por la <i>bitline</i> hasta un registro. La lectura destruye la información. Los bits del registro se envían a la CPU y también de vuelta a los capacitores para recargarlos: una lectura termina siendo también una escritura.</li>
+    <li><b>Recarga periódica:</b> como la pérdida natural es predecible, la circuitería recarga cada tanto. ¿Cómo? Solo haciendo lecturas.</li>
+    <li><b>El defecto:</b> leer o escribir una fila hace que los capacitores físicamente vecinos se descarguen algo más rápido. Si se lee la misma fila miles de veces, la descarga de las filas aledañas es mucho más rápida, y con suerte algún capacitor pierde carga suficiente como para leerse como 0 en vez de 1. Leer miles de veces una dirección produjo un <b>bit flip</b>, es decir una escritura, en otra.</li>
+  </ul>
+
+  <h3 id="sandbox-vm-rowhammer-ataque">El ataque paso a paso</h3>
+  <p>Parece un glitch improbable e inútil, pero la app puede convertirlo en escalada de privilegios.</p>
+  <ol>
+    <li><b>Reservar:</b> la app aloca tantas páginas como pueda.</li>
+    <li><b>Martillar:</b> toma una dirección y hace miles de lecturas sobre esa fila. No sabe cuál fila va a flippear, solo que con suerte alguna.</li>
+    <li><b>Buscar:</b> revisa sus páginas por algún cambio. Si no hubo flip, o fue en un bit que no le sirve, repite con otra dirección. Al final encuentra un par útil: la <b>fila agresora</b> (la que martilla) y la <b>fila víctima</b> (la que flippea).</li>
+    <li><b>Liberar casi todo:</b> la página víctima ya era del atacante, pero esto es solo la primera parte. Libera todas las páginas salvo las dos del par.</li>
+    <li><b>Inducir al kernel:</b> la app lo fuerza a alocar páginas para él. Por ejemplo, al mapear un archivo diminuto muchas veces, el kernel debe trackear miles de mappings en la <b>Page Table</b>, que guarda en memoria que debe alocar.</li>
+    <li><b>Que caiga en la víctima:</b> con casi toda la memoria alocada, libera la página víctima y sigue forzando al kernel a alocar. Con buena probabilidad el kernel la usa, y con buena probabilidad el atacante sabe qué estructura escribirá ahí: entradas de la Page Table.</li>
+    <li><b>La estocada:</b> martilla la fila agresora y el flip cae sobre memoria del kernel. Si eligió una víctima que flippea un bit específico, puede cambiar el bit que controla los permisos de una página.</li>
+  </ol>
+  <div class="riesgo"><b>Consecuencia.</b> Si la app mapeó como solo lectura un programa setuid (como <code>ping</code>), el bit flip lo deja como lectura y escritura: puede modificarlo para que en vez de hacer un ping abra una shell como root. Con creatividad, el flip no sirve solo para escalar a root sino para manipular la memoria del hypervisor y <b>escapar de la VM</b>.</div>
+
+  <h3 id="sandbox-vm-takeaways">Tradeoffs y conclusiones</h3>
+  <p>Un buen sandbox con VMs debe hacer difícil el escape y mantener una UX casi igual a correr la app afuera. Alcanzarlo tiene tradeoffs. Según la tecnología disponible se puede emular, paravirtualizar o virtualizar el hardware, y siempre conviene elegir lo que <b>simplifique lo que el hypervisor tiene que hacer</b>: más simple, menos bugs.</p>
+  <p>Bugs habrá siempre, en software y en hardware. Las VMs son mejores sandboxes que los del OS pero no están libres de vulnerabilidades. Según el daño, la probabilidad y la intención de un ataque se elige la tecnología adecuada. Un threat model correcto evita armar un setup inseguro o innecesariamente complejo.</p>
+
+  <p class="ref">Es el siguiente peldaño de <a href="#sandbox-os">los sandboxes del OS</a>: más aislamiento, más costo. El programa setuid del final es el mismo de <a href="#escalada-setuid">la escalada por setuid</a>, y elegir dominios según daño e intención es hacer un <a href="#threatmodel-quien-y-por-que">threat model</a>.</p>
+
+  <div class="examen"><b>Preguntas típicas de este tema.</b> Diferencias entre VM y unikernel, con pros, contras y caso de uso. Cómo se decide qué apps van en la misma VM (dominios, daño, intención, probabilidad). Hypervisor hosted vs bare-metal y el rol de Xen. Qué es full virtualization, por qué es lenta y qué agrega binary translation. Paravirtualización de drivers vs de kernel y qué son las hypercalls. Qué aporta el HVM (VT-x, AMD-V). Cómo funciona row hammering, de las filas de capacitores al bit flip en la Page Table, y por qué puede escapar de una VM. Por qué un hypervisor más simple es más seguro.</div>
+</section>

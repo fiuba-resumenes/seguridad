@@ -1,0 +1,16 @@
+<section class="unidad" id="s-sandbox-vm" data-titulo="Sandbox a nivel de VM (clase 11)">
+  <h2>11. Sandbox a nivel de máquina virtual</h2>
+  <p class="intro">Síntesis de la clase 11: cada app con su propio OS, de modo que solo se comparten hypervisor y hardware. Mientras más simple lo que debe hacer el hypervisor, menos bugs, pero bugs habrá siempre, también en el hardware.</p>
+
+  <h3 id="s-sandbox-vm-tipos">VM, unikernel y dominios</h3>
+  <p>Una <b>VM</b> trae OS completo, multiusuario y multiapp: buena UX, más memoria. Un <b>unikernel</b> es un OS a medida de una sola app (casi una librería): menos memoria y mejor performance, pero necesita compiladores especiales, es experimental y tiene peor UX; sirve para un servidor de una sola app. Qué apps van juntas se decide con <b>dominios de seguridad</b>: daño o impacto, intención del atacante y probabilidad de pawneo.</p>
+
+  <h3 id="s-sandbox-vm-hv">Hypervisors y formas de virtualizar</h3>
+  <p><b>Hosted:</b> una app de usuario sobre un OS (los emuladores, muy lentos). <b>Bare-metal:</b> el hypervisor tiene el hardware y los drivers van en una VM privilegiada (Xen, base del cloud). <b>Full virtualization</b> emula todo, incluso la CPU (sirve para otra arquitectura), con <b>binary translation</b> tipo JIT para ir más rápido, pero un emulador es complejo y su bug saca a la app del sandbox. <b>Paravirtualización de drivers:</b> los drivers son hypercalls, sin emulación. <b>Paravirtualización del kernel:</b> el OS sabe que está en una VM y delega CPU y memoria. <b>HVM</b> (Intel VT-x, AMD-V): el hardware ayuda y la VM corre mucho más rápido.</p>
+
+  <h3 id="s-sandbox-vm-rowhammer">Row hammering</h3>
+  <p>La RAM guarda bits en capacitores por filas y leer una fila recarga, pero leer una misma fila miles de veces descarga más rápido a las filas vecinas y causa un <b>bit flip</b>. El atacante aloca muchas páginas, martilla hasta encontrar un par <b>agresora y víctima</b>, libera todo menos ese par, induce al kernel a alocar su Page Table justo en la página víctima y vuelve a martillar para flippear un bit de permisos en memoria del kernel. Ejemplo: un programa setuid mapeado como solo lectura pasa a escribible y se cambia por una shell root. También puede manipular el hypervisor y escapar de la VM.</p>
+
+  <h3 id="s-sandbox-vm-conclusion">Conclusión</h3>
+  <p>Las VMs son mejores sandboxes que los del OS, pero no están libres de vulnerabilidades. Se elige la tecnología por daño, probabilidad e intención, con un threat model correcto para no armar algo inseguro o innecesariamente complejo.</p>
+</section>

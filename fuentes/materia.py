@@ -85,6 +85,12 @@ _REDES = [
 
 _BINARIOS = [
     ("binarios", "7", "Buffer overflow y mitigaciones"),
+    ("heap", "8", "Corrupción de memoria: heap, use after free y heap spray"),
+]
+
+_SANDBOX = [
+    ("sandbox-os", "10", "Sandbox a nivel del sistema operativo"),
+    ("sandbox-vm", "11", "Sandbox a nivel de máquina virtual"),
 ]
 
 _LAB = [
@@ -116,6 +122,7 @@ CFG = {
         ("Criptografía", _CRIPTO),
         ("Redes", _REDES),
         ("Explotación de binarios", _BINARIOS),
+        ("Sandboxing", _SANDBOX),
         ("Laboratorio", _LAB),
     ],
     "paleta_light": PALETA_LIGHT,
@@ -139,6 +146,9 @@ _CLASES_SIN = [
     ("s-asimetrica", "5", "Cryptography II: asimétrica, DH, firmas y certificados"),
     ("s-redes", "6", "Seguridad en redes: ataques y defensas capa por capa"),
     ("s-binarios", "7", "Buffer overflow y mitigaciones"),
+    ("s-heap", "8", "Corrupción de memoria: heap, use after free y heap spray"),
+    ("s-sandbox-os", "10", "Sandbox a nivel del sistema operativo"),
+    ("s-sandbox-vm", "11", "Sandbox a nivel de máquina virtual"),
 ]
 
 _LAB_SIN = [

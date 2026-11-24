@@ -1,0 +1,16 @@
+<section class="unidad" id="s-heap" data-titulo="Corrupción de memoria en el heap (clase 8)">
+  <h2>8. Corrupción de memoria en el heap</h2>
+  <p class="intro">Síntesis de la clase 8, según el material publicado por la cátedra (el PDF se llama "Advanced exploit and kernel exploit", pero solo trata el heap). La idea: el atacante no siempre pisa una dirección de retorno, a veces logra que el propio código del programa o del allocator escriba por él.</p>
+
+  <h3 id="s-heap-escritura">Escritura arbitraria desde una lista</h3>
+  <p>Sacar un nodo de una lista doblemente enlazada ejecuta <code>cur-&gt;prev-&gt;next = cur-&gt;next</code> y <code>cur-&gt;next-&gt;prev = cur-&gt;prev</code>. Si el atacante controla los punteros del nodo, la segunda línea escribe un valor elegido en una dirección elegida: una <b>primitiva de escritura arbitraria</b>. Casi siempre hay efectos secundarios y crash, así que el arte es tomar el control antes.</p>
+
+  <h3 id="s-heap-malloc">malloc y overflow en el heap</h3>
+  <p>El memory manager (el allocator de la libc, derivado del de Doug Lea) pide páginas al kernel y las parte en <b>chunks</b>. Cada chunk lleva metadata <b>en línea</b>: tamaño previo, tamaño actual y punteros <code>*prev</code> y <code>*next</code>, que enlazan los chunks libres en una lista doble clasificada en <b>bins</b> por tamaño. Un overflow en el heap pisa la metadata del chunk vecino, y cuando el allocator saca ese chunk de la lista ejecuta justo el código de la lista, ahora con punteros del atacante: el allocator hace la escritura arbitraria.</p>
+
+  <h3 id="s-heap-uaf">Vtable, use after free y double free</h3>
+  <p>En C++ una clase polimórfica tiene una <b>vtable</b>, tabla de punteros a los métodos (hay una por clase, y cada objeto guarda un puntero a ella). Un <code>delete</code> polimórfico sigue la vtable para llamar al destructor correcto. En un <b>use after free</b> el puntero queda colgado tras el <code>delete</code>, el allocator reusa la memoria para un objeto del atacante, este pisa el puntero a la vtable con una <b>vtable falsa</b> y el próximo uso del puntero colgado llama a una función elegida por él. El bug no es poder escribir en memoria libre (es legal): es que el programa siga usándola. El <b>double delete</b> es un caso particular.</p>
+
+  <h3 id="s-heap-spray">Heap spray</h3>
+  <p>El atacante no sabe dónde cae su objeto ni en qué offset queda el puntero, así que aloca muchísimos objetos para que uno caiga sobre el liberado, y los llena con un array de punteros a la misma vtable falsa para acertar el desplazamiento. Es una apuesta probabilística que compensa la falta de información con volumen.</p>
+</section>

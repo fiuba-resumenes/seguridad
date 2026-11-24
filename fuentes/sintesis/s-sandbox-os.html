@@ -1,0 +1,16 @@
+<section class="unidad" id="s-sandbox-os" data-titulo="Sandbox a nivel del OS (clase 10)">
+  <h2>10. Sandbox a nivel del sistema operativo</h2>
+  <p class="intro">Síntesis de la clase 10: como prevenir es inútil, se supone que toda app es maliciosa y se limita el daño. El OS no trae un sandbox hecho, trae piezas que el administrador combina, y todo descansa en que el kernel no tenga bugs.</p>
+
+  <h3 id="s-sandbox-os-base">Punto de partida y límites por defecto</h3>
+  <p>Toda app tiene acceso al OS y este al hardware. Por usuario hay separación, pero las apps del mismo usuario se ven los archivos entre sí. El kernel controla CPU y memoria, pero no hay tope para procesos, red (el firewall filtra por IP y puerto, no por app) ni IO. Más aislamiento es más seguridad y peor UX. Los <b>LSMs</b> (AppArmor, SELinux, TOMOYO) dan MAC y los <b>cgroups</b> limitan CPU, memoria, PIDs, red e IO.</p>
+
+  <h3 id="s-sandbox-os-piezas">Capabilities, seccomp y namespaces</h3>
+  <p><b>Capabilities:</b> los privilegios de root partidos en sets, para dar a <code>ping</code> solo ICMP y broadcast en vez de setuid root. <b>seccomp:</b> filtros que dejan pasar, bloquean o falsean syscalls para achicar la superficie de ataque; un <b>AppKernel</b> como gVisor redirige todo a una app en userspace que emula o bloquea, con más control pero más costo. <b>Namespaces:</b> el administrador define qué recursos ve cada app (IPC, usuarios, procesos, red); en red, loopback privada y <b>virtual ethernets</b> para comunicar namespaces. Firewall, ruteo y caches siguen compartidos.</p>
+
+  <h3 id="s-sandbox-os-fs">File system y orquestadores</h3>
+  <p>Tres enfoques: <b>todo el FS del host</b> (anda, pero es fácil que algo se escape, como un hardlink a un directorio descompartido), <b>FS vacío y montar a mano</b> (seguro pero difícil, tienta a compartir de más) e <b>imagen completa</b> (buena UX, pero con mismatch de uids, que lleva a correr como root, y es difícil de actualizar y verificar). Orquestadores: snap y flatpak (fáciles, hay que confiar) y docker, bubblewrap y firejail (más detalle). No confíes, verificá.</p>
+
+  <h3 id="s-sandbox-os-balance">Balance</h3>
+  <p>Son eficientes, configurables y con buena UX, pero se parte de todo compartido y basta olvidar algo. Las apps hablan directo con el kernel que impone los límites: un bug del kernel y es game over.</p>
+</section>

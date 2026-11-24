@@ -1177,6 +1177,12 @@
     <div class="nav-title">Explotación de binarios</div>
     <nav class="toc" aria-label="Explotación de binarios">
       <a href="#binarios"><span>7</span>Buffer overflow y mitigaciones</a>
+      <a href="#heap"><span>8</span>Corrupción de memoria: heap, use after free y heap spray</a>
+    </nav>
+    <div class="nav-title">Sandboxing</div>
+    <nav class="toc" aria-label="Sandboxing">
+      <a href="#sandbox-os"><span>10</span>Sandbox a nivel del sistema operativo</a>
+      <a href="#sandbox-vm"><span>11</span>Sandbox a nivel de máquina virtual</a>
     </nav>
     <div class="nav-title">Laboratorio</div>
     <nav class="toc" aria-label="Laboratorio">
@@ -2617,6 +2623,255 @@
   <p class="ref">La idea de que cada mitigación le sube el costo al ataque sin eliminarlo es la <a href="#defensa-mitigate">mitigación de la clase 3</a>, y preferir un lenguaje memory-safe antes que blindar C a mano es el <a href="#defensa-no-home-made">no home made sec</a> llevado a la elección de herramienta. Las técnicas de esta clase se practican en los challenges de la categoría F (buffer overflow).</p>
 
   <div class="callout exam"><b>Preguntas típicas de este tema.</b> Por qué pisar una variable contigua es posible (memoria continua, no la máquina abstracta de C) y por qué <code>gets</code> es inseguro. Qué guarda el stack en una llamada: argumentos, dirección de retorno, bp guardado, locales, y qué hacen el prólogo y el epílogo. Cómo un overflow que pisa la dirección de retorno redirige la ejecución a <code>system</code>. Diferencia entre pasar argumentos por stack y por registro, y cómo cambia la explotación. Qué es NX/W^X y qué ataque corta (shellcode en el stack). Qué es un gadget, por qué termina en <code>ret</code> y cómo se encadenan en ROP. Las tres defensas contra ROP (ASLR, CFI, canary) con su costo, y por qué ASLR obliga a un bug de leak. Por qué un lenguaje memory-safe elimina el buffer overflow pero no todos los bugs.</div>
+
+    </section>
+
+    <section class="chapter" id="heap" data-title="corrupcion memoria heap use after free spray una lista enlazada que escribe para atacante como funciona malloc por dentro overflow pisar metadata objetos herencia vtable acertar sin saber donde encadena todo">
+      <div class="chapter-head">
+        <div class="chapter-number">8</div>
+        <div><h2>Corrupción de memoria: heap, use after free y heap spray</h2></div>
+      </div>
+  <p class="intro">La clase 7 pisaba el stack. Esta clase muestra que el heap también se puede explotar, y que ahí el atacante ni siquiera necesita llegar a una dirección de retorno: le alcanza con lograr que el propio código del programa haga la escritura por él. El hilo es mirar código común (borrar un nodo de una lista, liberar un objeto) con ojos de atacante y ver una primitiva de escritura arbitraria o un puntero a una tabla de funciones que se puede falsificar.</p>
+
+  <div class="callout warning"><b>Alcance de este capítulo.</b> El material de la cátedra publicado con el nombre "Advanced exploit and kernel exploit" trata en realidad corrupción de memoria en el heap, y es lo único que cubre este capítulo. El handout no desarrolla explotación del kernel, así que acá no hay nada sobre eso.</div>
+
+  <h3 id="heap-escritura-arbitraria">Una lista enlazada que escribe para el atacante</h3>
+  <p>Sea el código que saca un nodo de una lista doblemente enlazada:</p>
+  <pre><code>void remove_node(node_t* cur) {
+  cur-&gt;prev-&gt;next = cur-&gt;next;
+  cur-&gt;next-&gt;prev = cur-&gt;prev;
+}</code></pre>
+  <p>Un programador ve una operación de un TDA. Un atacante ve otra cosa. Si controla el nodo, no solo el dato sino también los punteros <code>next</code> y <code>prev</code>, puede hacer que <code>next</code> no apunte a un nodo sino a cualquier parte de la memoria. Entonces la segunda línea escribe en la dirección <code>cur-&gt;next</code> (la que eligió) más un desplazamiento fijo, el del campo <code>prev</code>. Y el valor que escribe es <code>cur-&gt;prev</code>, que también eligió: es un puntero, pero en el fondo son 8 bytes de datos que el atacante llena con lo que quiera.</p>
+  <div class="callout"><b>Primitiva de escritura arbitraria.</b> Capacidad de escribir un valor elegido en una dirección elegida. Es el bloque básico de la explotación de memoria: con ella se pisa una dirección de retorno, un puntero a función o un permiso.</div>
+  <div class="callout warning"><b>Todo tiene un catch.</b> Manipular los punteros de un nodo para lograr un efecto concreto casi seguro tiene efectos secundarios no deseados, y lo normal es un crash. El arte está en tomar el control del sistema antes de que crashee.</div>
+
+  <h3 id="heap-malloc">Cómo funciona malloc por dentro</h3>
+  <p>A alto nivel parece que el programa le pide memoria al kernel, pero entre la aplicación y el kernel está el <b>memory manager</b>: una librería del mismo programa que implementa <code>malloc</code>, <code>realloc</code> y <code>free</code>. Hay varios allocators. En Linux con la GNU libc se usa un derivado del allocator de Doug Lea, de fines de los 80, viejo pero muy eficiente. La clase usa un modelo simplificado de él.</p>
+  <ul>
+    <li>Ante un pedido, el allocator busca memoria libre y, si no tiene, se la pide al kernel. El kernel no entrega "un par de bytes" sino bloques grandes: en Linux, <b>páginas</b>.</li>
+    <li>El allocator parte la página en unidades más chicas, los <b>chunks</b>. Cada chunk lleva <b>metadata</b>: el tamaño del chunk anterior, el tamaño del actual y dos punteros (<code>*prev</code> y <code>*next</code>). En la implementación de GNU, y en otras, esa metadata se escribe <b>dentro del propio chunk</b>.</li>
+    <li>Los punteros enlazan los chunks libres en una <b>lista doblemente enlazada</b>. Para atender un pedido, el allocator busca ahí un chunk del tamaño más adecuado, para no desperdiciar. Para no recorrer todo, los chunks libres vienen pre-clasificados en cajas o <b>bins</b> por tamaño.</li>
+    <li>Al elegir un chunk, lo saca de la lista de libres y le devuelve al usuario un puntero a él. De la metadata, los punteros no se preservan mientras el chunk está en uso, pero los tamaños sí.</li>
+  </ul>
+  <figure class="diag">
+    <svg viewBox="0 0 520 250" role="img" aria-label="Tres chunks consecutivos de una pagina del heap. Cada uno tiene prev sz, cur sz, puntero prev y puntero next. Los chunks libres estan unidos por flechas que forman una lista doblemente enlazada. Una flecha de overflow sale del chunk del medio, que esta en uso, y pisa la metadata del chunk siguiente">
+      <text x="260" y="18" text-anchor="middle" fill="currentColor" font-size="13">Una página del heap partida en chunks</text>
+
+      <rect x="30" y="34" width="140" height="96" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+      <text x="100" y="52" text-anchor="middle" fill="currentColor" font-size="11">prev sz</text>
+      <text x="100" y="70" text-anchor="middle" fill="currentColor" font-size="11">cur sz</text>
+      <text x="100" y="88" text-anchor="middle" fill="var(--acc)" font-size="11">*prev</text>
+      <text x="100" y="106" text-anchor="middle" fill="var(--acc)" font-size="11">*next</text>
+      <text x="100" y="124" text-anchor="middle" fill="currentColor" opacity="0.6" font-size="10">chunk libre</text>
+
+      <rect x="190" y="34" width="140" height="96" fill="none" stroke="var(--acc)" stroke-width="2"/>
+      <text x="260" y="52" text-anchor="middle" fill="currentColor" font-size="11">prev sz</text>
+      <text x="260" y="70" text-anchor="middle" fill="currentColor" font-size="11">cur sz</text>
+      <text x="260" y="94" text-anchor="middle" fill="currentColor" font-size="11">datos del usuario</text>
+      <text x="260" y="124" text-anchor="middle" fill="currentColor" opacity="0.6" font-size="10">chunk en uso (malloc)</text>
+
+      <rect x="350" y="34" width="140" height="96" fill="none" stroke="var(--linea)" stroke-width="1.5"/>
+      <text x="420" y="52" text-anchor="middle" fill="currentColor" font-size="11">prev sz</text>
+      <text x="420" y="70" text-anchor="middle" fill="currentColor" font-size="11">cur sz</text>
+      <text x="420" y="88" text-anchor="middle" fill="var(--acc4)" font-size="11">*prev</text>
+      <text x="420" y="106" text-anchor="middle" fill="var(--acc4)" font-size="11">*next</text>
+      <text x="420" y="124" text-anchor="middle" fill="currentColor" opacity="0.6" font-size="10">chunk libre</text>
+
+      <path d="M 170 146 Q 260 176 350 146" fill="none" stroke="var(--acc2)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#heapflecha)"/>
+      <path d="M 350 156 Q 260 186 170 156" fill="none" stroke="var(--acc2)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#heapflecha)"/>
+      <text x="260" y="204" text-anchor="middle" fill="var(--acc2)" font-size="11">lista doblemente enlazada de chunks libres</text>
+
+      <path d="M 300 80 L 396 80" fill="none" stroke="var(--acc4)" stroke-width="2" marker-end="url(#heapoverflow)"/>
+      <text x="260" y="232" text-anchor="middle" fill="var(--acc4)" font-size="11">un overflow en el chunk en uso llega a la metadata del vecino</text>
+
+      <defs>
+        <marker id="heapflecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc2)"/>
+        </marker>
+        <marker id="heapoverflow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--acc4)"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption>La metadata del allocator vive pegada a los datos del usuario. Un overflow en un chunk en uso puede pisar los punteros del chunk vecino.</figcaption>
+  </figure>
+
+  <h3 id="heap-overflow">Overflow en el heap: pisar la metadata</h3>
+  <p>Conectando las dos ideas: un atacante que consigue un buffer overflow <b>en el heap</b> (no en el stack) puede sobrescribir la metadata del chunk siguiente, en particular sus punteros <code>*prev</code> y <code>*next</code>. Cuando el allocator después saque ese chunk de la lista de libres, ejecuta justamente el código de <code>remove_node</code>, ahora con punteros elegidos por el atacante. Es el allocator mismo quien hace la escritura arbitraria.</p>
+  <div class="callout blue"><b>La metadata en línea es la debilidad de diseño.</b> Guardar los punteros de la lista dentro del chunk, pegados a los datos del usuario, hace que un desborde común toque estructuras internas del allocator.</div>
+
+  <h3 id="heap-vtable">C++: objetos, herencia y vtable</h3>
+  <p>El otro vector es el de los objetos con métodos virtuales. Sea un objeto de tipo <code>Child</code> que hereda de <code>Parent</code>. En memoria, un puntero a un <code>Child</code> (aun visto como <code>Parent*</code>) apunta a los atributos de <code>Parent</code> seguidos de los de <code>Child</code>.</p>
+  <p>Si la clase es <b>polimórfica</b>, hay un puntero extra a la <b>virtual table (vtable)</b>. El puntero que ve el usuario no apunta a la vtable sino al principio de los atributos: la vtable queda 8 bytes atrás. La vtable es una tabla de punteros a funciones (los métodos, con el destructor incluido). Hay una vtable por clase polimórfica, no por objeto: cada objeto tiene su propio puntero, y todos los de la misma clase apuntan a la misma tabla.</p>
+  <p>Por eso, al hacer <code>delete obj</code> con <code>obj</code> de tipo <code>Parent*</code>, el código no salta al destructor de <code>Parent</code>: sigue la vtable y llama al destructor correcto, el de <code>Child</code>. Así implementa C++ el polimorfismo.</p>
+
+  <h3 id="heap-uaf">Use after free</h3>
+  <p>Después de un <code>delete</code>, el puntero queda <b>colgado</b> (<i>dangling</i>): apunta a la misma región de memoria, pero ya no está reservada. Como está libre, el allocator puede reusarla, parcial o totalmente, para otro objeto. Si ese objeto nuevo lo controla el atacante, puede pisar justo donde estaba el puntero a la vtable del objeto borrado y apuntarlo a una <b>vtable falsa</b>, con punteros a las funciones que él quiera. Si el programa después vuelve a usar el puntero colgado y llama a un método virtual, ejecuta código elegido por el atacante.</p>
+  <div class="callout"><b>Use after free (UAF).</b> Vulnerabilidad en la que el programa usa un puntero a memoria que ya liberó. Es una vulnerabilidad de corrupción de memoria que no necesita desbordar nada.</div>
+  <div class="callout warning"><b>Dónde está el bug.</b> No está en que el atacante pueda escribir en esa memoria: está libre y escribir ahí es perfectamente legal. El error es que el programa <b>siga usando</b> un puntero a memoria liberada. En la jerga, "usar memoria frita".</div>
+  <p><b>Double delete (double free).</b> Si la aplicación borra dos veces el mismo objeto, es un caso particular del grupo más grande de use after free. Normalmente termina en crash, pero si el atacante dejó en el lugar una vtable falsa válida, el segundo <code>delete</code> puede llamar a un destructor falso: código que el atacante desea.</p>
+
+  <h3 id="heap-spray">Heap spray: acertar sin saber dónde</h3>
+  <p>Queda una pregunta práctica: ¿cómo logra el atacante que su allocación caiga justo en la dirección del objeto borrado, y que pise justo la vtable? No lo sabe. El truco es <b>allocar muchísimos objetos</b> con la esperanza de que uno de ellos, "el afortunado", caiga sobre el liberado. Eso es <b>heap spray</b>.</p>
+  <p>Tampoco sabe en qué parte exacta de su objeto va el puntero a la vtable falsa, porque no sabe cómo cae el puntero colgado dentro de lo que sprayeó. Entonces rellena sus objetos con un <b>array de punteros, todos a la misma tabla falsa</b>: con algo de suerte, el puntero colgado queda apuntando justo después de una de esas vtables y el código termina llamando a lo que el atacante dejó.</p>
+  <div class="callout blue"><b>Es una apuesta probabilística.</b> Se compensa la falta de información con volumen: muchos objetos para acertar la dirección y un array de punteros iguales para acertar el desplazamiento.</div>
+
+  <h3 id="heap-resumen">Cómo se encadena todo</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Técnica</th><th>Qué se corrompe</th><th>Qué se logra</th></tr></thead>
+    <tbody>
+      <tr><td>Nodo de lista con punteros propios</td><td>Los punteros <code>next</code> y <code>prev</code> de un nodo.</td><td>Escritura arbitraria cuando el código saca el nodo de la lista.</td></tr>
+      <tr><td>Overflow en el heap</td><td>La metadata en línea del chunk vecino (<code>*prev</code>, <code>*next</code>).</td><td>El allocator hace la escritura arbitraria al reservar el chunk.</td></tr>
+      <tr><td>Use after free con vtable falsa</td><td>El puntero a la vtable de un objeto liberado.</td><td>Llamada a una función elegida por el atacante.</td></tr>
+      <tr><td>Heap spray</td><td>Muchos objetos propios en el heap.</td><td>Mayor probabilidad de ocupar el lugar del objeto liberado.</td></tr>
+    </tbody>
+  </table></div>
+
+  <p class="ref">La idea de que un desborde escribe en lo contiguo es la de la <a href="#binarios-overflow-clasico">clase 7</a>, ahora en el heap en vez del stack. Que el atacante necesite además información que no tiene (dónde cae cada cosa) es lo mismo que <a href="#binarios-defensas">ASLR</a> le complica al ROP.</p>
+
+  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Por qué <code>remove_node</code> es una primitiva de escritura arbitraria y qué debe controlar el atacante. Cómo funciona malloc a alto nivel: páginas, chunks, metadata en línea, lista de libres y bins. Cómo un overflow en el heap fuerza al allocator a hacer escrituras arbitrarias. Qué es la vtable, por qué hay una por clase y cómo se usa en un <code>delete</code> polimórfico. Qué es un use after free y por qué la vulnerabilidad no es que el atacante pueda escribir en memoria libre. Qué es el double delete. Qué es heap spray y por qué el atacante llena sus objetos con punteros a la misma vtable falsa.</div>
+
+    </section>
+
+    <section class="chapter" id="sandbox-os" data-title="sandbox nivel del sistema operativo por que cual punto partida donde puede limitar una app sacar privilegios setuid capabilities cortar acceso kernel seccomp appkernel mostrar menos namespaces file system tres enfoques orquestadores tension con usabilidad balance">
+      <div class="chapter-head">
+        <div class="chapter-number">10</div>
+        <div><h2>Sandbox a nivel del sistema operativo</h2></div>
+      </div>
+  <p class="intro">Hasta ahora el hilo era evitar que el atacante entre. Esta clase parte de la idea contraria: prevenir es inútil porque algo siempre se escapa, así que conviene suponer que toda app es maliciosa y limitar el daño que puede hacer. Eso es un sandbox. El OS no ofrece "un sandbox": ofrece piezas (usuarios, capabilities, seccomp, namespaces, cgroups, file systems) y el administrador las combina.</p>
+
+  <h3 id="sandbox-os-por-que">Por qué un sandbox y cuál es el punto de partida</h3>
+  <p>Se puede revisar el código, usar análisis estático y monitoreo dinámico (un antivirus), y aun así algo se escapa. Una app legítima se vuelve maliciosa con un bug y un input malicioso. Y el problema no es solo el desarrollador de la app: también lo son el de la librería que usa la librería que usa la librería, y cualquier update futuro. El threat model más robusto es entonces considerar que <b>toda app es maliciosa</b> y contener el daño.</p>
+  <p>El punto de partida es malo: toda app que corre tiene acceso al OS, y el OS al hardware. En Linux una app de un usuario no puede ver los archivos de otro usuario, pero nada limita ver los del mismo usuario. Una calculadora maliciosa podría leer los archivos secretos que usa otra app. Y los archivos son uno de los muchos recursos que el kernel ofrece, todos compartidos.</p>
+  <div class="callout blue"><b>Cuánto aislamiento.</b> Más aislamiento y separación es más seguridad, pero también peor UX. La escalera es: sandbox del OS (el administrador arma los límites con lo que el kernel ofrece), cada app con su propio OS (VMs o unikernels, que solo comparten hypervisor y hardware) y, para el paranoico, máquinas físicas separadas.</div>
+  <div class="callout warning"><b>La debilidad de cada nivel.</b> En el sandbox del OS toda la seguridad descansa en que no haya mala configuración ni un bug del kernel, y los kernels son enormes y tienen bugs. Un hypervisor es más chico y más fácil de revisar, pero tampoco está libre de bugs y se sigue compartiendo el hardware.</div>
+
+  <h3 id="sandbox-os-puntos-de-control">Dónde se puede limitar a una app</h3>
+  <p>Una app usa la CPU y la memoria directamente, aunque el kernel tiene controles (un proceso de usuario no ejecuta instrucciones privilegiadas ni ve la memoria de otro). El resto son servicios del kernel: file systems, IPC, red, usuarios y más, algunos como abstracción del hardware (FS sobre disco, red sobre la placa de wifi) y otros por conveniencia. Las apps los usan con <b>syscalls</b>, y cualquier app puede ejecutar cualquier syscall: el kernel solo controla si hay permiso (con <code>open</code>, verifica si el usuario puede abrir ese archivo).</p>
+  <p>Por defecto la única defensa son los controles de acceso por usuario. Para varios usuarios es razonable. Para varias apps del mismo usuario no ofrece seguridad alguna. Android lo arregla corriendo cada app con su propio usuario, además de muchos otros mecanismos.</p>
+  <p>Tampoco hay límites mayores en los recursos: una app puede consumir el 99,99 % de la CPU o la memoria, crear procesos sin tope (y agotar PIDs), y el acceso a la red está libre salvo firewalls, que filtran por IP y puerto y no por app.</p>
+  <ul class="study-list">
+    <li><b>Linux Security Modules (LSMs):</b> AppArmor, SELinux y TOMOYO implementan <i>mandatory access control</i>: el administrador define a qué archivos puede acceder una app y si puede usar la red, aunque el usuario sí tenga acceso.</li>
+    <li><b>Control groups (cgroups):</b> límites finos de CPU, memoria, PIDs, red e IO, asumiendo que el proceso ya tiene acceso al recurso.</li>
+  </ul>
+
+  <h3 id="sandbox-os-capabilities">Sacar privilegios: setuid y capabilities</h3>
+  <p>Algunas apps necesitan algo que solo root puede hacer, pero darles todo el poder de root es exponerse demasiado. Lo ideal es que hagan lo mínimo con root y luego <b>tiren los privilegios</b>. Desde el punto de vista del sandbox no se puede confiar en que la app lo haga por su cuenta: hay que forzarlo desde afuera.</p>
+  <p>El ejemplo es <code>ping</code>. Enviar mensajes ICMP requiere root (para apps sin privilegios solo se permiten TCP y UDP), y hacer broadcast también, para que cualquiera no sature la red. Pero queremos que todos los usuarios puedan usarlo. La forma tradicional es dejar el bit <b>setuid</b> puesto, que eleva privilegios al ejecutar (ver <a href="#escalada-setuid">setuid en escalada de privilegios</a>). Toda la app corre como root, no solo la parte necesaria: un bug en cualquier lado le da al adversario todo el poder de root.</p>
+  <div class="callout"><b>Capabilities.</b> Partición de los privilegios de root en sets más chicos. Root sigue teniéndolas todas, pero el administrador puede adjuntar un subconjunto a una app. Con <code>ping</code> basta darle las de armar ICMP y hacer broadcast: si hay un bug, el atacante controla la app pero no tiene más capabilities que esas. Sigue siendo malo, pero no es el poder de fuego de root.</div>
+
+  <h3 id="sandbox-os-seccomp">Cortar el acceso al kernel: seccomp y AppKernel</h3>
+  <p>El kernel expone muchos servicios y un bug puede dar control sobre él. La mayoría de las apps no necesita todos (¿para qué una calculadora haría un <code>connect</code>?). Bloquear syscalls reduce la superficie de ataque.</p>
+  <div class="callout"><b>Filtros seccomp.</b> Interceptan syscalls y pueden (1) dejarlas pasar, (2) bloquearlas o hacerlas fallar, o (3) devolver valores falsos sin llegar al kernel. Así se le impide a una app cierta interacción sin modificar su código.</div>
+  <p>Un <b>AppKernel</b> es un seccomp con esteroides: redirige todas las syscalls a una app en userspace que o bien (1) emula su cómputo o bien (2) bloquea o falla. Se emula porque el kernel tiene syscalls de implementación compleja que se pueden reimplementar en userspace con syscalls más simples, lo que baja la probabilidad de un bug del kernel, y porque permite filtros mucho más configurables que los nativos.</p>
+  <div class="callout warning"><b>No todo es color de rosa.</b> Al bloquear o falsear syscalls la app puede dejar de funcionar. Con seccomp a secas es fácil ir relajando el filtro hasta que ande. Con un AppKernel (gVisor, de Google) el control es completo, a costa de tener corriendo una app no trivial.</div>
+
+  <h3 id="sandbox-os-namespaces">Mostrar menos: namespaces</h3>
+  <p>Si sacar permisos y syscalls reduce lo que la app puede hacer, el kernel también puede ofrecerle menos desde el principio. Un browser necesita conectarse a servidores externos pero no a los internos que escuchan en <code>localhost</code>: el sandbox puede mostrarle solo la placa de wifi y un localhost privado, desconectado del principal.</p>
+  <p>Los recursos de cada servicio del kernel están por defecto en un espacio compartido. Con IPC (colas de mensajes, memoria compartida, semáforos), las apps no tienen uso exclusivo de lo que crean, y el único control es por usuario: si las apps corren bajo el mismo usuario, es frágil.</p>
+  <div class="callout"><b>Namespace.</b> Limita qué recursos de un servicio puede ver una app, y por lo tanto usar. Dentro del namespace la app crea todo lo que necesite, pero no accede a lo de otros namespaces. Una app puede autocontenerse, pero por seguridad es el administrador quien define qué namespaces hay y qué apps van en cada uno. Aunque corran como el mismo usuario, el adversario no se sale del suyo.</div>
+  <p>Hay namespaces de IPC, de usuarios, de procesos y de interfaces de red. En red, cada namespace tiene su propia interfaz loopback privada y el administrador puede migrar interfaces de uno a otro. Con namespaces de red separados y solo loopback, las apps quedan desconectadas (sirve para que no se actualicen sin permiso). Para comunicarlas se crean <b>virtual ethernets</b>: un par de interfaces conectadas entre sí, como un pipe, una en cada namespace.</p>
+  <div class="callout warning"><b>No todo es namespace.</b> El firewall, las tablas de ruteo y los caches del stack de red son compartidos por todos los namespaces de red. Hay que revisar qué garantías da cada uno y no asumir.</div>
+
+  <h3 id="sandbox-os-fs">El file system del sandbox: tres enfoques</h3>
+  <p>Con los namespaces, crear uno vacío y funcional es trivial. Con los file systems no: la app necesita su ejecutable, sus librerías dinámicas (algunas se cargan on demand), las dependencias de esas, configuración y datos. Hace falta un FS completo y funcional.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Enfoque</th><th>Cómo es</th><th>Ventaja</th><th>Problema</th></tr></thead>
+    <tbody>
+      <tr><td>Todo el FS del host</td><td>Se monta y expone todo; quien arma el sandbox debe descompartir (<i>unshare</i>) lo sensible.</td><td>La app ve las librerías del host y probablemente anda sin cambios.</td><td>Todo está compartido y un error del administrador expone algo. Un hardlink en <code>/usr/data</code> que es alias de <code>/home/secrets/keys</code> sigue accesible aunque se haya descompartido <code>/home/secrets</code>.</td></tr>
+      <tr><td>FS vacío y montar a mano</td><td>Se parte de nada y se monta archivo a archivo y directorio a directorio.</td><td>No hay nada expuesto de entrada, es más seguro.</td><td>Falta algo y no siempre es obvio qué. Tienta a montar porciones enormes hasta que ande, y terminás compartiendo lo que no debías.</td></tr>
+      <tr><td>Imagen de FS completa</td><td>Un FS independiente del host, en un archivo imagen, que se desempaqueta y monta, con montajes extra opcionales.</td><td>No comparte nada por defecto y el FS ya funciona: mucho mejor UX.</td><td>Mismatch de ids, difícil de actualizar, imágenes enormes imposibles de verificar.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout blue"><b>Un sistema seguro conspira contra uno fácil de usar.</b> Si el usuario se cansa, es el primero en esquivarte.</div>
+  <p><b>El mismatch de ids.</b> Los FS usan ids numéricos de usuario y grupo que no son necesariamente compatibles entre host e imagen. Dentro del sandbox <code>/usr/foo</code> puede tener uid 1001 y <code>/home/working</code> uid 1002. En el host el 1002 es Alice, pero en el sandbox el 1001 es Alice y el 1002 es Eve. No solo no funciona, es un problema de seguridad, porque el kernel controla permisos solo por estos ids. El único id que vale en ambos lados es el 0, el de root, así que muchas imágenes tienen todo como root y corren las apps como root, y una app como root puede escaparse del sandbox. Los kernels modernos tienen soluciones más o menos funcionales.</p>
+
+  <h3 id="sandbox-os-orquestadores">Orquestadores y tensión con la usabilidad</h3>
+  <p>Decenas de orquestadores arman el sandbox con estas piezas. Algunos son de alto nivel y andan con un click (snap, flatpak), otros exigen meterse en los detalles (docker, bubblewrap, firejail). Los fáciles obligan a confiar al 100 % en que las imágenes y configuraciones provistas no sean maliciosas. Ver en detalle cómo funciona cada uno permite medir qué tan robusto es: no confíes, verificá.</p>
+  <p>Con el escenario "calculadora sin acceso a internet" no hay una sola respuesta: se puede sacar la capability de red, bloquear <code>connect</code> con seccomp, o darle un namespace de red sin interfaces. Hay varias porque si una protección falla, queda la otra de respaldo.</p>
+
+  <h3 id="sandbox-os-balance">Balance</h3>
+  <ul class="study-list">
+    <li><b>Pros:</b> eficientes, consumen pocos recursos, configurables y con muy buena UX para quien usa la app y quien arma sandboxes.</li>
+    <li><b>Contras (los mismos pros):</b> el OS es compartido por defecto y hacer que cada app viva en su universo es muy complicado: se parte de todo compartido y basta olvidarse de algo. Además las apps hablan directo con el kernel, que es quien impone los límites. Un bug del kernel y la app lo controla, deshabilita la seguridad y escapa. Es game over.</li>
+  </ul>
+
+  <p class="ref">Es el <a href="#defensa-separation">principio de separación</a> y la <a href="#defensa-sec-in-depth">defensa en profundidad</a> aplicados a las apps, y asume el mismo threat model pesimista que <a href="#defensa-mitigate">mitigar</a> en vez de solo prevenir. El caso de <code>ping</code> es el de <a href="#escalada-utilidades-setuid">las utilidades setuid</a> visto desde el lado defensivo. El caso del hardlink recuerda a <a href="#links-symlinks">los links</a>.</p>
+
+  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Por qué prevenir es insuficiente y qué threat model propone el sandbox. Qué controla el kernel por defecto y qué no (procesos, red, IO, archivos del mismo usuario). Qué hacen los LSMs (MAC) y los cgroups. Por qué ping necesita root, qué problema tiene setuid y cómo ayudan las capabilities. Qué puede hacer un filtro seccomp y qué agrega un AppKernel como gVisor. Qué es un namespace, qué servicios los tienen y qué no se aísla en red. Los tres enfoques de FS con ventajas y problemas, y el mismatch de ids. Qué son los orquestadores y por qué no se debe confiar a ciegas. Pros y contras de los sandboxes del OS.</div>
+
+    </section>
+
+    <section class="chapter" id="sandbox-vm" data-title="sandbox nivel maquina virtual vms unikernels que apps van juntas dominios seguridad hypervisor hosted bare metal full virtualization emular todo paravirtualizacion virtualizacion asistida por hardware hvm row hammering tambien tiene bugs como funciona ram ataque paso tradeoffs conclusiones">
+      <div class="chapter-head">
+        <div class="chapter-number">11</div>
+        <div><h2>Sandbox a nivel de máquina virtual</h2></div>
+      </div>
+  <p class="intro">El sandbox del OS depende de que el kernel sea perfecto. La alternativa es darle a cada app su propio OS: lo único que se comparte pasa a ser el hypervisor y el hardware. Esta clase recorre las formas de virtualizar (emular, paravirtualizar, apoyarse en el hardware), cuánto código queda expuesto en cada una, y termina con un ataque que rompe el aislamiento desde el hardware mismo: row hammering.</p>
+
+  <h3 id="sandbox-vm-familias">VMs y unikernels</h3>
+  <p>Cada máquina virtual tiene su propio sistema operativo, y ese OS no habla directo con el hardware sino con el <b>hypervisor</b>. Hay dos familias.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Virtual machine</th><th>Unikernel</th></tr></thead>
+    <tbody>
+      <tr><td>Qué es</td><td>OS completo, multiusuario y multiapp, como cualquier OS moderno.</td><td>OS modificado, muchas veces a medida de la app, con un solo usuario y una sola app. Es como una librería más de la app: las syscalls son llamadas directas y no hay separación real entre user y kernel space.</td></tr>
+      <tr><td>Ventajas</td><td>Setup mínimo, buena UX (las apps dentro se comunican sin problema).</td><td>Mejor performance, sobre todo menos memoria.</td></tr>
+      <tr><td>Costos</td><td>Mayor consumo de memoria.</td><td>Requieren compiladores especiales, son una tecnología experimental y, con todas las apps separadas, peor UX.</td></tr>
+      <tr><td>Caso de uso</td><td>General.</td><td>Servidores con una sola app (un nginx), donde la UX importa poco y se prioriza seguridad y memoria.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="sandbox-vm-dominios">Qué apps van juntas: dominios de seguridad</h3>
+  <p>Si se ponen todas las apps en una VM, basta que una quede pawneada para perder toda la VM. La estrategia es separar en <b>dominios de seguridad</b> según el daño o impacto, la <b>intención</b> del atacante y la probabilidad de pawneo.</p>
+  <p>Si te da igual que te pawneen una red social o varias, y todas son igual de probables (se acceden con el browser y suponés que el atacante irá por un bug del browser), pueden ir en la misma VM. En cambio, las apps de un lab de tu trabajo (server web, bases de datos) conectadas a la VPN del trabajo pueden ser seguras hasta que un atacante quiera pawnearte para entrar a esa red (vos no sos el objetivo real). La intención lo diferencia del atacante que va por tu homebanking.</p>
+
+  <h3 id="sandbox-vm-hypervisor">Qué es un hypervisor: hosted y bare-metal</h3>
+  <div class="callout"><b>Hosted.</b> El hypervisor es una app con los mismos privilegios que una app de usuario, sobre un OS. Acá caen los emuladores, que tienen una performance pésima. <b>Bare-metal.</b> Se saca el OS del host: el hypervisor tiene el acceso directo al hardware y los drivers (el OS del host) corren en una VM privilegiada. Xen fue pionero y hoy es el corazón del cloud computing. Microsoft, una década tarde, sigue el mismo camino.</div>
+  <p>Para entender qué hay que virtualizar, el hardware es CPU, memoria y periféricos, conectados por la placa madre. Al prender, el booteo inicializa lo mínimo y ejecuta el OS, que termina de inicializar y tomar control de todo. Después, kernel y apps usan CPU y memoria directamente (el kernel impone los controles). El resto del hardware (disco, red) se accede indirectamente por abstracciones del OS (file system, stack de red) vía syscalls, y esas abstracciones delegan el detalle en los drivers. En una VM todo eso, incluido el hardware, es virtual: detrás está el verdadero OS con el verdadero hardware. Es tomar la pastilla roja de Matrix.</p>
+
+  <h3 id="sandbox-vm-emulacion">Full virtualization: emular todo</h3>
+  <p>El primer enfoque es una app que emule todo el hardware: CPU, motherboard, discos, monitores, teclado. Es el <b>Full Virtualization Mode</b>. Como cualquier app sin privilegios, el emulador usa CPU y memoria del host directo y el resto del hardware por syscalls. Como la CPU también es emulada, se puede correr código de una arquitectura en un host con otra (ARM sobre AMD), útil para probar una app de celular en la notebook. Pero es muy lento.</p>
+  <ul class="study-list">
+    <li><b>Binary translation:</b> como Java o Python compilan a nativo en tiempo real (JIT), el emulador traduce el código de la arquitectura de la VM a la del host. La primera vez es más lento, pero después ejecuta código nativo sin emular instrucción por instrucción.</li>
+    <li><b>Seguridad:</b> sigue siendo lento y un emulador está lejos de ser simple. Si la app dentro de la VM dispara un bug del emulador, corre fuera del sandbox. Con esa complejidad no es una cuestión de si tienen bugs sino de si fueron descubiertos.</li>
+  </ul>
+
+  <h3 id="sandbox-vm-paravirtualizacion">Paravirtualización</h3>
+  <p>Si en vez de emular el hardware el hypervisor ofrece una API al OS de la VM para usar el real, ese OS tiene mucho menos código: sus drivers son <b>hypercalls</b> al hypervisor y nada más. Sin emulación hay menos código y más velocidad, y la seguridad no se compromete porque el OS de la VM no toca el hardware, lo hace el hypervisor a través del OS del host. Además no hay que modificar el OS de la VM, solo cambiar los drivers.</p>
+  <div class="callout"><b>Paravirtualización de drivers.</b> Los drivers del OS invitado son llamadas al hypervisor. <b>Paravirtualización del kernel.</b> Además se modifica el OS para que sepa que corre en una VM: no intenta usar hardware que no existe (y habría que emular) y delega en el hypervisor mediante hypercalls, en especial el control de CPU y memoria. Sabe que no tiene privilegios reales y debe pedir permiso al OS del host.</div>
+
+  <h3 id="sandbox-vm-hvm">Virtualización asistida por hardware (HVM)</h3>
+  <p>Así como el kernel puede saber que está en una VM, el hardware puede saber que va a correr VMs y ofrecer aislación y optimizaciones: Intel VT-x, AMD-V. Sin necesidad de emular la CPU, el OS de la VM puede ejecutar ciertas operaciones privilegiadas (no todas) con menos intervención del hypervisor, y la VM corre muchísimo más rápido.</p>
+
+  <h3 id="sandbox-vm-rowhammer">Row hammering: el hardware también tiene bugs</h3>
+  <h4>Cómo funciona la RAM</h4>
+  <p>Los chips de RAM guardan cada bit en un capacitor (cargado o no), con un transistor conectado a la <i>wordline</i> que habilita o no su descarga. Capacitor más transistor se organizan en filas (palabras de memoria) controladas por la misma wordline, y las filas forman matrices, los bancos de memoria. Un capacitor cargado pierde carga lentamente por interacción con el circuito.</p>
+  <ul class="study-list">
+    <li><b>Leer:</b> se activa la wordline de la palabra, el transistor se habilita y el capacitor se descarga por la <i>bitline</i> hasta un registro. La lectura destruye la información. Los bits del registro se envían a la CPU y también de vuelta a los capacitores para recargarlos: una lectura termina siendo también una escritura.</li>
+    <li><b>Recarga periódica:</b> como la pérdida natural es predecible, la circuitería recarga cada tanto. ¿Cómo? Solo haciendo lecturas.</li>
+    <li><b>El defecto:</b> leer o escribir una fila hace que los capacitores físicamente vecinos se descarguen algo más rápido. Si se lee la misma fila miles de veces, la descarga de las filas aledañas es mucho más rápida, y con suerte algún capacitor pierde carga suficiente como para leerse como 0 en vez de 1. Leer miles de veces una dirección produjo un <b>bit flip</b>, es decir una escritura, en otra.</li>
+  </ul>
+
+  <h3 id="sandbox-vm-rowhammer-ataque">El ataque paso a paso</h3>
+  <p>Parece un glitch improbable e inútil, pero la app puede convertirlo en escalada de privilegios.</p>
+  <ol class="study-list">
+    <li><b>Reservar:</b> la app aloca tantas páginas como pueda.</li>
+    <li><b>Martillar:</b> toma una dirección y hace miles de lecturas sobre esa fila. No sabe cuál fila va a flippear, solo que con suerte alguna.</li>
+    <li><b>Buscar:</b> revisa sus páginas por algún cambio. Si no hubo flip, o fue en un bit que no le sirve, repite con otra dirección. Al final encuentra un par útil: la <b>fila agresora</b> (la que martilla) y la <b>fila víctima</b> (la que flippea).</li>
+    <li><b>Liberar casi todo:</b> la página víctima ya era del atacante, pero esto es solo la primera parte. Libera todas las páginas salvo las dos del par.</li>
+    <li><b>Inducir al kernel:</b> la app lo fuerza a alocar páginas para él. Por ejemplo, al mapear un archivo diminuto muchas veces, el kernel debe trackear miles de mappings en la <b>Page Table</b>, que guarda en memoria que debe alocar.</li>
+    <li><b>Que caiga en la víctima:</b> con casi toda la memoria alocada, libera la página víctima y sigue forzando al kernel a alocar. Con buena probabilidad el kernel la usa, y con buena probabilidad el atacante sabe qué estructura escribirá ahí: entradas de la Page Table.</li>
+    <li><b>La estocada:</b> martilla la fila agresora y el flip cae sobre memoria del kernel. Si eligió una víctima que flippea un bit específico, puede cambiar el bit que controla los permisos de una página.</li>
+  </ol>
+  <div class="callout danger"><b>Consecuencia.</b> Si la app mapeó como solo lectura un programa setuid (como <code>ping</code>), el bit flip lo deja como lectura y escritura: puede modificarlo para que en vez de hacer un ping abra una shell como root. Con creatividad, el flip no sirve solo para escalar a root sino para manipular la memoria del hypervisor y <b>escapar de la VM</b>.</div>
+
+  <h3 id="sandbox-vm-takeaways">Tradeoffs y conclusiones</h3>
+  <p>Un buen sandbox con VMs debe hacer difícil el escape y mantener una UX casi igual a correr la app afuera. Alcanzarlo tiene tradeoffs. Según la tecnología disponible se puede emular, paravirtualizar o virtualizar el hardware, y siempre conviene elegir lo que <b>simplifique lo que el hypervisor tiene que hacer</b>: más simple, menos bugs.</p>
+  <p>Bugs habrá siempre, en software y en hardware. Las VMs son mejores sandboxes que los del OS pero no están libres de vulnerabilidades. Según el daño, la probabilidad y la intención de un ataque se elige la tecnología adecuada. Un threat model correcto evita armar un setup inseguro o innecesariamente complejo.</p>
+
+  <p class="ref">Es el siguiente peldaño de <a href="#sandbox-os">los sandboxes del OS</a>: más aislamiento, más costo. El programa setuid del final es el mismo de <a href="#escalada-setuid">la escalada por setuid</a>, y elegir dominios según daño e intención es hacer un <a href="#threatmodel-quien-y-por-que">threat model</a>.</p>
+
+  <div class="callout exam"><b>Preguntas típicas de este tema.</b> Diferencias entre VM y unikernel, con pros, contras y caso de uso. Cómo se decide qué apps van en la misma VM (dominios, daño, intención, probabilidad). Hypervisor hosted vs bare-metal y el rol de Xen. Qué es full virtualization, por qué es lenta y qué agrega binary translation. Paravirtualización de drivers vs de kernel y qué son las hypercalls. Qué aporta el HVM (VT-x, AMD-V). Cómo funciona row hammering, de las filas de capacitores al bit flip en la Page Table, y por qué puede escapar de una VM. Por qué un hypervisor más simple es más seguro.</div>
 
     </section>
 
